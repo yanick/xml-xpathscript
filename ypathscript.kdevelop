@@ -8,7 +8,7 @@
     <primarylanguage>Perl</primarylanguage>
     <projectdirectory>.</projectdirectory>
     <absoluteprojectpath>false</absoluteprojectpath>
-    <description></description>
+    <description/>
     <ignoreparts>
       <part>KDevDoxygen</part>
       <part>KDevdistpart</part>

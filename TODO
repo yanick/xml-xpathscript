@@ -4,5 +4,8 @@
 		prefixed with SRC_DIR
 		prefixed with SS_DIR
 
-* simplify the compile (2 versions for no good reason)
+* simplify code of compile (2 versions for no good reason)
 
+* XML::XPath::..:Document -- must revisit
+
+* Add option to change output encoding

@@ -105,3 +105,7 @@ my $buffer;
 $xps->process( sub{ $buffer .= uc shift } );
 
 ok( $buffer, 'HOW ABOUT A SHOUT-O-MATIC?', 'override of printform' );
+
+
+# encoding
+#test_xml( '<doc>&#1000;</doc>', '<%= apply_templates() %>', '', 'Encoding' ); 

@@ -163,13 +163,13 @@ sub translate_node
 		{
 			my $t = {};
 			$retval = $code->($node, $t);
-			if ($retval and %$t) {
-				foreach my $tkey (keys %$t) {
-					$trans->{$tkey} = $t->{$tkey};
-				}
+			return if $retval == DO_NOT_PROCESS;
+
+			if ($retval and %$t) 
+			{
+				$trans->{$_} = $t->{$_} for keys %$t;
 			}
 			
-			return if $retval == DO_NOT_PROCESS;
 			$middle = '' if $retval == DO_SELF_ONLY;
 		}
 

@@ -225,7 +225,7 @@ use Symbol;
 use File::Basename;
 use XML::YPathScript::Toys;
 
-$VERSION = '0.20';
+$VERSION = '0.21';
 
 $XML_parser = 'XML::LibXML';
 
