@@ -22,7 +22,8 @@ XML::YPathScript - a Perl framework for XML stylesheets
   my $compiled = XML::YPathScript->new(stylesheetfile => $filename)
          ->compile('$r');
 
-  foreach my $xml (@xmlfiles) {
+  foreach my $xml (@xmlfiles) 
+  {
      use IO::File;
 
      my $currentIO=new IO::File(shift @outputfiles);
@@ -39,8 +40,20 @@ XML::YPathScript - a Perl framework for XML stylesheets
 
 =head1 DESCRIPTION
 
-This is the I<XML::YPathScript> stylesheet framework, part of the
-AxKit project at http://axkit.org/.
+I<XML::YPathScript> is a fork of I<XML::XPathScript>, 
+itself a fork of Matt Sergeant's I<XPathScript>, and
+unless where specified otherwise, it is meant to provide
+the same functionality and behaviors than the original XPathScript. 
+
+Notable differences with XPS are:
+
+	* YPS uses either XML::libXML or XML::XPath as its parser.
+	
+	* YPS's interpolation is controlled by the variable 
+		$XML::YPathScript::DoNotInterpolate. By default
+		YPS does not interpolate.
+		
+
 
 YPathScript is a stylesheet language similar in many ways to XSLT (in
 concept, not in appearance), for transforming XML from one format to
@@ -71,14 +84,13 @@ the template hash $t.
 
 =head2 xpathscript Invocation
 
-This CPAN module is bundled with an "xpathscript" shell tool that
+This module is bundled with an "yps" shell tool that
 is to be invoked like this:
 
-   xpathscript mydocument.xml mystylesheet.xps
+   yps mydocument.xml mystylesheet.xps
 
-It will produce the resulting document on standard output. More
-options will be added later (select output file, pass parameters to
-the stylesheet etc.).
+It will produce the resulting document on standard output. For more
+options, refer to yps's man page.
 
 =head2 Functions and global variables available in the stylesheet
 
@@ -130,7 +142,7 @@ sub findvalues {
     map { findvalue( '.', $_ ) } @nodes;
 }
 
-sub findnodes_as_string {    $XML::YPathScript::xp->findnodes_as_string(@_) }
+sub findnodes_as_string { $XML::YPathScript::xp->findnodes_as_string( @_ ) }
 
 sub matches { $XML::YPathScript::xp->matches(@_) }
 
@@ -158,7 +170,8 @@ sub apply_templates (;$@) {
     }
 
     my $retval = '';
-	if ($arg1->isa('XML::XPath::NodeSet') or $arg1->isa('XML::LibXML::NodeList') ) {
+	if ( $arg1->isa('XML::XPath::NodeSet') or $arg1->isa('XML::LibXML::NodeList') ) 
+	{
         foreach my $node ($arg1->get_nodelist) {
             $retval .= translate_node($node);
         }
@@ -568,6 +581,9 @@ use File::Basename;
 $VERSION = '0.20';
 
 $XML_parser = 'XML::LibXML';
+
+# By default, no interpolation
+$DoNotInterpolate = 1;
 
 sub import
 {
@@ -1131,23 +1147,25 @@ __END__
 
 =back
 
-=head1 ABSTRACT
-
 =head1 AUTHOR
 
 XPathScript was created by Matt Sergeant <matt@sergeant.org>
 
-And XPathScript begat XML::XPathScript, 
-by the actions of 
-Dominique Quatravaux <dom@ideax.com> and Yanick Champoux <yanick@babyl.dyndns.org>,
-offering impovements and feature merges with 
-Apache::AxKit::Language::XPathScript.
+And it came to pass that
+XPathScript begat XML::XPathScript, 
+by the actions of Dominique Quatravaux <dom@ideax.com> and Yanick Champoux <yanick@babyl.dyndns.org>,
+offering improvements and feature merges with Apache::AxKit::Language::XPathScript.
 
-And, by the will of a rather fork-happy Yanick, XML::XPS in turn begat XML::YPS.
+And, by the will of a rather fork-happy Yanick, XML::XPS in turn begat XML::YPS. 
+We can only hope that the madness will stop there.
 
 =head1 LICENSE
 
 This is free software. You may distribute it under the same terms as
 Perl itself.
+
+=head1 SEE ALSO
+
+The XPathScript Guide at http://axkit.org/wiki/view/AxKit/XPathScriptGuide
 
 =cut
