@@ -173,17 +173,100 @@ Declares that the stylesheet output is B<not> in UTF-8, but instead in
 an (unspecified) character encoding embedded in the stylesheet source
 that neither Perl nor XPathScript should have any business dealing
 with. Calling C<< XML::XPathScript->current()->binmode() >> is an
-B<irreversible> operation with the following consequences:
+B<irreversible> operation with the consequences outlined in L</The
+Unicode mess>.
+
+=cut "
+
+sub binmode {
+    my ($self)=@_;
+    $self->{binmode}=1;
+    binmode ORIGINAL_STDOUT if (! defined $self->{printer});
+}
+
+=pod "
+
+=back
+
+=head2 Stylesheet Guidelines
+
+Here are a few things to watch out for when coding stylesheets.
+
+=head3 The Unicode mess
+
+Unicode is a balucitherian character numbering standard, that strives
+to be a superset of all character sets currently in use by humans and
+computers. Going Unicode is therefore the way of the future, as it
+will guarantee compatibility of your applications with every character
+set on planet Earth: for this reason, all XML-compliant APIs
+(XML::XPathScript being no exception) should return Unicode strings in
+all their calls, regardless of the charset used to encode the XML
+document to begin with.
+
+The gotcha is, the brave Unicode world sells itself in much the same
+way as XML when it promises that you'll still be able to read your
+data back in 30 years: that will probably turn out to be true, but
+until then, you can't :-)
+
+Therefore, you as a stylesheet author will more likely than not need
+to do some wrestling with Unicode in Perl, XML::XPathScript or
+not. Here is a primer on how.
+
+=head4 Unicode, UTF-8 and Perl
+
+Unicode is B<not> a text file format: UTF-8 is. Perl, when doing
+Unicode, prefers to use UTF-8 internally.
+
+Unicode is a character numbering standard: that is, an abstract
+registry that associates unique integer numbers to a cast of thousands
+of characters. For example the "smiling face" is character number
+0x263a, and the thin space is 0x2009 (there is a URL to a Unicode
+character table in L</SEE ALSO>). Of course, this means that the
+8-bits- (or even, Heaven forbid, 7-bits-?)-per-character idea goes
+through the window this instant. Coding every character on 16 bits in
+memory is an option (called UTF-16), but not as simple an idea as it
+sounds: one would have to rewrite nearly every piece of C code for
+starters, and even then the Chinese aren't quite happy with "only"
+65536 character code points.
+
+Introducing UTF-8, which is a way of encoding Unicode character
+numbers (of any size) in an ASCII- and C-friendly way: all 127 ASCII
+characters (such as "A" or or "/" or ".", but I<not> the ISO-8859-1
+8-bit extensions) have the same encoding in both ASCII and UTF-8,
+including the null character (which is good for strcpy() and
+friends). Of course, this means that the other characters are rendered
+using I<several> bytes, for example "é" is "Ã©" in UTF-8. The result
+is therefore vaguely intelligible for a Western reader.
+
+=head4 Output to UTF-8 with XPathScript
+
+The programmer- and C-friendly characteristics of UTF-8 have made it
+the choice for dealing with Unicode in Perl. The interpreter maintains
+an "UTF8-tainted" bit on every string scalar it handles (much like
+what L<perlsec> does for untrusted data). Every function in
+XML::XPathScript returns a string with such bit set to true:
+therefore, producing UTF-8 output is straightforward and one does not
+have to take any special precautions in XPathScript.
+
+=head4 Output to a non-UTF-8 character set with XPathScript
+
+When L</binmode> is invoked from the stylesheet body, it signals that
+the stylesheet output should I<not> be UTF-8, but instead some
+user-chosen character encoding that XML::XPathScript cannot and will
+not know or care about. Calling C<<
+XML::XPathScript->current()->binmode() >> has the following
+consequences:
 
 =over 2
 
 =item *
 
-presence of the "UTF-8 taint" in the stylesheet output is now a fatal
+presence of this "UTF-8 taint" in the stylesheet output is now a fatal
 error. That is, whenever the result of a template evaluation is marked
 internally in Perl with the "this string is UTF-8" flag (as opposed to
 being treated by Perl as binary data without character meaning, see
-L</perlunicode>), L<XML::XPathScript::Processor/translate_node> will croak;
+L</perlunicode>), L<XML::XPathScript::Processor/translate_node> will
+croak;
 
 =item *
 
@@ -205,25 +288,6 @@ time under any locales, versions of Perl, or phases of moon.
 
 =back
 
-=cut "
-
-sub binmode {
-    my ($self)=@_;
-    $self->{binmode}=1;
-    binmode ORIGINAL_STDOUT if (! defined $self->{printer});
-}
-
-=pod "
-
-=back
-
-=head2 Stylesheet Guidelines
-
-Here are a few things to watch out for when coding stylesheets.
-
-=head3 The Unicode mess
-
-is explained above, under L</binmode>.
 
 =head3 XPath scalar return values considered harmful
 
@@ -376,7 +440,7 @@ use Symbol;
 use File::Basename;
 use XML::XPathScript::Processor;
 
-$VERSION = '0.14';
+$VERSION = '0.14.1';
 
 $XML_parser = 'XML::LibXML';
 
@@ -864,7 +928,7 @@ sub compile {
     my $package=gen_package_name();
 
 	my $extravars = join ',', @extravars;
-
+	
 	my $eval = <<EOT;
 		    package $package;
 		    no strict;   # Don't moan on sloppyly
@@ -892,6 +956,9 @@ EOT
 
     return $self->{compiledstylesheet} = $retval;
 }
+
+
+
 
 =item I<print($text)>
 
@@ -953,6 +1020,67 @@ sub gen_package_name {
 }
 };
 
+=item  $nodeset = $xps->document( $uri )
+
+	Reads XML given in $uri, parses it and returns it in a nodeset.
+
+=cut
+
+sub document {
+    # warn "Document function called\n";
+    my( $self, $uri ) = @_;
+	  
+	my( $results, $parser );	
+	if( $XML_parser eq 'XML::XPath' ) {
+		my $xml_parser = XML::Parser->new(
+				ErrorContext => 2,
+				Namespaces => $XML::XPath::VERSION < 1.07 ? 1 : 0,
+				# ParseParamEnt => 1,
+				);
+	
+		$parser = XML::XPath::XMLParser->new(parser => $xml_parser);
+		$results = XML::XPath::NodeSet->new();
+	} 
+	elsif ( $XML_parser eq 'XML::LibXML' ) {
+		$parser = XML::LibXML->new;
+		$results = XML::LibXML::Document->new;
+	}
+	else {
+		$self->die( "xml parser not valid: $XML_parser" );
+	}
+
+	
+    my $newdoc;
+	# TODO: must handle axkit: scheme a little more cleverly
+    if ($uri =~ /^\w\w+:/ and $uri !~ /^axkit:/ ) { # assume it's scheme://foo uri
+        eval {
+         	$self->debug( 5, "trying to parse $uri" );
+			eval "use LWP::Simple";
+            $newdoc = $parser->parse_string( LWP::Simple::get( $uri ) );
+            $self->debug( 5, "Parsed OK into $newdoc\n" );
+        };
+        if (my $E = $@) {
+			$self->debug("Parse of '$uri' failed: $E" );
+        }
+    }
+    else {
+        $self->debug(3, "Parsing local: $uri\n");
+        $newdoc = $parser->parse_file( $uri );
+    }
+
+	if( $newdoc ) {
+		if( $XML_parser eq 'XML::LibXML' ) {
+			$results = $newdoc->documentElement();
+		} 
+		elsif( $XML_parser eq 'XML::XPath' ) {
+			$results->push($newdoc)
+		}
+	}
+	
+    $self->debug(8, "XPathScript: document() returning");
+    return $results;
+}
+
 1;
 
 # small package to catch print statements within
@@ -991,7 +1119,17 @@ Perl itself.
 
 =head1 SEE ALSO
 
-The XPathScript Guide at http://axkit.org/wiki/view/AxKit/XPathScriptGuide
+The XPathScript Guide at
+
+  http://axkit.org/wiki/view/AxKit/XPathScriptGuide
+
+XPath documentation from W3C:
+
+  http://www.w3.org/TR/xpath
+
+Unicode character table:
+
+  http://www.unicode.org/charts/charindex.html
 
 =cut
 

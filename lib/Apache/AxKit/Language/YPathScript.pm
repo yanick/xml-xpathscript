@@ -5,49 +5,46 @@ use vars qw( @ISA $VERSION $stash );
 
 @ISA = qw/ Apache::AxKit::Language XML::XPathScript /;
 
-=pod
+=head1 NAME
 
-=head1 Apache::AxKit::Language::YPathScript
+Apache::AxKit::Language::YPathScript - An XML Stylesheet Language
 
-Sub-class of Apache::AxKit::Language and XML::XPathScript.
+=head1 SYNOPSIS
 
-=head2 global variables
+  AxAddStyleMap "application/x-xpathscript => \
+        Apache::AxKit::Language::YPathScript"
 
-$VERSION 
+=head1 DESCRIPTION
 
-$stash - Hash table of stylesheets
+YPathScript is a fork of the original AxKit's XPathScript using 
+XML::XPathScript as its transforming engine. 
 
-=head2 Imported modules
+As it is mostly 
+backward compatible with the classic Axkit XPathScript module, 
+the definitive reference for 
+XPathScript, located at http://axkit.org/docs/xpathscript/guide.dkb,
+also applies to YPathScript, excepts for the differences listed in the
+sections below.
 
-=over
+=head1 PRE-DEFINED STYLESHEET VARIABLES AND FUNCTIONS
 
-=item Apache
+=head2 VARIABLES
 
-=item Apache::File
+=item $r
 
-=item XML::XPath 1.00
+A copy of the Apache::AxKit::request object -- which is itself a wrapper around
+the Apache::request object -- tied to the current document.
 
-=item XML::XPath::XMLParser
+	<%	%args = $r->args() %>
+	<p>args: <%= join ' : ', map "$_ => $args{$_}", keys %args %></p>
 
-=item XML::XPath::Node
+=back 
 
-=item XML::XPath::NodeSet
+=head2 FUNCTIONS
 
-=item XML::Parser
+=item $node = XML::XPathScript::current->document( $uri )
 
-=item Apache::AxKit::Provider
-
-=item Apache::AxKit::Language
-
-=item Apache::AxKit::Cache
-
-=item Apache::AxKit::Exception
-
-=item Apache::AxKit::CharsetConv
-
-=item X::X::Processor
-
-=back
+Fetch the xml document located at $uri and return it as a dom node.
 
 =cut
 
@@ -60,13 +57,13 @@ use Apache::AxKit::Exception;
 use Apache::AxKit::CharsetConv;
 use XML::XPathScript; 
 
-$VERSION = '1.1';
+$VERSION = 1.4;
 
 =head2 Functions
 
 =item $xps = new Apache::AxKit::Language::YPathScript($xml_provider, $style_provider)
 
-Constructs a new YPathScript language interpreter out of the provided
+Construct a new YPathScript language interpreter out of the provided
 providers.
 
 =cut
@@ -84,9 +81,7 @@ sub new
 
 =item	$rc = handler( $class, $request, $xml_provider, $style_provider )
 
-	The function called by Apache. Does all cache-managing magic.
-	Not present in X::X.
-
+	The handler function called by Apache. 
 
 =cut
 
@@ -118,7 +113,8 @@ sub handler
 
     AxKit::Debug(7, "Running YPathScript script\n");
     local $^W;
-	return $xps->process();
+	$xps->compile( '$r' );
+	return $xps->process( '', $r );
 }
 
 =item $file_content = I<include_file( $filename )>
@@ -195,10 +191,7 @@ sub include_file
 
 =item 	$doc = get_source_tree( $xml_provider  )
 
-	Reads an XML document from the provider.
-	Return the doc as a string.
-
-	Not present in X::X
+Read an XML document from the provider and return it as a string.
 
 =cut
 
@@ -226,10 +219,7 @@ sub get_source_tree
 
 =item $string = I<read_stylesheet( $stylesheet )>
 
-Read the $stylesheet (which can be a filehandler or a string). 
-Used by I<extract>.
-
-Overrides the XML::XPathScript method
+Retrieve and return the $stylesheet (which can be a filehandler or a string) as a string. 
 
 =cut
 
@@ -265,7 +255,7 @@ sub read_stylesheet
 
 =item $self->debug( $level, $message )
 
-Prints $message if the requested debug level 
+Print $message if the requested debug level 
 is equal or smaller than $level.
 
 =cut
@@ -274,196 +264,55 @@ sub debug{ shift; AxKit::Debug( @_ ) }
 
 =item $self->die( $suicide_note )
 
+Print the $suicide_note and exit;
+
 =cut
 
 sub die{ die @_ }
 
-__END__
+=item  $nodeset = $self->document( $uri )
 
-=item $compiled_package = $self->get_stylesheet( $stylesheet_provider )
+Read XML document located at $uri, parse it and return it in a node object.
 
-=cut
-
-
-sub get_stylesheet
-{
-	my ( $self, $provider ) = @_;
-    
-    my $mtime = $provider->mtime();
-    my $style_key = $provider->key();
-    my $package = $self->gen_package_name();
-    
-    $self->debug(6, "Checking stylesheet mtime: $mtime\n");
-
-    if ( 0 and $stash->{$style_key}
-		and exists($stash->{$style_key}{mtime})
-		and !$provider->has_changed($stash->{$style_key}{mtime})
-		and check_inc_mtime($stash->{$style_key}{mtime}, $provider, $stash->{$style_key}{includes})) {
-        # cached... just exec.
-        $self->debug(7, "Using stylesheet cache\n");
-		$self->{compiledstylesheet} = $stash->{$style_key};
-    }
-    else {
-        # recompile stylesheet.
-        $self->debug(6, "Recompiling stylesheet: $style_key\n");
-		eval { 
-			my $fh = $provider->get_fh();
-			local $/;
-			$self->{stylesheet} = <$fh>;
-		};
-		if ($@) {
-			$self->{stylesheet} = ${ $provider->get_strref() };
-		}
-        $stash->{$style_key} = $self->compile($package, $provider);
-        $stash->{$style_key}{mtime} = $self->get_mtime( undef, $provider);
-    }
-
-	return $package;
-}
-
-
-=item check_inc_mtime( $mtime, $provider, \@includes )
-
-	Check the modified time of included files
-
-	Use Apache::Axkit::Provider
-
-	Return 0 if recompile is required, 1 otherwise (?)
-
-	Not in X::X.
+The $uri can be specified using the regular schemes ('http://foo.org/bar.xml', 
+'ftp://foo.org/bar.xml'), or the Axkit scheme ('axkit://baz.xml'), or as
+a local file ('/home/web/foo.xml', './foo.xml' ).
 
 =cut
 
-sub check_inc_mtime {
-    my ($mtime, $provider, $includes) = @_;
-    
-    my $apache = $provider->apache_request;
-    
-    for my $inc (@$includes) {
-#        warn "Checking mtime for $inc\n";
-        my $sub = $apache->lookup_uri($inc);
-        local $AxKit::Cfg = Apache::AxKit::ConfigReader->new($sub);
-        
-        my $inc_provider = Apache::AxKit::Provider->new_style_provider($sub);
-        
-        if ($inc_provider->has_changed($mtime)) {
-#            warn "$inc newer (" . $inc_provider->mtime() . ") than last compile ($mtime) causing recompile\n";
-            return;
-        }
-    }
-    return 1;
-}
-
-
-=item compile( $package, $provider )
-
-Compile the XPS stylesheet given in $provider into the package
-$package and wrap it in the function &handler of that package.
-
-Pretty much the same as for X::X
-
-
-sub compile {
-    my ($self, $package, $provider) = @_;
-
-    $self->debug( 5, 'Compiling package...' );
-
-    my $script = $self->extract($provider);
-    
-    my $eval = join('',
-            'package ',
-            $package,
-            '; use Apache qw(exit);',
-            'use XML::XPath::Node;',
-            'Apache::AxKit::Language::YPathScript::Processor->import;',
-            'sub handler {',
-            'my ($r, $xp, $t) = @_;',
-            "\n#line 1 " . $provider->key() . "\n",
-            $script,
-            ";\n",
-            'return Apache::Constants::OK;',
-            "\n}",
-            );
-
-    local $^W;
-
-    AxKit::Debug(10, "Compiling script:\n$eval\n");
-    eval $eval;
-    if ($@) {
-        AxKit::Debug(1, "Compilation failed: $@");
-        throw $@;
-    }
-}
-
-=cut
-
-=item	$file_content = include_file( $filename, $provider, $scalar_output )
-
-Wrapper around extract. Verify if $filename hasn't already been
-extracted before.
-
-Exists in X::X in a simplified version.
-
-=cut
-
-sub include_file {
-    my ($self, $filename, $provider, $script_output) = @_;
-
-    # return if already included
-    my $key = $provider->key();
-    return '' if grep $_ eq $filename, @{$stash->{$key}{includes}};
-
-    push @{$stash->{$key}{includes}}, $filename;
-    
-    my $apache = $provider->apache_request;
-    my $sub = $apache->lookup_uri($filename);
-    local $AxKit::Cfg = Apache::AxKit::ConfigReader->new($sub);
-    
-    my $inc_provider = Apache::AxKit::Provider->new_style_provider($sub);
-    
-    return $self->extract( $inc_provider );
-	
-}
-
-=item  $nodeset = XML::XPath::Function::document( $node, $uri )
-
-	Reads XML given in $uri, parses it and returns it in a nodeset.
-
-	Pretty similar to the one in X::X, except for details like inclusion
-	of scheme axkit://.
-
-=cut
-
-sub XML::XPath::Function::document {
+sub document {
     # warn "Document function called\n";
     return unless $Apache::AxKit::Language::YPathScript::local_ent_handler;
-    my $self = shift;
-    my ($node, @params) = @_;
-    die "document: Function takes 1 parameter\n" unless @params == 1;
+    my( $self, $uri ) = @_;
 
-    my $xml_parser = XML::Parser->new(
-            ErrorContext => 2,
-            Namespaces => $XML::XPath::VERSION < 1.07 ? 1 : 0,
-            # ParseParamEnt => 1,
-            );
-
-    my $parser = XML::XPath::XMLParser->new(parser => $xml_parser);
-
-    my $results = XML::XPath::NodeSet->new();
-    my $uri = $params[0];
+	my( $results, $parser );	
+	if( $XML_parser eq 'XML::XPath' ) {
+		my $xml_parser = XML::Parser->new(
+				ErrorContext => 2,
+				Namespaces => $XML::XPath::VERSION < 1.07 ? 1 : 0,
+				# ParseParamEnt => 1,
+				);
+	
+		$parser = XML::XPath::XMLParser->new(parser => $xml_parser);
+		$results = XML::XPath::NodeSet->new();
+	} elsif {
+		$parser = new XML::LibXML;
+		$result = new XML::LibXML::Node;
+	}
+	
     my $newdoc;
     if ($uri =~ /^axkit:/) {
         $newdoc = $parser->parse( AxKit::get_axkit_uri($uri) );
     }
     elsif ($uri =~ /^\w\w+:/) { # assume it's scheme://foo uri
         eval {
-            # warn "Trying to parse $params[0]\n";
+         	$self->debug( 5, "trying to parse $uri" );
             $newdoc = $parser->parse(
                     $Apache::AxKit::Language::YPathScript::local_ent_handler->(
                         undef, undef, $uri
                     )
                 );
-            # warn "Parsed OK into $newdoc\n";
+            $self->debug( 5, warn "Parsed OK into $newdoc\n" );
         };
         if (my $E = $@) {
             if ($E->isa('Apache::AxKit::Exception::IO')) {
@@ -478,91 +327,17 @@ sub XML::XPath::Function::document {
         AxKit::Debug(3, "Parsing local: $uri\n");
         
         # create a subrequest, so we get the right AxKit::Cfg for the URI
-        my $apache = AxKit::Apache->request;
-        my $sub = $apache->lookup_uri($uri);
+        my $sub = AxKit::Apache->request->lookup_uri($uri);
         local $AxKit::Cfg = Apache::AxKit::ConfigReader->new($sub);
         
         my $provider = Apache::AxKit::Provider->new_content_provider($sub);
         
         $newdoc = $parser->parse( xml => get_source_tree($provider) );
-        undef $provider;
-        undef $apache;
-        undef $sub;
     }
 
     $results->push($newdoc) if $newdoc;
-    #AxKit::Debug(8, "YPathScript: document() returning");
+    $self->debug(8, "YPathScript: document() returning");
     return $results;
 }
 
-=item   $mtime =  get_mtime( $class, $provider )
-
-Returns the mtime of $provider. 
-
-$class is not used.
-
-The global $stash is modified as a side-effect.
-
-Does not exist in X::X.
-
-=cut
-
-sub get_mtime {
-
-	return 0;
-	my $self = shift;
-    my $class = shift;
-    my ($provider) = @_;
-
-    my $mtime = $provider->mtime();
-    my $filename = $provider->key();
-
-    if (!$stash->{$filename}) {
-        # compile stylesheet
-        $self->compile( $self->get_package_name($filename), $provider);
-    
-        $stash->{$filename}{mtime} = $mtime;
-        return 0;
-    }
-
-    my $apache = $provider->apache_request;
-    
-    for my $inc (@{$stash->{$filename}{includes}}) {
-        
-        my $sub = $apache->lookup_uri($inc);
-        local $AxKit::Cfg = Apache::AxKit::ConfigReader->new($sub);
-        
-        my $inc_provider = Apache::AxKit::Provider->new_style_provider(
-                $sub, 
-                # uri => $inc,
-                );
-        
-#        warn "Checking mtime of $inc\n";
-        if ($inc_provider->has_changed($mtime)) {
-            $mtime = $inc_provider->mtime();
-        }
-    }
-    
-    return $mtime;
-}
-
-
-1;
-__END__
-
-=head1 NAME
-
-Apache::AxKit::Language::YPathScript - An XML Stylesheet Language
-
-=head1 SYNOPSIS
-
-  AxAddStyleMap "application/x-xpathscript => \
-        Apache::AxKit::Language::YPathScript"
-
-=head1 DESCRIPTION
-
-This documentation has been removed. The definitive reference for 
-XPathScript is now at http://axkit.org/docs/xpathscript/guide.dkb
-in DocBook format.
-
-=cut
+'Apache::AxKit::Language::YPathScript';

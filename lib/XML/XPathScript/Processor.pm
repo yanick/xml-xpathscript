@@ -50,6 +50,7 @@ both these contexts.
 package XML::XPathScript::Processor;
 
 use strict;
+use warnings;
 
 use Exporter;
 use vars '@ISA', '@EXPORT';
@@ -76,6 +77,8 @@ use vars '@ISA', '@EXPORT';
 		DO_NOT_PROCESS
 		DO_TEXT_AS_CHILD
         );
+
+my $VERSION = 0.1;
 
 =pod "
 
@@ -145,7 +148,13 @@ values considered harmful>).
 =cut "
 
 sub findnodes {
-	$XML::XPathScript::xp->findnodes(@_)
+	if ($XML::XPathScript::xp->isa("XML::XPath")) {
+		return $XML::XPathScript::xp->findnodes(@_);
+	}
+
+	my ($path, $context) = @_;
+	$context = $XML::XPathScript::xp if (!defined $context);
+	return $context->findnodes($path);
 }
 
 =pod "
@@ -162,7 +171,13 @@ L</xpath_to_string>.
 =cut "
 
 sub findvalue {
-	return xpath_to_string(scalar $XML::XPathScript::xp->findvalue(@_));
+	if ($XML::XPathScript::xp->isa("XML::XPath")) {
+		return xpath_to_string(scalar $XML::XPathScript::xp->findvalue(@_));
+	}
+
+	my ($path, $context) = @_;
+	$context = $XML::XPathScript::xp if (!defined $context);
+	return xpath_to_string($context->findvalue($path));
 }
 
 =pod "
@@ -337,7 +352,8 @@ sub call_template {
 }
 
 sub _apply_templates {
-	return join( '', map { translate_node($_) or "" } @_ );
+	no warnings 'uninitialized';
+	return join '', map translate_node($_), @_;
 }
 
 =item  is_element_node ( $object )
@@ -589,6 +605,7 @@ sub translate_element_node {
 		unless( $trans = $translations->{$node_name} )
 		{
 			# no specific and no generic? Okay, okay, return as is...
+			no warnings qw/ uninitialized /;
 			return start_tag($node) . 
                 	_apply_templates( ( $XML::XPathScript::XML_parser eq 'XML::LibXML' ) ? 
 										$node->childNodes : $node->getChildNodes) .
@@ -656,7 +673,7 @@ sub translate_element_node {
 				if is_element_node( $kid );
         }
         
-		return ($pre||'') . ($middle||'') . ($post||'');
+		return ($pre||'') . ( $middle||'' ) . ($post||'');
     }
 	
     if($search) 
@@ -752,7 +769,7 @@ sub end_tag {
 
 sub interpolate {
     my ($node, $string) = @_;
-
+	
 	# if string is empty or no interpolation,
 	# we return
     return( $string || '' ) unless 
