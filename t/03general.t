@@ -1,20 +1,18 @@
 use strict;
 use Test;
 
-BEGIN 
-{ 
-	plan tests => 18, todo => [];
+BEGIN { 
+	plan tests => 21, todo => [];
 }
 
 use XML::XPathScript;
 
 # not used for now
-# use Apache::AxKit::Language::YPathScript;
+#use Apache::AxKit::Language::YPathScript;
 
 ok(1); 
 
-sub test_xml
-{
+sub test_xml {
 	my( $xml, $style, $result, $comment ) = @_;
     my $xps = new XML::XPathScript( xml => $xml, stylesheet => $style );
 	my $buffer;
@@ -24,27 +22,24 @@ sub test_xml
 }
 
 
-# empty run
-test_xml( '<doc>dummy</doc>', 'working', 'working' );
+test_xml( '<doc>dummy</doc>', 'working', 'working', 'empty run' );
 
+test_xml( '<doc>dummy</doc>', '<%= apply_templates() %>', 
+	'<doc>dummy</doc>', 'simple in/out');
 
-# simple in/out
-test_xml( '<doc>dummy</doc>', '<%= apply_templates() %>', '<doc>dummy</doc>' );
+test_xml( '<doc>dummy</doc>', '<% print "Hello!" %>', 'Hello!', 
+	'rogue print statement' );
 
-# a rogue print statement
-test_xml( '<doc>dummy</doc>', '<% print "Hello!" %>', 'Hello!' );
-
-# processing a comment
-test_xml( '<doc><!-- hello world --></doc>', <<'EOT', "<doc>comment: hello world </doc>\n" );
+test_xml( '<doc><!-- hello world --></doc>', <<'EOT', "<doc>comment: hello world </doc>\n", 'processing a comment' );
 <% $t->{'#comment'}{pre} = "comment:"; %><%= apply_templates() %>
 EOT
 
-# masking a comment
-test_xml( '<doc><!-- hello world --></doc>', <<'EOT', "<doc></doc>\n" );
+test_xml( '<doc><!-- hello world --></doc>', <<'EOT', "<doc></doc>\n", 'masking a comment' );
 <% $t->{'#comment'}{testcode} = sub{ 0 } %><%= apply_templates() %>
 EOT
 
-# testing Interpolation
+############################################################
+# Interpolation
 
 my $xml = "<doc><node color='blue'>Hello</node></doc>";
 my $xps = <<'EOT';
@@ -73,6 +68,33 @@ $xps = <<'EOT';
 EOT
 
 test_xml( $xml, $xps, "\n<doc>blue</doc>\n", 'Interpolation (enabled)'  );
+
+############################################################
+# double interpolation 
+
+$xps = <<'EOT';
+<% 
+	$XML::XPathScript::DoNotInterpolate = 0; 
+	$t->{node}{testcode} = sub
+	{ 
+		my( $n, $t ) = @_; 
+		$t->{pre} = '{@color}:{@color}'; 
+		return DO_SELF_ONLY() 
+	}; %>
+<%= apply_templates() %>
+EOT
+test_xml( $xml, $xps, "\n<doc>blue:blue</doc>\n", 'Double interpolation'  );
+
+############################################################
+# interpolation regex
+
+test_xml( '<doc arg="stuff" />', <<'XPS' , "stuff\n", 'interpolation regex' );
+<%
+	$XML::XPathScript::current->{interpolation_regex} = qr/\[\[(.*?)\]\]/;
+	$t->{doc}{pre} = '[[@arg]]';
+%><%= apply_templates() %>
+XPS
+
 
 test_xml( '<doc><apple/><banana/></doc>', <<'EOT', "<doc>!<apple></apple><banana></banana>?</doc>\n", 'Prechildren and Postchildren tags, with children' );
 <%
@@ -140,4 +162,25 @@ EOXPS
 	unlink $output_file or die $!;
 }
 
+# get_xpath_of_node()
 
+{
+	my $xps = new XML::XPathScript( xml => '<coucou><bloh><blah /><blah>hello <em>world</em> ! </blah></bloh></coucou>',
+									stylesheet => <<'STYLESHEET' );
+<%
+    $t->{'*'}{pre}="";
+    $t->{'text()'}{testcode} = sub {
+            my ($self, $t)=@_;
+            $t->{pre} = get_xpath_of_node($self)."\n";
+            return DO_SELF_ONLY;
+    };
+%><%= apply_templates() %>
+STYLESHEET
+	my $result=""; $xps->process(\$result);
+	ok($result eq <<'EXPECTED') or warn $result;
+/coucou[1]/bloh[1]/blah[2]/text()[1]
+/coucou[1]/bloh[1]/blah[2]/em[1]/text()[1]
+/coucou[1]/bloh[1]/blah[2]/text()[2]
+
+EXPECTED
+}

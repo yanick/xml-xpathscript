@@ -3,7 +3,7 @@ Makefile.PL
 MANIFEST
 README
 XPathScript.pm
-lib/XML/XPathScript/Toys.pm
+lib/XML/XPathScript/Processor.pm
 lib/Apache/AxKit/Language/YPathScript.pm
 script/xpathscript
 t/include.xps

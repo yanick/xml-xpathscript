@@ -1,10 +1,19 @@
-Revision history for Perl module XML::YPathScript.pm
+Revision history for Perl module XML::XPathScript.pm
+
+0.14
+	- XML::XPathScript->current()->binmode() for non-UTF8 output
+	- Renamed XML::XPathScript::Toys to XML::XPathScript::Processor
+	- Introduction of testcode return value DO_TEXT_AS_CHILD 
+	  for text nodes (see XML::XPathScript::Processor docs)
+	- Interpolation regex is now configurable
+	- Corrected Makefile.PL typo for XML::LibXML
+	- General bug and typo fixes
 
 0.13  Sun Aug 15 2004
 	- Added support for XML::LibXML
 	- Added tests for prechild, prechildren, postchild and postchildren
 	- DO_NOT_PROCESS, DO_SELF_ONLY, DO_SELF_AND_KIDS are now constants
-	- XML::XPathScript::Toys now has its own file
+	- XML::XPathScript::Processor now has its own file
 	- Added Apache::Axkit::Language::YPathScript to the distribution 
 	- Fixed bugs in A:A:L::YPS 
 	- Added the template keys '#text' and '#comment' -- synonyms for
@@ -16,7 +25,7 @@ Revision history for Perl module XML::YPathScript.pm
 		interpolating value
 	- Changed implementation detail such that <% print "stuff" %> works
 
-0.11  Wed Aug 06 2003
+0.10  Wed Aug 06 2003
 	- Enriched object-oriented interface, providing cache and
 	  code factoring with Apache::AxKit::Language::XPathScript
 	- Added ability to print to something else than STDOUT

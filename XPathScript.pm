@@ -46,11 +46,11 @@ AxKit project at http://axkit.org/.
 
 XPathScript is a stylesheet language similar in many ways to XSLT (in
 concept, not in appearance), for transforming XML from one format to
-another format (possibly HTML, but XPathScript also shines for
-non-XML-like output).
+another (possibly HTML, but XPathScript also shines for non-XML-like
+output).
 
-Like XSLT, XPathScript has a dialect to mix up verbatim document
-portions and code. Also like XSLT, it leverages the powerful
+Like XSLT, XPathScript offers a dialect to mix verbatim portions of
+documents and code. Also like XSLT, it leverages the powerful
 ``templates/apply-templates'' and ``cascading stylesheets'' design
 patterns, that greatly simplify the design of stylesheets for
 programmers. The availability of the I<XPath> query language inside
@@ -59,11 +59,10 @@ side-effect-free coding style. But unlike XSLT which uses its own
 dedicated control language with an XML-compliant syntax, XPathScript
 uses Perl which is terse and highly extendable.
 
-The result of the merge is an extremely powerful environment for
-development tasks that involve rendering complex XML documents to
-other formats. Stylesheets written in XPathScript are very easy to
-create, extend and reuse, even if they manage hundreds of different
-XML tags.
+The result of the merge is an extremely powerful tool for rendering
+complex XML documents into other formats. Stylesheets written in
+XPathScript are very easy to create, extend and reuse, even if they
+manage hundreds of different XML tags.
 
 =head1 STYLESHEET WRITER DOCUMENTATION
 
@@ -83,30 +82,205 @@ is to be invoked like this:
 It will produce the resulting document on standard output. For more
 options, refer to xpathscript's man page.
 
-=head2 Functions and global variables available in the stylesheet
+=head2 XPathScript methods available from within the stylesheet
 
 A number of callback functions are available from the stylesheet
 proper.  They apply against the current document and template hash,
 which are transparently passed back and forth as global variables (see
 L</Global variables>). They are defined in the
-I<XML::XPathScript::Toys> package, which is implicitly imported into
+L<XML::XPathScript::Processor> package, which is implicitly imported into
 all code written in the embedded stylesheet dialect.
+
+The following methods are also available to peek at the internal state
+of the XPathScript engine from within the stylesheet. Although C<<
+XML::XPathScript->current()->whatever() >> may be called from anywhere
+within the stylesheet (except a BEGIN or END block or similar), it is
+B<most unwise> to alter the state of the interpreter from within a
+C<testcode> block as the order of evaluation of the XML nodes is not
+specified. Better tweak the stylesheet globals (e.g. L</binmode>) once
+and for all at the beginning of the stylesheet.
 
 =over
 
 =cut "
 
+=pod "
+
+=item I<current()>
+
+This class method (e.g. C<< XML::XPathScript->current() >>) returns
+the stylesheet object currently being applied. This can be called from
+anywhere within the stylesheet, except a BEGIN or END block or
+similar. B<Beware though> that using the return value for altering (as
+opposed to reading) stuff from anywhere except the stylesheet's top
+level is unwise.
+
+=cut "
+
+sub current {
+    unless (defined $XML::XPathScript::current) {
+	use Carp;
+	Carp::croak "Wrong context for calling current()";
+    };
+    return $XML::XPathScript::current;
+}
+
+=item I<interpolating()>
+
+=item I<interpolating($boolean)>
+
+Gets (first call form) or sets (second form) the XPath interpolation
+boolean flag. If true, values set in C<< $template->{pre} >> and
+similar may contain expressions within braces, that will be
+interpreted as XPath expressions and substituted in place: for
+example, when interpolation is on, the following code
+
+   $t->{'link'}{pre} = '<a href="{@url}">';
+   $t->{'link'}{post} = '</a>';
+
+is enough for rendering a C<< <link> >> element as an HTML hyperlink.
+The interpolation-less version is slightly more complex as it requires a
+C<testcode>:
+
+   $t->{'link'}{testcode} = sub {
+      my ($currentnode, $t) = @_;
+      my $url = findvalue('@url', $currentnode);
+      $t->{pre}="<a href='$url'>";
+      $t->{post}='</a>';
+	  return DO_SELF_AND_KIDS();
+   };
+
+Interpolation is on by default. A (now undocumented) global variable
+used to change the default to off, but don't do that.
+
+=cut "
+
+sub interpolating {
+    my $self=shift;
+
+    $self->{interpolating}=shift if (@_);
+
+    return exists $self->{interpolating} ?
+			$self->{interpolating} :
+		    !$XML::XPathScript::DoNotInterpolate; # Obsolete, for compatibility:
+}
+
+=pod "
+
+=item I<binmode()>
+
+Declares that the stylesheet output is B<not> in UTF-8, but instead in
+an (unspecified) character encoding embedded in the stylesheet source
+that neither Perl nor XPathScript should have any business dealing
+with. Calling C<< XML::XPathScript->current()->binmode() >> is an
+B<irreversible> operation with the following consequences:
+
+=over 2
+
+=item *
+
+presence of the "UTF-8 taint" in the stylesheet output is now a fatal
+error. That is, whenever the result of a template evaluation is marked
+internally in Perl with the "this string is UTF-8" flag (as opposed to
+being treated by Perl as binary data without character meaning, see
+L</perlunicode>), L<XML::XPathScript::Processor/translate_node> will croak;
+
+=item *
+
+the stylesheet therefore needs to build an "unicode firewall". That
+is, C<testcode> blocks have to take input in UTF-8 (as per the XML
+standard, UTF-8 indeed is what will be returned by
+L<XML::XPathScript::Processor/findvalue> and such) and provide output in
+binary (in whatever character set is intended for the output), lest
+I<translate_node()> croaks as explained above. The L<Unicode::String>
+module comes in handy to the stylesheet writer to cast from UTF-8 to
+an 8-bit-per-character charset such as ISO 8859-1, while laundering
+Perl's internal UTF-8-string bit at the same time;
+
+=item *
+
+the appropriate voodoo is performed on the output filehandle(s) so
+that a spurious, final charset conversion will not happen at print()
+time under any locales, versions of Perl, or phases of moon.
+
+=back
+
+=cut "
+
+sub binmode {
+    my ($self)=@_;
+    $self->{binmode}=1;
+    binmode ORIGINAL_STDOUT if (! defined $self->{printer});
+}
 
 =pod "
 
 =back
+
+=head2 Stylesheet Guidelines
+
+Here are a few things to watch out for when coding stylesheets.
+
+=head3 The Unicode mess
+
+is explained above, under L</binmode>.
+
+=head3 XPath scalar return values considered harmful
+
+XML::XPath calls such as I<findvalue()> return objects in an object
+class designed to map one of the types mandated by the XPath spec (see
+L<XML::XPath> for details). This is often not what a Perl programmer
+comes to expect (e.g. strings and numbers cannot be treated the
+same). There are some work-arounds built in XML::XPath, using operator
+overloading: when using those objects as strings (by concatenating
+them, using them in regular expressions etc.), they become strings,
+through a transparent call to one of their methods such as I<<
+->value() >>. However, we do not support this for a variety of reasons
+(from limitations in L</overload> to stylesheet compatibility between
+XML::XPath and XML::LibXML to Unicode considerations), and that is why
+our L</findvalue> and friends return a real Perl scalar, in violation
+of the XPath specification.
+
+On the other hand, L</findnodes> does return a list of objects in list
+context, and an I<XML::XPath::NodeSet> or I<XML::LibXML::NodeList>
+instance in scalar context, obeying the XPath specification in
+full. Therefore you most likely do not want to call I<findnodes()> in
+scalar context, ever: replace
+
+   my $attrnode = findnodes('@url',$xrefnode); # WRONG!
+
+with
+
+   my ($attrnode) = findnodes('@url',$xrefnode);
+
+
+=head3 Do not use DOM method calls, for they make stylesheets non-portable
+
+The I<findvalue()> such functions described in
+L<XML::XPathScript::Processor> are not the only way of extracting bits from
+the XML document. Objects passed as the first argument to the I<<
+->{testcode} >> templates and returned by I<findnodes()> in array
+context are of one of the I<XML::XPath::Node::*> classes, and they
+feature some data extraction methods by themselves, conforming to the
+DOM specification.
+
+However, the names of those methods are not standardized even among
+DOM parsers (the accessor to the C<childNodes> property, for example,
+is named C<childNodes()> in I<XML::LibXML> and C<getChildNodes()> in
+I<XML::XPath>!). In order to write a stylesheet that is portable
+between L<XML::libXML> and L<XML::XPath> used as back-ends to
+L<XML::XPathScript>, one should refrain from doing that. The exact
+same data is available through appropriate XPath formulae, albeit more
+slowly, and there are also type-checking accessors such as
+C<is_element_node()> in L<XML::XPathScript::Processor>.
+
 
 =head1 TECHNICAL DOCUMENTATION
 
 The rest of this POD documentation is B<not> useful to programmers who
 just want to write stylesheets; it is of use only to people wanting to
 call existing stylesheets or more generally embed the XPathScript
-motor into some wider framework.
+engine into some wider framework.
 
 I<XML::XPathScript> is an object-oriented class with the following features:
 
@@ -200,11 +374,11 @@ use vars qw( $VERSION $XML_parser $DoNotInterpolate $debug_level );
 
 use Symbol;
 use File::Basename;
-use XML::XPathScript::Toys;
+use XML::XPathScript::Processor;
 
-$VERSION = '0.13';
+$VERSION = '0.14';
 
-$XML_parser = 'XML::XPath';
+$XML_parser = 'XML::LibXML';
 
 # By default, we interpolate
 $DoNotInterpolate = 0;
@@ -294,6 +468,12 @@ Re-uses a previous return value of I<compile()> (see L</SYNOPSIS> and
 L</compile>), typically to apply the same stylesheet to several XML
 documents in a row.
 
+=item interpolation_regex => $regex
+
+Sets the interpolation regex to be $regex. Whatever is
+captured in $1 will be used as the xpath expression. 
+Defaults to qr/{(.*?)}/.
+
 =back
 
 =cut "
@@ -303,6 +483,7 @@ sub new {
     die "Invalid hash call to new" if @_ % 2;
     my %params = @_;
     my $self = \%params;
+	$self->{interpolation_regex} ||= qr/{(.*?)}/;
     bless $self, $class;
 }
 
@@ -436,12 +617,11 @@ EOT
 	{
 		local *ORIGINAL_STDOUT;
 		*ORIGINAL_STDOUT = *STDOUT;
-		local *STDOUT;
+   		local *STDOUT;
 
 		# Perl 5.6.1 dislikes closed but tied descriptors (causes SEGVage)
    		*STDOUT = *ORIGINAL_STDOUT if $^V lt v5.7.0; 
 
-		
 	   	tie *STDOUT, 'XML::XPathScript::StdoutSnatcher';
 	   	my $retval = $self->compile()->( $self, @extravars );
 	   	untie *STDOUT;
@@ -490,17 +670,7 @@ sub extract {
 
     my $filename=$includestack[0] || "stylesheet";
 
-    my $contents;
-
-	# $stylesheet can be a filehandler
-	# or a string
-    if( ref($stylesheet) ) {
-        local $/;
-        $contents = <$stylesheet>;
-    }
-    else {
-        $contents = $stylesheet;
-    }
+    my $contents = $self->read_stylesheet( $stylesheet );
 
     my $script="#line 1 $filename\n",
     my $line = 1;
@@ -549,6 +719,32 @@ sub extract {
 
 =pod "
 
+=item $string = I<read_stylesheet( $stylesheet )>
+
+Read the $stylesheet (which can be a filehandler or a string). 
+Used by I<extract> and exists such that it can be overloaded in
+I<Apache::AxKit::Language::YPathScript>.
+
+=cut
+
+sub read_stylesheet
+{
+	my( $self, $stylesheet ) = @_;
+	
+	# $stylesheet can be a filehandler
+	# or a string
+    if( ref($stylesheet) ) {
+        local $/;
+        return <$stylesheet>;
+    }
+    else {
+        return $stylesheet;
+    }
+	
+}
+
+=pod "
+
 =item I<include_file($filename)>
 
 =item I<include_file($filename,@includestack)>
@@ -560,7 +756,7 @@ that I<extract()> has to be called recursively to expand the contents
 of $filename (which may contain more C<< <!--#include --> >>s etc.)
 
 $filename has to be slash-separated, whatever OS it is you are using
-(this is the XML way of things). If $filename is relative (e.g. does
+(this is the XML way of things). If $filename is relative (i.e. does
 not begin with "/" or "./"), it is resolved according to the basename
 of the stylesheet that includes it (that is, $includestack[0], see
 below) or "." if we are in the topmost stylesheet. Filenames beginning
@@ -571,7 +767,7 @@ system's current working directory.
 @includestack is the include stack currently in use, made up of all
 values of $filename through the stack, lastly added (innermost)
 entries first. The toplevel stylesheet is not in @includestack
-(e.g. the outermost call does not specify an @includestack).
+(that is, the outermost call does not specify an @includestack).
 
 This method may be overridden in subclasses to provide support for
 alternate namespaces (e.g. ``axkit://'' URIs).
@@ -615,8 +811,8 @@ sub include_file {
 
 Compiles the stylesheet set at I<new()> time and returns an anonymous
 CODE reference. $stylesheet shall be written in the unparsed embedded
-dialect (e.g. C<< ->extract($stylesheet) >> will be called first
-inside I<compile()>).
+dialect (in other words C<< ->extract($stylesheet) >> will be called
+first inside I<compile()>).
 
 I<varname1>, I<varname2>, etc. are extraneous arguments that will be
 made available to the stylesheet dialect as lexically scoped
@@ -675,7 +871,7 @@ sub compile {
 		    no warnings; # written stylesheets
 			
 			use $XML_parser;  
-		    XML::XPathScript::Toys->import;
+		    BEGIN {XML::XPathScript::Processor->import;}
 		    sub {
 		    	my (\$self, $extravars ) = \@_;
 				local \$XML::XPathScript::current=\$self;
@@ -697,44 +893,28 @@ EOT
     return $self->{compiledstylesheet} = $retval;
 }
 
-=item I<interpolating()>
+=item I<print($text)>
 
-=item I<interpolating($boolean)>
-
-Gets (first call form) or sets (second form) the XPath interpolation
-boolean flag. If true, values set in C<< $template->{pre} >> and
-similar may contain expressions within braces, that will be
-interpreted as XPath expressions and substituted in place: for
-example, when interpolation is on, the following code
-
-   $t->{'link'}{pre} = '<a href="{@url}">';
-   $t->{'link'}{post} = '</a>';
-
-is enough for rendering a C<< <link> >> element as an HTML hyperlink.
-The interpolation-less version is slightly more complex as it requires a
-C<testcode>:
-
-   $t->{'link'}{testcode} = sub {
-      my ($currentnode, $t) = @_;
-      my $url = findvalue('@url', $currentnode);
-      $t->{pre}="<a href='$url'>";
-      $t->{post}='</a>';
-	  return DO_SELF_AND_KIDS();
-   };
-
-Interpolation is on by default. A (now undocumented) global variable
-used to change the default to off, but don't do that.
+Outputs a chunk of text on behalf of the stylesheet. The default
+implementation is to use the second argument to L</process>, which was
+stashed in C<< $self->{printer} >> by said function. Overloading this
+method in a subclass provides yet another method to redirect output.
 
 =cut "
 
-sub interpolating {
-    my $self=shift;
-
-    $self->{interpolating}=shift if (@_);
-
-    return exists $self->{interpolating} ?
-			$self->{interpolating} :
-		    !$XML::XPathScript::DoNotInterpolate; # Obsolete, for compatibility:
+sub print {
+    my ($self, @text)=@_;
+    my $printer=$self->{printer};
+    if (!defined $printer) {
+	print ORIGINAL_STDOUT @text;
+    } elsif (ref($printer) eq "CODE") {
+	$printer->(@text);
+    } elsif (UNIVERSAL::isa($printer, "SCALAR")) {
+	$$printer.= join '', @text;
+    } else {
+	local $\=undef;
+	print $printer @text;
+    };
 }
 
 
@@ -743,50 +923,6 @@ sub interpolating {
 
 sub debug {
 	warn $_[2] if $_[1] <= $debug_level;
-}
-
-=item I<print($text)>
-
-Outputs a chunk of text on behalf of the stylesheet. The default
-implementation is to use the second argument to L</process>, which was
-stashed in C<< $self->{printer} >> by said function. Overloading this
-method in a subclass provides yet another method to redirect output.
-
-
-=cut "
-
-sub print {
-    my ($self, $text)=@_;
-    my $printer=$self->{printer};
-    if (!defined $printer) {
-	print ORIGINAL_STDOUT $text;
-    } elsif (ref($printer) eq "CODE") {
-	$printer->($text);
-    } elsif (UNIVERSAL::isa($printer, "SCALAR")) {
-	$$printer.=$text;
-    } else {
-	local $\=undef;
-	print $printer $text;
-    };
-}
-
-=pod "
-
-=item I<current()>
-
-This class method (e.g. C<< XML::XPathScript->current() >>) returns
-the stylesheet object currently being applied. This can be called from
-anywhere within the stylesheet, except a BEGIN or END block or
-similar.
-
-=cut "
-
-sub current {
-    unless (defined $XML::XPathScript::current) {
-	use Carp;
-	Carp::croak "Wrong context for calling current()";
-    };
-    return $XML::XPathScript::current;
 }
 
 =pod "
@@ -828,6 +964,9 @@ sub PRINT {
 	my $self = shift;
 	XML::XPathScript::current()->print( @_ );
 }
+sub BINMODE {
+    XML::XPathScript::current()->binmode( @_ );
+}
 
 'end of XML::XPathScript::StdoutSnatcher' ;
 
@@ -843,7 +982,7 @@ Created by Matt Sergeant <matt@sergeant.org>
 
 Improvements and feature merge with
 Apache::AxKit::Language::XPathScript by Yanick Champoux
-<yanick@babyl.dyndns.org> and Dominique Quatravaux <dom@ideax.com>
+<yanick@babyl.dyndns.org> and Dominique Quatravaux <dom@idealx.com>
 
 =head1 LICENSE
 

@@ -8,6 +8,8 @@ use Getopt::Long;
 use Symbol;
 use File::Basename;
 
+my $VERSION = 0.2;
+
 my ( $query, $interpolate );
 GetOptions( 'query=s' => \$query, 'interpolate' => \$interpolate );
 
@@ -70,6 +72,10 @@ sub param
 {
 	my $self = shift;
 	my %h = @_;
+
+	# quick init, if needed
+	$self->{param} = {} unless $self->{param};
+
 	while( my( $k, $v ) = each %h )
 	{
 		$self->{param}{$k}= $v;	
@@ -99,7 +105,7 @@ xpathscript [-i] [-q=<query_string>] <name>
 =head1 DESCRIPTION
 
 If the second type of call is used, xpathscript assumes that the xml source
-file  and the YPS stylesheet are named <name>.xml and <name>.xps.
+file  and the XPathScript stylesheet are named <name>.xml and <name>.xps.
 
 =head2 ARGUMENTS
 
@@ -130,7 +136,7 @@ Yanick Champoux, <yanick@babyl.dyndns.org>
 
 =head1 VERSION
 
-Version 0.1, June 29th, 2004.
+Version 0.2
 
 =cut
 

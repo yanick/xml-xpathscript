@@ -9,9 +9,9 @@ GetOptions( 'parser=s' => \$XML_parser );
 
 if( $XML_parser )
 {
-	unless( grep $XML_parser eq $_, qw/ XML::XPath XML::libXML / )
+	unless( grep $XML_parser eq $_, qw/ XML::XPath XML::LibXML / )
 	{
-		die "XML parser $XML_parser not supported\nplease choose XML::XPath or XML::libXML\n";
+		die "XML parser $XML_parser not supported\nplease choose XML::XPath or XML::LibXML\n";
 	}
 	
 	print "XML parser configured to be $XML_parser\n";
@@ -64,6 +64,6 @@ WriteMakefile(
     VERSION_FROM	=> 'XPathScript.pm', 
 	EXE_FILES => [ qw( script/xpathscript ) ],
      ABSTRACT_FROM => 'XPathScript.pm', 
-     AUTHOR     => 'Dominique Quatravaux <dom@ideax.com> and Yanick Champoux <yanick@babyl.dyndns.org>',
+     AUTHOR     => 'Dominique Quatravaux <dom@idealx.com> and Yanick Champoux <yanick@babyl.dyndns.org>',
 );
 
