@@ -217,16 +217,10 @@ sub call_template {
 	return 1;
     };
 }
+
 sub _apply_templates {
-    my @nodes = @_;
-
-    my $retval = '';
-    foreach my $node (@nodes) {
-		# the || is there just to quiet the warnings
-        $retval .= translate_node($node) || '';
-    }
-
-    return $retval;
+	# the second '' is there just to quiet the warnings
+	return join '', '', map translate_node($_), @_;
 }
 
 =item  $boolean = is_element( $node )
