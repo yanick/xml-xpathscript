@@ -53,6 +53,17 @@ Notable differences with XPS are:
 		$XML::YPathScript::DoNotInterpolate. By default
 		YPS does not interpolate.
 		
+	* the pre/postchildren template sub-keys are only used if
+		the node actually has children 
+		
+	* the template supports a #comment key. 
+	  E.g.:
+	  	
+		$t->{'#comment'}{pre}  = 'This is a comment {';
+		$t->{'#comment'}{post} = "}\n";
+	
+
+		
 
 
 YPathScript is a stylesheet language similar in many ways to XSLT (in
@@ -125,9 +136,12 @@ use Exporter;
 		DO_NOT_PROCESS
         );
 
-    sub DO_SELF_AND_KIDS () { return  1 }
-    sub DO_SELF_ONLY     () { return -1 }
-    sub DO_NOT_PROCESS   () { return  0 }
+use constant
+{
+	DO_SELF_AND_KIDS => 1,
+	DO_SELF_ONLY => -1,
+	DO_NOT_PROCESS => 0
+};
 
 # quieten warnings when compiling this module
 sub apply_templates (;$@);
@@ -201,6 +215,9 @@ sub _apply_templates {
     return $retval;
 }
 
+
+# $boolean = is_element_node( $node )
+# returns true if $node is an element node, false otherwise
 sub is_element_node
 {
 	my $node = shift;
@@ -216,9 +233,10 @@ sub translate_node
 
     my $translations = $XML::YPathScript::trans;
 
-	if( $XML::YPathScript::XML_parser eq 'XML::LibXML' ) 
+	if( $XML::YPathScript::XML_parser eq 'XML::LibXML' and 
+		UNIVERSAL::isa($node,"XML::LibXML::Document") ) 
 	{
-		$node = $node->documentElement if UNIVERSAL::isa($node,"XML::LibXML::Document")
+		$node = $node->documentElement;
 	}
 
 	if( $XML::YPathScript::XML_parser eq 'XML::LibXML' and
@@ -277,7 +295,8 @@ sub translate_node
 		return $trans->{pre} . $middle . $trans->{post};
 	}
 
-    unless( is_element_node( $node ) ) {
+    unless( is_element_node( $node ) ) 
+	{
         # don't output top-level PI's
 		# could this be it?
         if ($XML::YPathScript::XML_parser eq 'XML::XPath' and $node->isPINode) {
@@ -293,43 +312,45 @@ sub translate_node
         return $node->toString;
     }
 
-#     warn "translate_node: ", $node->getName, "\n";
-
     my $node_name = $node->getName;
-    my $trans = $translations->{$node_name} if (defined $node_name);
+    my $trans;
+	$trans = $translations->{$node_name} if defined $node_name;
 
-    if (!$trans) {
+	# no specific transformation? use the generic '*'
+    unless( $trans ) 
+	{
         $node_name = '*';
-        $trans = $translations->{$node_name};
+        
+		unless( $trans = $translations->{$node_name} )
+		{
+			# no specific and no generic? Okay, okay, return as is...
+			return start_tag($node) . 
+                	_apply_templates( ( $XML::YPathScript::XML_parser eq 'XML::LibXML' ) ? 
+										$node->childNodes : $node->getChildNodes) .
+                	end_tag($node);	
+		}
     }
 
-    if (!$trans) {
-        return start_tag($node) . 
-                _apply_templates( ( $XML::YPathScript::XML_parser eq 'XML::LibXML' ) ? 
-					$node->childNodes : $node->getChildNodes) .
-                end_tag($node);
-    }
-
-
-    my $dokids = 1;
+    my $dokids = 1;  # by default we do the kids
     my $search;
-
     my $t = {};
-    if ($trans->{testcode}) {
-#         warn "Evalling testcode\n";
+    
+	if ($trans->{testcode}) 
+	{
         my $result = $trans->{testcode}->($node, $t);
-        if ($result eq "0") {
-            # don't process anything.
-            return;
-        }
-        if ($result eq "-1") {
-            # -1 means don't do children.
+
+		return if $result == DO_NOT_PROCESS;
+
+        if ($result == DO_SELF_ONLY ) 
+		{
             $dokids = 0;
         }
-        elsif ($result eq "1") {
-            # do kids
+        elsif ($result == DO_SELF_AND_KIDS ) 
+		{
+            $dokids = 1;
         }
-        else {
+        else # search pattern returned 
+		{
             $dokids = 0;
             $search = $result;
         }
@@ -339,37 +360,48 @@ sub translate_node
     # copy old values in
     %{$translations->{$node_name}} = %$trans;
 
-    if (%$t) {
-        foreach my $key (keys %$t) {
-            $translations->{$node_name}{$key} = $t->{$key};
-        }
+    if (%$t) 
+	{
+        $translations->{$node_name}{$_} = $t->{$_} for keys %$t;
         $trans = $translations->{$node_name};
     }
 
     # default: process children too.
-    my $pre = interpolate($node, $trans->{pre}) . 
-            ($trans->{showtag} ? start_tag($node) : '') .
-            interpolate($node, $trans->{prechildren});
+	my $has_kids = $XML::YPathScript::XML_parser eq 'XML::LibXML' ? 
+						$node->hasChildNodes() : $node->getFirstChild();
+	
+    my $pre = interpolate($node, $trans->{pre});
+	$pre .= start_tag( $node ) if $trans->{showtag};
+	$pre .= interpolate($node, $trans->{prechildren}) if $has_kids;
+	
 
-    my $post = interpolate($node, $trans->{postchildren}) .
-            ($trans->{showtag} ? end_tag($node) : '') .
-            interpolate($node, $trans->{post});
+    my $post;
+	$post .= interpolate($node, $trans->{postchildren}) if $has_kids;
+	$post .= end_tag( $node ) if  $trans->{showtag};
+	$post .= interpolate($node, $trans->{post});
 
-    if ($dokids) {
+    if ($dokids) 
+	{
         my $middle = '';
-        for my $kid ($node->getChildNodes()) {
-            if ( is_element_node( $kid ) ) {
+        for my $kid ($node->getChildNodes()) 
+		{
+            if ( is_element_node( $kid ) ) 
+			{
                 $middle .= interpolate($node, $trans->{prechild}) .
-                        _apply_templates($kid) .
-                        interpolate($node, $trans->{postchild});
+                        	_apply_templates($kid) .
+                        	interpolate($node, $trans->{postchild});
             }
-            else {
+            else 
+			{
                 $middle .= _apply_templates($kid);
             }
         }
-        return $pre . $middle . $post;
+        
+		return $pre . $middle . $post;
     }
-    elsif ($search) {
+	
+    if($search) 
+	{
         my $middle = '';
         for my $kid (findnodes($search, $node)) {
             if ( is_element_node( $kid ) ) {
@@ -383,9 +415,9 @@ sub translate_node
         }
         return $pre . $middle . $post;
     }
-    else {
-        return $pre . $post;
-    }
+    
+	
+	return $pre . $post;
 }
 
 sub start_tag {
@@ -402,18 +434,16 @@ sub start_tag {
     	$string .= $_->toString for $node->getNamespaceNodes;
 	}
 
-    foreach my $attr ( ( $XML::YPathScript::XML_parser eq 'XML::LibXML' ) ? $node->attributes : $node->getAttributeNodes) {
-	   #warn "attribute: $attr ";
-	   #warn $attr->toString;
-	   #warn $attr->name;
-	   #warn $attr->value;
-
-	   if( $XML::YPathScript::XML_parser eq 'XML::XPath' )
-	   {
-	   	$string .= $attr->toString;
-	   }
-	   else
-	   {
+    for my $attr ( ( $XML::YPathScript::XML_parser eq 'XML::LibXML' ) ? 
+						$node->attributes : $node->getAttributeNodes) 
+	{
+	   
+		if( $XML::YPathScript::XML_parser eq 'XML::XPath' )
+	   	{
+	   		$string .= $attr->toString;
+	   	}
+	   	else
+	   	{
 		   my $value = $attr->value;
 		   $value =~ s/'/&quot;/g;
 			$string .= ' '.$attr->name."='".$value."' ";
@@ -425,13 +455,16 @@ sub start_tag {
     return $string;
 }
 
-sub end_tag {
+sub end_tag 
+{
     my ($node) = @_;
 
-    if (my $name = $node->getName) {
+    if (my $name = $node->getName) 
+	{
         return "</" . $name . ">";
     }
-    else {
+    else 
+	{
         return '';
     }
 }
@@ -453,7 +486,6 @@ sub interpolate {
 }
 
 1;
-
 
 =pod "
 
@@ -566,6 +598,10 @@ $XML_parser = 'XML::LibXML';
 # By default, no interpolation
 $DoNotInterpolate = 1;
 
+# internal variable for debugging information. 
+# 0 is total silence and 10 is complete verbiage
+my $debug_level = 0;
+
 sub import
 {
 	my $self = shift @_;
@@ -653,7 +689,7 @@ documents in a row.
 
 sub new {
     my $class = shift;
-    die "Invalid hash call to new" if @_ % 2;
+    die "Invalid hash call to new (param: ".join(':',@_).")" if @_ % 2;
     my %params = @_;
     my $self = \%params;
     bless $self, $class;
@@ -840,19 +876,26 @@ dialect.
 
 =cut "
 
-sub extract {
-    my ($self,$stylesheet,$printform,@includestack) = @_;
+sub extract 
+{
+    my ( $self, $stylesheet, $printform, @includestack ) = @_;
 
+	# if not specified, we just use a simple 'print'
     $printform ||= "print";
 
-    my $filename=$includestack[0] || "stylesheet";
+    my $filename = $includestack[0] || "stylesheet";
 
     my $contents;
-    if (ref($stylesheet)) {
+
+	# $stylesheet can be a filehandler
+	# or a string
+    if( ref($stylesheet) ) 
+	{
         local $/;
         $contents = <$stylesheet>;
     }
-    else {
+    else 
+	{
         $contents = $stylesheet;
     }
 
@@ -878,12 +921,10 @@ sub extract {
                 $params{$2} = $4 if (defined $2);
             }
 
-            if (!$params{file}) {
-                die "No matching file attribute in #include at line $line";
-            }
+			die "No matching file attribute in #include at line $line"
+				unless $params{file};
 
-            $script .= $self->include_file($printform,
-					   $params{file},@includestack);
+            $script .= $self->include_file($printform, $params{file},@includestack);
         }
         else {
             $contents =~ /\G(.*?)%>/gcs || die "No terminating '%>' after line $line";
@@ -894,7 +935,7 @@ sub extract {
         }
     }
 
-    if($contents =~ /\G(.*)/gcs) 
+    if( $contents =~ /\G(.+)/gcs ) 
 	{
         my $text = $1;
         $text =~ s/\|/\\\|/g;
@@ -1003,7 +1044,7 @@ said argument.
 sub compile {
     my ($self,@extravars) = @_;
 
-	#warn "inside compile";
+	warn "inside compile, \$self = $self";
 
     return $self->{compiledstylesheet}
       if defined $self->{compiledstylesheet};
@@ -1048,11 +1089,16 @@ EOT
 
 	#warn "script ready for compil: $eval";
     local $^W;
-#warn "Compiling: $eval\n";
+	$self->debug( 10, "Compiling code:\n $eval" );
     my $retval = eval $eval;
     die $@ unless defined $retval;
 
     return ( $self->{compiledstylesheet} = $retval );
+}
+
+sub debug
+{
+	warn $_[2] if $_[1] <= $debug_level;
 }
 
 
