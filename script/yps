@@ -1,0 +1,106 @@
+#!/usr/bin/perl -ws
+eval 'exec /usr/bin/perl -ws -S $0 ${1+"$@"}'
+    if 0; # not running under some shell
+
+use strict;
+
+use XML::YPathScript;
+use Getopt::Std;
+use Symbol;
+use File::Basename;
+
+my %opt;
+getopt('q', \%opt);
+
+# trick so that xps story  => xps story.xml story.xps
+@ARGV = ( $ARGV[0].'.xml', $ARGV[0].'.xps'  ) if @ARGV == 1;
+
+# offline dirty magic
+$Fake::Request = AxKit::Apache->request();
+$Fake::Request->param( split /[&=]/, $opt{q} ) if $opt{q};		
+
+usage() unless @ARGV == 2;
+
+my ($xmlfile, $stylefile) = @ARGV;
+$Fake::Request->uri( $xmlfile );
+
+my $xml = gensym;
+my $stylesheet = gensym;
+
+open($xml, $xmlfile) || die "Cannot open XML file '$xmlfile': $!";
+chdir dirname($stylefile);
+open($stylesheet, basename($stylefile)) || die "Cannot open Stylesheet file '$stylefile': $!";
+
+my $xps = XML::YPathScript->new(xml => $xml, stylesheet => $stylesheet);
+
+print $xps->process( 'return' );
+
+exit(0);
+
+sub usage {
+    print STDERR <<EOT;
+Usage: xpathscript [-q="query-string"] xmlfile stylesheet_file
+       or
+       xpathscript [-q="query-string"] file
+	     in which case the xml file will be assumed 
+		 to be file.xml and the xps file to be file.xps
+
+	-q the string will be used as if it was the 
+		query string passed by the client.
+EOT
+    exit(0);
+}
+
+# Let's cheat so that stylesheets using AxKit::Apache->request
+# works offline too
+package AxKit::Apache;
+
+sub request
+{
+	return bless \%Fake::Request, 'AxKit::Apache';
+}
+
+sub args{ return $_[0]->param() };
+
+sub param
+{
+	my $self = shift;
+	my %h = @_;
+	while( my( $k, $v ) = each %h )
+	{
+		$self->{param}{$k}= $v;	
+	}
+	return %{$self->{param}};
+}
+
+sub uri
+{
+		my $self = shift;
+		$self->{uri} = shift if @_;
+		return $self->{uri};
+
+}
+
+
+=head1 NAME
+
+dummy - short discription of your program
+
+=head1 SYNOPSIS
+
+ how to us your program
+
+=head1 DESCRIPTION
+
+ long description of your program
+
+=head1 SEE ALSO
+
+ need to know things before somebody uses your program
+
+=head1 AUTHOR
+
+ Yanick,,,613-829-4069
+
+=cut
+
