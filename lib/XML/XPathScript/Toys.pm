@@ -203,15 +203,10 @@ sub apply_templates (;$@) {
 	
     my ($arg1, @args) = @_;
 
-    if (!ref($arg1)) {
-        # called with a path to find
-		if( my $nodes = findnodes($arg1, @args) )
-		{
-        	return apply_templates($nodes);
-		}
-		else { 
-			return 
-		}
+    unless( ref($arg1) ) { # called with a path to find
+
+		my $nodes = findnodes($arg1, @args);
+		return $nodes ? apply_templates($nodes) : undef;
     }
 
     my $retval = '';
