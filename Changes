@@ -4,6 +4,8 @@ Revision history for Perl module XML::YPathScript.pm
 	- Added tests for prechild, prechildren, postchild and postchildren
 	- Worked on the YPS docs
 	- DO_NOT_PROCESS, DO_SELF_ONLY, DO_SELF_AND_KIDS are now bona fide constants
+	- X::Y::Toys now has its own little file
+	- Fixed bugs in AAL::YPS 
 
 0.20  Mon Jun  2 13:11:04 2003
 	- ground zero

@@ -60,7 +60,7 @@ use Apache::AxKit::Language;
 use Apache::AxKit::Cache;
 use Apache::AxKit::Exception;
 use Apache::AxKit::CharsetConv;
-use XML::YPathScript; # qw/ libxml /;
+use XML::YPathScript; 
 
 $VERSION = '1.0';
 
@@ -77,10 +77,9 @@ sub new
 {
 	my( $class, $xml_provider, $style_provider ) = @_;
 	
-	AxKit::Debug( 10, "creating new A::A::L::YPS instance, class = $class, xml_provider: $xml_provider, style_provider: $style_provider" );
-
-	my $self = XML::YPathScript::new( $class, xml_provider => $xml_provider, 
-	                                          style_provider => $style_provider );
+	my $self = XML::YPathScript::new( $class, 
+							xml_provider => $xml_provider, 
+	                        style_provider => $style_provider );
 
 	return $self;
 }
@@ -151,8 +150,6 @@ sub include_file
 {
     my ($self, $printform, $filename, @includestack) = @_;
 	
-	AxKit::Debug(10, "the heck? ".join ':', @_ );
-
 	my $provider = $self->{xml_provider};
 
     AxKit::Debug(10, "YPathScript: entering include_file ($filename)");

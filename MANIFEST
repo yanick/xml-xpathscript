@@ -3,7 +3,11 @@ Makefile.PL
 MANIFEST
 README
 YPathScript.pm
+lib/Apache/AxKit/Language/YPathScript.pm
 script/yps
 t/base.t
-lib/Apache/AxKit/Language/YPathScript.pm
+t/include.xps
+t/include2.xps
+t/include3.xps
+t/recursive.xps
 META.yml                                 Module meta-data (added by MakeMaker)

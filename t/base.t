@@ -5,9 +5,8 @@ use Test;
 
 BEGIN 
 { 
-	plan tests => 11, todo => [];
-	unshift @INC, '../blib/arch';
-	unshift @INC, '../blib/lib';
+	plan tests => 16, todo => [];
+	unshift @INC, '../blib/arch', '../blib/lib';
 }
 
 use XML::YPathScript;
@@ -91,3 +90,18 @@ test_xml( '<doc><apple/><banana/></doc>', <<'EOT', "<doc>!<apple></apple>?!<bana
 	$t->{doc}{showtag} = 1;
 %><%= apply_templates() %>
 EOT
+
+test_xml( '<doc>empty</doc>', '<!--#include file="t/include.xps" -->', "#include works!\n", '<!--#include -->' );
+
+test_xml( '<doc>empty</doc>', '<!--#include file="t/include2.xps" -->', "#include works!\n\n", '2 levels of <!--#include -->' );
+
+test_xml( '<doc>empty</doc>', '<!--#include file="t/recursive.xps" -->', "Ooops.\n", 'recursive <!--#include -->' );
+
+test_xml( '<doc>empty</doc>', '<!--#include file="t/include3.xps" -->', "Ooops.\n\n", '2 levels of <!--#include --> + recursion' );
+
+# override of printform
+$xps = new XML::YPathScript( xml => '<doc/>', stylesheet => 'how about a shout-o-matic?' );
+my $buffer;
+$xps->process( sub{ $buffer .= uc shift } );
+
+ok( $buffer, 'HOW ABOUT A SHOUT-O-MATIC?', 'override of printform' );

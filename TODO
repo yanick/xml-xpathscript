@@ -4,9 +4,5 @@
 		prefixed with SRC_DIR
 		prefixed with SS_DIR
 
-* prechildren and prechild and the posts too
-
-* Take care of constants
-
-* Doc the treatment of comments
+* simplify the compile (2 versions for no good reason)
 
