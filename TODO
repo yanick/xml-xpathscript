@@ -7,6 +7,7 @@
 * documentation everywhere
 
 * XML::XPath::..:Document -- must revisit
+* Add back document() to A::A::L::XPS
 
 * Explain test() and the return code 
 
@@ -20,3 +21,26 @@ $current->interpolation_regex( qq/\[\[(.*)\]\]/ )
 	be a little more zippy for long transformation chains
 
 * Would it be a good idea to allow '$t->{foo}{testcode} = DO_SELF_ONLY;' ?
+
+* Do a Makefile-like mode where the same document can be transformed by different stylesheets
+	and produce different end documents.
+
+document.xml:
+	xml2html.xps	=>	document.html
+
+html
+
+<xpsMakefile>
+<document>document.xml</document>
+<output id='html'>
+	<name>document.html</name>
+	<transformation type='xps'>xml2html.xps</transformation>
+</output>
+<output id='pdf'>
+	<name>document.pdf</name>
+	<transformation type='xps'>xml2latex.xps</transformation>
+	<transformation type='blah'>latex2pdf.pl</transformation>
+</output>
+<xpsMakefile/>
+
+

@@ -2,6 +2,7 @@ Revision history for Perl module XML::XPathScript.pm
 
 0.15 
 	- Added tests into distribution
+	- In stylesheets under A::A::L::YPS, the variable $r is now pre-defined.
 
 0.14 Thu Sep 23 2004
 	- XML::XPathScript->current()->binmode() for non-UTF8 output
