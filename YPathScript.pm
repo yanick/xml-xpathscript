@@ -215,6 +215,8 @@ the matching templates (as hash references).
 =cut "
 
 package XML::YPathScript;
+# Revision: $Rev: 12 $
+# Last Changed: $Date: 2004-07-11 16:37:16 -0400 (Sun, 11 Jul 2004) $   
 
 use vars qw( $VERSION $XML_parser $DoNotInterpolate );
 
