@@ -444,6 +444,10 @@ EOT
 		local *ORIGINAL_STDOUT;
 		*ORIGINAL_STDOUT = *STDOUT;
    		local *STDOUT;
+
+		# Perl 5.6.1 dislikes closed but tied descriptors (causes SEGVage)
+   		*STDOUT = *ORIGINAL_STDOUT if $^V lt v5.7.0; 
+
 	   	tie *STDOUT, 'XML::XPathScript::StdoutSnatcher';
 	   	my $retval = $self->compile()->( $self, @extravars );
 	   	untie *STDOUT;
