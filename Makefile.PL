@@ -64,6 +64,6 @@ WriteMakefile(
     VERSION_FROM	=> 'XPathScript.pm', 
 	EXE_FILES => [ qw( script/xpathscript ) ],
      ABSTRACT_FROM => 'XPathScript.pm', 
-     AUTHOR     => 'Dominique Quatravaux <dom@ideax.com> and Yanick Champoux <yanick@babyl.dyndns.org>',
+     AUTHOR     => 'Dominique Quatravaux <dom@idealx.com> and Yanick Champoux <yanick@babyl.dyndns.org>',
 );
 

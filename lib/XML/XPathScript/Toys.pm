@@ -173,14 +173,15 @@ sub set_namespace
 
 =item I<apply_templates($xpath, $context)>
 
-=item I<apply_templates(@nodes)>
+=item I<&apply_templates(@nodes)> # mind the "&"!
 
 This is where the whole magic in XPathScript resides: recursively
 applies the stylesheet templates to the nodes provided either
-literally (last invocation form) or through an XPath expression
-(second and third invocation forms), and returns a string
-concatenation of all results. If called without arguments at all,
-renders the whole document.
+literally (last invocation form - mind the "&" in this case, otherwise
+the function prototype could coerce your list into a scalar!) or
+through an XPath expression (second and third invocation forms), and
+returns a string concatenation of all results. If called without
+arguments at all, renders the whole document.
 
 Calls to I<apply_templates()> may occur both implicitly (at the top of
 the document, and for rendering subnodes when the templates choose not

@@ -378,7 +378,7 @@ use XML::XPathScript::Toys;
 
 $VERSION = '0.14';
 
-$XML_parser = 'XML::XPath';
+$XML_parser = 'XML::LibXML';
 
 # By default, we interpolate
 $DoNotInterpolate = 0;
@@ -966,7 +966,7 @@ Created by Matt Sergeant <matt@sergeant.org>
 
 Improvements and feature merge with
 Apache::AxKit::Language::XPathScript by Yanick Champoux
-<yanick@babyl.dyndns.org> and Dominique Quatravaux <dom@ideax.com>
+<yanick@babyl.dyndns.org> and Dominique Quatravaux <dom@idealx.com>
 
 =head1 LICENSE
 
