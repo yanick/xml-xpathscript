@@ -1,20 +1,20 @@
-package XML::YPathScript;
+package XML::XPathScript;
 # Revision: $Rev: 12 $
 # Last Changed: $Date: 2004-07-11 16:37:16 -0400 (Sun, 11 Jul 2004) $   
 
 use strict;
 use warnings;
 
-=pod
+=pod "
 
 =head1 NAME
 
-XML::YPathScript - a Perl framework for XML stylesheets
+XML::XPathScript - a Perl framework for XML stylesheets
 
 =head1 SYNOPSIS
 
-  use XML::YPathScript;
-  my $xps = XML::YPathScript->new(xml => $xml, stylesheet => $stylesheet);
+  use XML::XPathScript;
+  my $xps = XML::XPathScript->new(xml => $xml, stylesheet => $stylesheet);
 
   # The short way:
 
@@ -23,16 +23,15 @@ XML::YPathScript - a Perl framework for XML stylesheets
   # The long way (caching the compiled stylesheet for reuse and
   # outputting to multiple files):
 
-  my $compiled = XML::YPathScript->new(stylesheetfile => $filename)
+  my $compiled = XML::XPathScript->new(stylesheetfile => $filename)
          ->compile('$r');
 
-  foreach my $xml (@xmlfiles) 
-  {
+  foreach my $xml (@xmlfiles) {
      use IO::File;
 
      my $currentIO=new IO::File(shift @outputfiles);
 
-     XML::YPathScript->new(xml => $xml, compiledstylesheet=>$compiled)
+     XML::XPathScript->new(xml => $xml, compiledstylesheet=>$compiled)
          ->process(sub {$currentIO->print(shift)});
   };
 
@@ -44,7 +43,7 @@ XML::YPathScript - a Perl framework for XML stylesheets
 
 =head1 DESCRIPTION
 
-I<XML::YPathScript> is a fork of I<XML::XPathScript>, 
+I<XML::XPathScript> is a fork of I<XML::XPathScript>, 
 itself a fork of Matt Sergeant's I<XPathScript>, and
 unless where specified otherwise, it is meant to provide
 the same functionality and behaviors than the original XPathScript. 
@@ -54,7 +53,7 @@ Notable differences with XPS are:
 	* YPS uses either XML::libXML or XML::XPath as its parser.
 	
 	* YPS's interpolation is controlled by the variable 
-		$XML::YPathScript::DoNotInterpolate. By default
+		$XML::XPathScript::DoNotInterpolate. By default
 		YPS does not interpolate.
 		
 	* the pre/postchildren template sub-keys are only used if
@@ -70,23 +69,23 @@ Notable differences with XPS are:
 		
 
 
-YPathScript is a stylesheet language similar in many ways to XSLT (in
+XPathScript is a stylesheet language similar in many ways to XSLT (in
 concept, not in appearance), for transforming XML from one format to
-another format (possibly HTML, but YPathScript also shines for
+another format (possibly HTML, but XPathScript also shines for
 non-XML-like output).
 
-Like XSLT, YPathScript uses the powerful ``templates/apply-templates''
+Like XSLT, XPathScript uses the powerful ``templates/apply-templates''
 and ``cascading stylesheets'' design patterns, that greatly simplifies
 the design of stylesheets for programmers. The availability of the
 I<XPath> query language inside stylesheets promotes the use of a purely
 document-dependent, side-effect-free coding style. Unlike XSLT which
 uses its own dedicated control language with an XML-compliant syntax,
-YPathScript uses Perl which is terse and highly extendable.
+XPathScript uses Perl which is terse and highly extendable.
 
 The result of the merge is an extremely powerful environment for
 development tasks that involve rendering complex XML documents to
-other formats. Stylesheets written in YPathScript are very easy to
-create, extend and reuse, even if they treat hundreds of different
+other formats. Stylesheets written in XPathScript are very easy to
+create, extend and reuse, even if they manage hundreds of different
 XML tags.
 
 =head1 STYLESHEET WRITER DOCUMENTATION
@@ -99,10 +98,10 @@ the template hash $t.
 
 =head2 xpathscript Invocation
 
-This module is bundled with an "yps" shell tool that
+This CPAN module is bundled with an "xpathscript" shell tool that
 is to be invoked like this:
 
-   yps mydocument.xml mystylesheet.xps
+   xpathscript mydocument.xml mystylesheet.xps
 
 It will produce the resulting document on standard output. For more
 options, refer to yps's man page.
@@ -113,7 +112,7 @@ A number of callback functions are available from the stylesheet
 proper.  They apply against the current document and template hash,
 which are transparently passed back and forth as global variables (see
 L</Global variables>). They are defined in the
-I<XML::YPathScript::Toys> package, which is implicitly imported into
+I<XML::XPathScript::Toys> package, which is implicitly imported into
 all code written in the embedded stylesheet dialect.
 
 =over
@@ -129,10 +128,10 @@ all code written in the embedded stylesheet dialect.
 
 The rest of this POD documentation is B<not> useful to programmers who
 just want to write stylesheets; it is of use only to people wanting to
-call existing stylesheets or more generally embed the YPathScript
+call existing stylesheets or more generally embed the XPathScript
 motor into some wider framework.
 
-I<XML::YPathScript> is an object-oriented class with the following features:
+I<XML::XPathScript> is an object-oriented class with the following features:
 
 =over
 
@@ -143,7 +142,7 @@ code with snippets of the output document. Don't be afraid, this is
 exactly the same kind of stuff as in I<Text::Template>, I<HTML::Mason>
 or other similar packages: instead of having text inside Perl (that
 one I<print()>s), we have Perl inside text, with a special escaping
-form that a preprocessor interprets and extracts. For YPathScript,
+form that a preprocessor interprets and extracts. For XPathScript,
 this preprocessor is embodied by the I<xpathscript> shell tool (see
 L</xpathscript Invocation>);
 
@@ -161,15 +160,15 @@ preprocess time.
 
 =head2 Dependencies
 
-Although YPathScript is a core component of AxKit, which will not work
+Although XPathScript is a core component of AxKit, which will not work
 without this module, there is plenty of motivation for doing
 stylesheets outside of a WWW application server and so
-I<XML::YPathScript> is also distributed as a standalone CPAN module.
-The AxKit YPathScript component inherits from this class and provides
+I<XML::XPathScript> is also distributed as a standalone CPAN module.
+The AxKit XPathScript component inherits from this class and provides
 the coupling with the application framework by overloading and adding
 some methods.
 
-I<XML::YPathScript> requires the following Perl packages:
+I<XML::XPathScript> requires the following Perl packages:
 
 =over
 
@@ -203,12 +202,12 @@ not rely on those variables existing forever.
 
 =over
 
-=item I<$XML::YPathScript::xp>
+=item I<$XML::XPathScript::xp>
 
 The XML::XPath object that holds the whole document (created by
 L<XML::XPath/new>)
 
-=item I<$XML::YPathScript::trans>
+=item I<$XML::XPathScript::trans>
 
 The template hash currently in use (known as $t in the AxKit
 documentation). Its keys are element names, and its values are
@@ -223,9 +222,9 @@ use vars qw( $VERSION $XML_parser $DoNotInterpolate );
 
 use Symbol;
 use File::Basename;
-use XML::YPathScript::Toys;
+use XML::XPathScript::Toys;
 
-$VERSION = '0.21';
+$VERSION = '0.12';
 
 $XML_parser = 'XML::LibXML';
 
@@ -242,11 +241,11 @@ sub import
 
 	if( grep $_ eq 'XML::XPath', @_ )
 	{
-		$XML::YPathScript::XML_parser = 'XML::XPath';
+		$XML::XPathScript::XML_parser = 'XML::XPath';
 	}
 	elsif( grep $_ eq 'XML::LibXML', @_ )
 	{
-		$XML::YPathScript::XML_parser = 'XML::LibXML';
+		$XML::XPathScript::XML_parser = 'XML::LibXML';
 	}
 }
 
@@ -279,7 +278,7 @@ EOT
 
 =item I<< new(key1=>value1,key2=>value2,...) >>
 
-Creates a new YPathScript translator. The recognized named arguments are
+Creates a new XPathScript translator. The recognized named arguments are
 
 =over
 
@@ -304,7 +303,7 @@ constructs, which will be resolved relative to ".".
 
 =item stylesheetfile => $filename
 
-Same as I<stylesheet> but let I<XML::YPathScript> do the loading
+Same as I<stylesheet> but let I<XML::XPathScript> do the loading
 itself.  Using this form, relative C<< <!--#include --> >>s in the
 stylesheet file will be honored with respect to the dirname of
 $filename instead of "."; this provides SGML-style behaviour for
@@ -342,7 +341,7 @@ Processes the document and stylesheet set at construction time, and
 prints the result to STDOUT by default. If $stdout_tie is set, it
 must be either the name of a class that will be tied to STDOUT, 
 or the string 'return', in which case STDOUT will be tied to the 
-class XML::YPathScript::Blah::Buffer and will be returned by the function. 
+class XML::XPathScript::Blah::Buffer and will be returned by the function. 
 
 If the stylesheet was I<compile()>d with extra I<varname>s, then the
 calling code should call I<process()> with a corresponding number of
@@ -447,7 +446,7 @@ EOT
 	if( $printsub eq 'return' )
 	{
 		local *STDOUT;
-		tie *STDOUT, 'XML::YPathScript::FileHandle::Buffer';
+		tie *STDOUT, 'XML::XPathScript::FileHandle::Buffer';
 		$self->compile()->( $xpath );
 		my $t = (tied *STDOUT)->get_contents;
 		untie *STDOUT;
@@ -495,8 +494,7 @@ dialect.
 
 =cut "
 
-sub extract 
-{
+sub extract {
     my ( $self, $stylesheet, $printform, @includestack ) = @_;
 
 	# if not specified, we just use a simple 'print'
@@ -639,7 +637,7 @@ inside I<compile()>).
 I<varname1>, I<varname2>, etc. are extraneous arguments that will be
 made available to the stylesheet dialect as lexically scoped
 variables. L</SYNOPSIS> shows a way to use this feature to pass the
-Apache handler to AxKit YPathScript stylesheets, which explains this
+Apache handler to AxKit XPathScript stylesheets, which explains this
 feature better than a lengthy paragraph would do.
 
 The return value is an opaque token that encapsulates a compiled
@@ -650,11 +648,11 @@ the return value, but will need to overload I<process()> accordingly
 of course.
 
 The I<compile()> method is idempotent. Subsequent calls to it will
-return the very same function, and calls to it when a
+return the very same token, and calls to it when a
 I<compiledstylesheet> argument was set at I<new()> time will return
 said argument.
 
-=cut
+=cut "
 
 # Internal documentation: the return value is an anonymous sub whose
 # prototype is
@@ -690,15 +688,15 @@ sub compile {
 		    no warnings; # written stylesheets
 			
 			use $XML_parser;  
-		    XML::YPathScript::Toys->import;
+		    XML::XPathScript::Toys->import;
 		    sub {
 		    	my (undef,undef, $extravars ) = \@_;
 		    \$_[1]=sub {print shift} if (!defined \$_[1]);
 		    my \$t = {};
-		    local \$XML::YPathScript::trans = \$t; # Yes,
+		    local \$XML::XPathScript::trans = \$t; # Yes,
 		    # this does the sharing! Perl is a bizarre and
 		    # wonderful language.
-		    local \$XML::YPathScript::xp=\$_[0];
+		    local \$XML::XPathScript::xp=\$_[0];
 		    $script
 		    }
 EOT
@@ -764,19 +762,17 @@ stylesheet. Never returns twice the same name.
 
 =cut "
 
-do 
-{
+do {
 	my $uniquifier;
-	sub gen_package_name 
-	{
+	sub gen_package_name {
     	$uniquifier++;
-    	return 'XML::YPathScript::STYLESHEET'.$uniquifier;
+    	return 'XML::XPathScript::STYLESHEET'.$uniquifier;
 	}
 };
 
 1;
 
-package XML::YPathScript::FileHandle::Buffer;
+package XML::XPathScript::FileHandle::Buffer;
 # shamelessly stolen  from Tie::FileHandle::Buffer
 
 sub TIEHANDLE { my $self = ''; bless \$self, $_[0] }
@@ -787,24 +783,22 @@ sub get_contents { ${$_[0]} }
 
 sub clear { ${$_[0]} = '' }
 
-'end of XML::YPathScript::FileHandle::Buffer';
+'end of XML::XPathScript::FileHandle::Buffer';
 
 
 __END__
 
 =back
 
-=head1 AUTHOR
 
-XPathScript was created by Matt Sergeant <matt@sergeant.org>
 
-And it came to pass that
-XPathScript begat XML::XPathScript, 
-by the actions of Dominique Quatravaux <dom@ideax.com> and Yanick Champoux <yanick@babyl.dyndns.org>,
-offering improvements and feature merges with Apache::AxKit::Language::XPathScript.
+=head1 AUTHORS
 
-And, by the will of a rather fork-happy Yanick, XML::XPS in turn begat XML::YPS. 
-We can only hope that the madness will stop there.
+Created by Matt Sergeant <matt@sergeant.org>
+
+Improvements and feature merge with
+Apache::AxKit::Language::XPathScript by Yanick Champoux
+<yanick@babyl.dyndns.org> and Dominique Quatravaux <dom@ideax.com>
 
 =head1 LICENSE
 
@@ -816,3 +810,8 @@ Perl itself.
 The XPathScript Guide at http://axkit.org/wiki/view/AxKit/XPathScriptGuide
 
 =cut
+
+# Local Variables:
+# mode:cperl
+# tab-width:8
+# End:
