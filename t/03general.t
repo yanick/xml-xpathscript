@@ -172,7 +172,7 @@ EOXPS
     $t->{'text()'}{testcode} = sub {
             my ($self, $t)=@_;
             $t->{pre} = get_xpath_of_node($self)."\n";
-            return DO_SELF_ONLY();
+            return DO_SELF_ONLY;
     };
 %><%= apply_templates() %>
 STYLESHEET

@@ -46,13 +46,13 @@ sub utf8tolatin1 {
 $t->{convertok}->{testcode}=sub {
     my ($self, $t)=@_;
     $t->{pre}=utf8tolatin1(findvalue("text()",$self));
-    return DO_SELF_AND_KIDS;
+    return DO_SELF_ONLY;
 };
 
 $t->{convertfail}->{testcode}=sub {
     my ($self, $t)=@_;
     $t->{pre}=findvalue("text()",$self);
-    return DO_SELF_AND_KIDS;
+    return DO_SELF_ONLY;
 };
 %><%= apply_templates() %>
 STYLE

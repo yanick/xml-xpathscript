@@ -11,6 +11,7 @@ use vars '@ISA', '@EXPORT';
         findvalue
         findvalues
         findnodes_as_string
+		xpath_to_string
         apply_templates
         matches
         set_namespace
@@ -74,18 +75,41 @@ sub findnodes {
 =item  I<findvalue($path, $context)>
 
 Evaluates XPath expression $path and returns the resulting value. If
-the path returns a set of nodes, the stringification is done
-automatically for you (see L<XML::XPathScript/XPath scalar return
-values considered harmful>). The result is an UTF-8 string.
+the path returns one of the "Literal", "Numeric" or "NodeList" XPath
+types, the stringification is done automatically for you using
+L</xpath_to_string>.
 
 =cut "
 
 sub findvalue {
-	my $blob = $XML::XPathScript::xp->findvalue(@_);
+	return xpath_to_string(scalar $XML::XPathScript::xp->findvalue(@_));
+}
+
+=pod "
+
+=item I<xpath_to_string($blob)>
+
+Converts any XPath data type, such as "Literal", "Numeric",
+"NodeList", text nodes, etc. into a pure Perl string (UTF-8 tainted
+too - see L</is_utf8_tainted>). Scalar XPath types are interpreted in
+the straightforward way, DOM nodes are stringified into conform XML,
+and NodeList's are stringified by concatenating the stringification of
+their members (in the latter case, the result obviously is not
+guaranteed to be valid XML).
+
+See L<XML::XPathScript/XPath scalar return values considered harmful>
+on why this is useful.
+
+=cut "
+
+sub xpath_to_string {
+	my ($blob)=@_;
 	return $blob if (! ref($blob));
-	# Was "$blob" but Perl 5.6.1 seems to have issues with
-	# UTF8-flag used in overloaded stringification :-(
-	return $blob->value();
+	# Was simply C<< return "$blob" >> but Perl 5.6.1 seems to have
+	# issues with UTF8-flag used in overloaded stringification :-(
+	return $blob->can("data") ? $blob->data() :
+		$blob->can("value") ? $blob->value() :
+			$blob->string_value();
 }
 
 =pod "
@@ -334,8 +358,6 @@ sub is_utf8_tainted {
 	return ( length($string) + 1 < length($maybe_autopromoted) );
 }
 
-# Getting an XPath that leads to some node (e.g. for warning messages)
-
 =pod "
 
 =item I<get_xpath_of_node($node)>
@@ -349,9 +371,10 @@ document.
 sub get_xpath_of_node {
 	my $self =shift;
 
-	# ugly hack to get aroudn XML::XPath::Element and XML::XPath::ElementImp
-	# quirkiness
-	$self = $$self if 
+	# ugly hacks all over in this function, because the quirky
+	# refcount-proof aliasing (i.e. XML::XPath::Element versus
+	# XML::XPath::ElementImpl) in XML::XPath gets in the way badly
+	$self = $$self if
 		$self->isa( 'XML::XPath::Node::Element' ) and not $self->isa( 'XML::XPath::Node::ElementImpl' );
 
 	my $parent = ( $self->can("parentNode") ?
@@ -370,7 +393,8 @@ sub get_xpath_of_node {
 	} elsif (is_pi_node($self)) {
 		$name = "processing-instruction()";
 	} else {
-		return get_xpath_of_node($parent)."/bizarre-node()";
+		# YKYBPTMNW...
+		return get_xpath_of_node($parent)."/strange-node()";
 	}
 
 	# ugly hack, part II
@@ -384,8 +408,7 @@ sub get_xpath_of_node {
 
 	# Bug: the matches() function from XML::XPath is hosed, and only
 	# works towards ancestors. We resort to comparing references for
-	# identity, but even then the clever refcount-proof aliasing in
-	# XML::XPath gets in the way badly.
+	# identity. See above for details on the $$self quirk.
 	my $theself=($self =~ m/SCALAR/?$$self:$self);
 
 	for my $i ( 0..$#brothers ) {
