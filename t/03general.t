@@ -165,18 +165,22 @@ EOXPS
 # get_xpath_of_node()
 
 {
-	my $xps = new XML::XPathScript( xml => '<coucou><bloh><blah /><blah><text>hello</text></blah></bloh></coucou>',
+	my $xps = new XML::XPathScript( xml => '<coucou><bloh><blah /><blah>hello <em>world</em> ! </blah></bloh></coucou>',
 									stylesheet => <<'STYLESHEET' );
 <%
     $t->{'*'}{pre}="";
-    $t->{text}{testcode} = sub {
+    $t->{'text()'}{testcode} = sub {
             my ($self, $t)=@_;
-            $t->{pre} = get_xpath_of_node($self); 
-            return DO_SELF_AND_KIDS;
-    }
+            $t->{pre} = get_xpath_of_node($self)."\n";
+            return DO_SELF_ONLY();
+    };
 %><%= apply_templates() %>
 STYLESHEET
 	my $result=""; $xps->process(\$result);
-	ok($result eq "/coucou[1]/bloh[1]/blah[2]/text[1]\n") or
-		warn $result;
+	ok($result eq <<'EXPECTED') or warn $result;
+/coucou[1]/bloh[1]/blah[2]/text()[1]
+/coucou[1]/bloh[1]/blah[2]/em[1]/text()[1]
+/coucou[1]/bloh[1]/blah[2]/text()[2]
+
+EXPECTED
 }

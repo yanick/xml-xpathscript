@@ -1,5 +1,7 @@
 package XML::XPathScript::Toys;
 
+use strict;
+
 use Exporter;
 use vars '@ISA', '@EXPORT';
 @ISA = ('Exporter');
@@ -164,8 +166,9 @@ routines).
 If appropriate care is taken in all templates (especially the
 C<testcode> routines and the I<text()> template), the string result of
 I<apply_templates> need not be UTF-8 (see
-L<XML::XPathScript/binmode>): it is thus possible using XPathScript to
-produce output in any character set without an extra translation pass.
+L<XML::XPathScript/binmode>): it is thus possible to use XPathScript
+to produce output in any character set without an extra translation
+pass.
 
 =cut "
 
@@ -357,14 +360,25 @@ sub get_xpath_of_node {
 
 	return "" unless defined $parent;
 
-	my $name = $self->findvalue('name()');
+	my $name;
+	if (is_element_node($self)) {
+		$name = $self->findvalue('name()');
+	} elsif (is_text_node($self)) {
+		$name = "text()";
+    } elsif (is_comment_node($self)) {
+		$name = "comment()";
+	} elsif (is_pi_node($self)) {
+		$name = "processing-instruction()";
+	} else {
+		return get_xpath_of_node($parent)."/bizarre-node()";
+	}
 
 	# ugly hack, part II
 	my @brothers = map{ ($_->isa( 'XML::XPath::Node::Element' ) ) ? $$_ : $_ } $parent->findnodes("./$name");
 
 	# Short-cut for nodes that have an ID. FIXME: not all DTDs use
 	# attribute named "id" as the SGML ID!
-	if (my $id=findvalue('@id',$self)) {
+	if (is_element_node($self) && (my $id=findvalue('@id',$self))) {
 		return get_xpath_of_node($parent).sprintf('/%s[@id="%s"]', $name, $id);
 	}
 
@@ -418,8 +432,9 @@ sub translate_node {
 	if (XML::XPathScript->current()->{binmode} &&
 		is_utf8_tainted($retval)) {
 		use Carp qw(confess);
-		confess("Wrong translation by stylesheet (result is Unicode-tainted)
-$retval\n");
+		confess("Wrong translation by stylesheet".
+				" (result is Unicode-tainted) at ".get_xpath_of_node($node).
+				"\n$retval\n");
 	}
 
 	return $retval;
