@@ -434,7 +434,7 @@ sub start_tag {
 		}
     }
 
-    $string .= ">";
+    $string .= '>';
 
     return $string;
 }
@@ -574,7 +574,9 @@ use File::Basename;
 
 $VERSION = '0.20';
 
-$parser = 'libxml';  # default parser is 'libxml';
+
+# TODO: change all instances of libxml and xpath to their full name
+$XML_parser = 'libxml';
 
 sub import
 {
@@ -592,7 +594,6 @@ sub import
 
 INIT
 {
-
 	if( $parser eq 'xpath' )
 	{
 		eval <<EOT;

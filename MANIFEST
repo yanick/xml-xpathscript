@@ -5,3 +5,4 @@ README
 YPathScript.pm
 script/yps
 t/base.t
+lib/Apache/Axkit/Language/YPathScript.pm

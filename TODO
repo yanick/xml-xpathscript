@@ -1,0 +1,10 @@
+* Be able to configure the default parser from configuration:
+	perl Makefile.PL --parser=libXML or
+	perl Makefile.PL --parser=XPath
+	
+* Make sure that everything work (both with XPath and libXML)
+
+* Change the AUTHOR section
+
+* Do the MAN of yps
+
