@@ -1,9 +1,8 @@
 use strict;
 use Test;
 
-BEGIN 
-{ 
-	plan tests => 19, todo => [];
+BEGIN { 
+	plan tests => 20, todo => [];
 }
 
 use XML::XPathScript;
@@ -11,8 +10,7 @@ use Apache::AxKit::Language::YPathScript;
 
 ok(1); 
 
-sub test_xml
-{
+sub test_xml {
 	my( $xml, $style, $result, $comment ) = @_;
     my $xps = new XML::XPathScript( xml => $xml, stylesheet => $style );
 	my $buffer;
@@ -87,6 +85,17 @@ $xps = <<'EOT';
 <%= apply_templates() %>
 EOT
 test_xml( $xml, $xps, "\n<doc>blue:blue</doc>\n", 'Double interpolation'  );
+
+############################################################
+# interpolation regex
+
+test_xml( '<doc arg="stuff" />', <<'XPS' , "stuff\n", 'interpolation regex' );
+<%
+	$XML::XPathScript::current->{interpolation_regex} = qr/\[\[(.*?)\]\]/;
+	$t->{doc}{pre} = '[[@arg]]';
+%><%= apply_templates() %>
+XPS
+
 
 test_xml( '<doc><apple/><banana/></doc>', <<'EOT', "<doc>!<apple></apple><banana></banana>?</doc>\n", 'Prechildren and Postchildren tags, with children' );
 <%
