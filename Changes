@@ -1,9 +1,9 @@
-Revision history for Perl module XML::YPathScript.pm
+Revision history for Perl module XML::XPathScript.pm
 
-0.13
+0.14
 	- Interpolation regex is now configurable
 
-0.12
+0.13  Sun Aug 15 2004
 	- Added support for XML::LibXML
 	- Added tests for prechild, prechildren, postchild and postchildren
 	- DO_NOT_PROCESS, DO_SELF_ONLY, DO_SELF_AND_KIDS are now constants
