@@ -1,6 +1,9 @@
 Revision history for Perl module XML::XPathScript.pm
 
-0.14
+0.15 
+	- Added tests into distribution
+
+0.14 Thu Sep 23 2004
 	- XML::XPathScript->current()->binmode() for non-UTF8 output
 	- Renamed XML::XPathScript::Toys to XML::XPathScript::Processor
 	- Introduction of testcode return value DO_TEXT_AS_CHILD 
