@@ -266,7 +266,7 @@ DOM specification.
 
 However, the names of those methods are not standardized even among
 DOM parsers (the accessor to the C<childNodes> property, for example,
-is named C<childNodes()> in I<XML::LibXML> and C<getChildNodes() in
+is named C<childNodes()> in I<XML::LibXML> and C<getChildNodes()> in
 I<XML::XPath>!). In order to write a stylesheet that is portable
 between L<XML::libXML> and L<XML::XPath> used as back-ends to
 L<XML::XPathScript>, one should refrain from doing that. The exact
@@ -378,7 +378,7 @@ use XML::XPathScript::Toys;
 
 $VERSION = '0.14';
 
-$XML_parser = 'XML::XPath';
+$XML_parser = 'XML::LibXML';
 
 # By default, we interpolate
 $DoNotInterpolate = 0;
