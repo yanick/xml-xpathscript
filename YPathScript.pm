@@ -440,35 +440,18 @@ EOT
 	#warn "XML: $xpath";
 	#warn "preparing to compile";
 
+	# special case for 'return'
 	if( $printsub eq 'return' )
 	{
 		local *STDOUT;
 		tie *STDOUT, 'XML::YPathScript::FileHandle::Buffer';
-
 		$self->compile()->( $xpath );
-
-		#warn "compiled";
-
 		my $t = (tied *STDOUT)->get_contents;
-
 		untie *STDOUT;
-
-		#warn "got t: $t";
-
-		#warn "preparing to return";
-
 		return $t;
    } 
-   elsif( $printsub )
-   {
-		local *STDOUT;
-	    tie *STDOUT, $printsub;
-		$self->compile()->( $xpath );
-   }
-   else
-   { 
-   	$self->compile()->($xpath) 
-	}
+   
+   return $self->compile()->( $xpath, $printsub );
 }
 
 =pod "
@@ -613,9 +596,6 @@ alternate namespaces (e.g. ``axkit://'' URIs).
 sub include_file {
     my ($self, $print_form, $filename, @includestack) = @_;
 
-    # should maybe check for circular includes here...
-#warn "INCLUDE: $filename\n";
-
     if ($filename !~ m|^\.?/|) {
 	my $reldir;
 	# We guarantee that all values we insert into @includestack begin
@@ -630,6 +610,9 @@ sub include_file {
 	};
 	$filename = "$reldir/$filename";
     }
+	
+	# are we going recursive?
+	return '' if grep $_ eq $filename, @includestack;
 
     my $sym = gensym;
     open($sym, $filename) || do {
