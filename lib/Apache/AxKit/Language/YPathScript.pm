@@ -60,7 +60,7 @@ use Apache::AxKit::Exception;
 use Apache::AxKit::CharsetConv;
 use XML::XPathScript; 
 
-$VERSION = '1.1';
+$VERSION = '1.3';
 
 =head2 Functions
 

@@ -77,6 +77,8 @@ use vars '@ISA', '@EXPORT';
 		DO_TEXT_AS_CHILD
         );
 
+my $VERSION = 0.1;
+
 =pod "
 
 =over 4

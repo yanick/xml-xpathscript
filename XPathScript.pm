@@ -378,7 +378,7 @@ use XML::XPathScript::Processor;
 
 $VERSION = '0.15';
 
-$XML_parser = 'XML::XPath';
+$XML_parser = 'XML::LibXML';
 
 # By default, we interpolate
 $DoNotInterpolate = 0;
