@@ -3,7 +3,7 @@ use Test;
 
 BEGIN 
 { 
-	plan tests => 17, todo => [];
+	plan tests => 18, todo => [];
 }
 
 use XML::XPathScript;
@@ -122,4 +122,20 @@ EOXPS
 
 # encoding
 #test_xml( '<doc>&#1000;</doc>', '<%= apply_templates() %>', '', 'Encoding' ); 
+
+# testing for proper STDOUT management
+{
+	my $xps = new XML::XPathScript( xml => '<blah>hello</blah>', stylesheet => '<%= apply_templates()%>' );
+	my $output_file = 't/output.xml';
+	local *STDOUT;
+	die "file $output_file shouldn't be there" if -f $output_file;
+	open STDOUT, ">$output_file" or die $!;
+	$xps->process;
+	close STDOUT;
+	open FILE, $output_file or die "$!";
+	ok( <FILE>, '<blah>hello</blah>', 'STDOUT management');
+	close FILE;
+	unlink $output_file or die $!;
+}
+
 

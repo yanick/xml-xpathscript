@@ -434,6 +434,8 @@ EOT
 		if $XML_parser eq 'XML::LibXML';
 
 	{
+		local *ORIGINAL_STDOUT;
+		*ORIGINAL_STDOUT = *STDOUT;
    		local *STDOUT;
 	   	tie *STDOUT, 'XML::XPathScript::StdoutSnatcher';
 	   	my $retval = $self->compile()->( $self, @extravars );
@@ -752,7 +754,7 @@ sub print {
     my ($self, $text)=@_;
     my $printer=$self->{printer};
     if (!defined $printer) {
-	print $text;
+	print ORIGINAL_STDOUT $text;
     } elsif (ref($printer) eq "CODE") {
 	$printer->($text);
     } elsif (UNIVERSAL::isa($printer, "SCALAR")) {
