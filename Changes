@@ -1,5 +1,8 @@
 Revision history for Perl module XML::YPathScript.pm
 
+0.13
+	- Interpolation regex is now configurable
+
 0.12
 	- Added support for XML::LibXML
 	- Added tests for prechild, prechildren, postchild and postchildren

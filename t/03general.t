@@ -20,27 +20,24 @@ sub test_xml {
 }
 
 
-# empty run
-test_xml( '<doc>dummy</doc>', 'working', 'working' );
+test_xml( '<doc>dummy</doc>', 'working', 'working', 'empty run' );
 
+test_xml( '<doc>dummy</doc>', '<%= apply_templates() %>', 
+	'<doc>dummy</doc>', 'simple in/out');
 
-# simple in/out
-test_xml( '<doc>dummy</doc>', '<%= apply_templates() %>', '<doc>dummy</doc>' );
+test_xml( '<doc>dummy</doc>', '<% print "Hello!" %>', 'Hello!', 
+	'rogue print statement' );
 
-# a rogue print statement
-test_xml( '<doc>dummy</doc>', '<% print "Hello!" %>', 'Hello!' );
-
-# processing a comment
-test_xml( '<doc><!-- hello world --></doc>', <<'EOT', "<doc>comment: hello world </doc>\n" );
+test_xml( '<doc><!-- hello world --></doc>', <<'EOT', "<doc>comment: hello world </doc>\n", 'processing a comment' );
 <% $t->{'#comment'}{pre} = "comment:"; %><%= apply_templates() %>
 EOT
 
-# masking a comment
-test_xml( '<doc><!-- hello world --></doc>', <<'EOT', "<doc></doc>\n" );
+test_xml( '<doc><!-- hello world --></doc>', <<'EOT', "<doc></doc>\n", 'masking a comment' );
 <% $t->{'#comment'}{testcode} = sub{ 0 } %><%= apply_templates() %>
 EOT
 
-# testing Interpolation
+############################################################
+# Interpolation
 
 my $xml = "<doc><node color='blue'>Hello</node></doc>";
 my $xps = <<'EOT';
@@ -162,5 +159,4 @@ EOXPS
 	close FILE;
 	unlink $output_file or die $!;
 }
-
 
