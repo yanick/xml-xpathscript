@@ -582,10 +582,8 @@ sub translate_text_node {
 		$middle = $node->toString if $retval == DO_TEXT_AS_CHILD;
 	}
 
-	# not pretty, but keep warning mollified
-	return ($trans->{pre} ||''). 
-		   ($middle       ||'').
-		   ($trans->{post}||'');
+	no warnings 'uninitialized';
+	return $trans->{pre} . $middle . $trans->{post};
 }
 
 sub translate_element_node {
@@ -673,7 +671,8 @@ sub translate_element_node {
 				if is_element_node( $kid );
         }
         
-		return ($pre||'') . ( $middle||'' ) . ($post||'');
+		no warnings 'uninitialized';
+		return $pre . $middle . $post;
     }
 	
     if($search) 
@@ -720,9 +719,7 @@ sub translate_comment_node {
 		$middle = '' if $retval == DO_SELF_ONLY;
 	}
 	
-	$trans->{pre} ||= '';
-	$trans->{post} ||= '';
-
+	no warnings 'uninitialized';
 	return $trans->{pre}. $middle. $trans->{post};
 }
 
@@ -778,7 +775,9 @@ sub interpolate {
 
 	my $regex = $XML::XPathScript::current->{interpolation_regex};
 	$string =~ s/$regex/ $node->findvalue($1) /egs;
-    return $string || '';
+	
+	no warnings 'uninitialized';
+    return $string;
 }
 
 =back
