@@ -23,7 +23,7 @@ XML
    $t->{'linkinter'}{post} = '</a>';
    $t->{'link'}{testcode} = sub {
       my ($currentnode, $t) = @_;
-      my $url = findvalue('@url', $currentnode);
+      my $url = $currentnode->getAttribute('url');
       $t->{pre}="<a href=\"$url\">";
       $t->{post}='</a>';
       return 1;
@@ -51,15 +51,22 @@ do {
 XML
 									stylesheet => <<'STYLE' );
 <%
-   die unless (XML::XPathScript->current()->interpolating());
-   die unless (XML::XPathScript->current()->interpolating(1));
-   die unless (XML::XPathScript->current()->interpolating());
+	# by default, we interpolate
+   die unless XML::XPathScript->current()->interpolating;
+    # set to 1 (no-op)
+   die unless XML::XPathScript->current()->interpolating(1);
+   	# recheck
+   die unless XML::XPathScript->current()->interpolating;
 
-   die unless (XML::XPathScript->current()->interpolating(0));
+	# set to 0
+   die if XML::XPathScript->current()->interpolating(0);
 
-   die if (XML::XPathScript->current()->interpolating());
-   die if (XML::XPathScript->current()->interpolating(0));
-   die if (XML::XPathScript->current()->interpolating());
+	# re-check
+   die if XML::XPathScript->current()->interpolating;
+
+   	# set to 0 again
+   die if XML::XPathScript->current()->interpolating(0);
+   die if XML::XPathScript->current()->interpolating;
 
    $t->{'link'}{pre} = '<a href="{@url}">';
    $t->{'link'}{post} = '</a>';

@@ -66,6 +66,7 @@ do {
 	my $style = <<'EOT';
 <%
 	$t->{'comment()'}{pre}  = '<comment />';
+	$t->{'comment()'}{testcode} = sub{ DO_SELF_ONLY() };
 
 	$t->{'text()'}{testcode} = sub {
 
@@ -75,7 +76,7 @@ do {
 
 		$t->{pre} =~ s/oops/yay/;
 
-		return 1;
+		return DO_SELF_ONLY();
 	};
 
 %><%= apply_templates() %>

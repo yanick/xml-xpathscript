@@ -1,4 +1,20 @@
-Revision history for Perl extension XML::XPathScript.
+Revision history for Perl module XML::YPathScript.pm
+
+0.12
+	- Added support for XML::LibXML
+	- Added tests for prechild, prechildren, postchild and postchildren
+	- DO_NOT_PROCESS, DO_SELF_ONLY, DO_SELF_AND_KIDS are now constants
+	- XML::XPathScript::Toys now has its own file
+	- Added Apache::Axkit::Language::YPathScript to the distribution 
+	- Fixed bugs in A:A:L::YPS 
+	- Added the template keys '#text' and '#comment' -- synonyms for
+		'text()' and 'comment()'. Although, behavior of those two
+		types of node altered: DO_SELF_ONLY will only print pre and
+		post keys, whereas DO_SELF_AND_KIDS will print the enclosed 
+		text
+	- Modified behavior of interpolating(), now returns the current
+		interpolating value
+	- Changed implementation detail such that <% print "stuff" %> works
 
 0.10  Wed Aug 06 2003
 	- Enriched object-oriented interface, providing cache and
