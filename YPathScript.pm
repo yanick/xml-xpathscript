@@ -438,6 +438,8 @@ EOT
 		};
 	}
 
+	$xpath->ownerDocument->setEncoding( "UTF-8" ) if $XML_parser eq 'XML::LibXML';
+
 	#warn "XML: $xpath";
 	#warn "preparing to compile";
 
