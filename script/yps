@@ -3,7 +3,7 @@
 use strict;
 use warnings;
 
-use XML::YPathScript;
+use XML::XPathScript;
 use Getopt::Long;
 use Symbol;
 use File::Basename;
@@ -23,7 +23,7 @@ usage() unless @ARGV == 2;
 my ($xmlfile, $stylefile) = @ARGV;
 $Fake::Request->uri( $xmlfile );
 
-$XML::YPathScript::DoNotInterpolate = !$interpolate if $interpolate;
+$XML::XPathScript::DoNotInterpolate = !$interpolate if $interpolate;
 
 my $xml = gensym;
 my $stylesheet = gensym;
@@ -32,9 +32,9 @@ open($xml, $xmlfile) || die "Cannot open XML file '$xmlfile': $!";
 chdir dirname($stylefile);
 open($stylesheet, basename($stylefile)) || die "Cannot open Stylesheet file '$stylefile': $!";
 
-my $xps = XML::YPathScript->new(xml => $xml, stylesheet => $stylesheet);
+my $xps = XML::XPathScript->new(xml => $xml, stylesheet => $stylesheet);
 
-print $xps->process( 'return' );
+$xps->process;
 
 exit(0);
 
@@ -50,7 +50,7 @@ Usage: xpathscript [-i] [-q="query-string"] xmlfile stylesheet_file
 	-q the string will be used as if it was the 
 		query string passed by the client.
 
-	see 'perldoc yps' for more details
+	see 'perldoc xpathscript' for more details
 EOT
     exit(0);
 }
@@ -88,17 +88,17 @@ sub uri
 
 =head1 NAME
 
-yps - YPathScript command-line utility
+xpathscript - XPathScript command-line utility
 
 =head1 SYNOPSIS
 
-yps [-i] [-q=<query_string>] <xml_file> <stylesheet_file>
+xpathscript [-i] [-q=<query_string>] <xml_file> <stylesheet_file>
 
-yps [-i] [-q=<query_string>] <name> 
+xpathscript [-i] [-q=<query_string>] <name> 
 	
 =head1 DESCRIPTION
 
-If the second type of call is used, yps assumes that the xml source
+If the second type of call is used, xpathscript assumes that the xml source
 file  and the YPS stylesheet are named <name>.xml and <name>.xps.
 
 =head2 ARGUMENTS
@@ -113,7 +113,7 @@ Enable interpolation
 
 query_string is passed as if it was a query string. E.g.,
 
-	yps -q="page=3&images=no" doc.xml htmlify.xps
+	xpathscript -q="page=3&images=no" doc.xml htmlify.xps
 	
 will act as if the document was requested from the web server with the url
 'http://your.server.org/doc.xml?page=3&images=no'
@@ -122,7 +122,7 @@ will act as if the document was requested from the web server with the url
 
 =head1 SEE ALSO
 
-XML::YPathScript
+XML::XPathScript
 
 =head1 AUTHOR
 
