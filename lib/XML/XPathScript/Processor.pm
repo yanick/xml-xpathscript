@@ -662,7 +662,7 @@ sub translate_element_node {
     if($search) 
 	{
         my $middle = '';
-        for my $kid (findnodes($search, $node)) {
+        for my $kid ( $node->findnodes($search)) {
 
 			$middle .= interpolate($node, $trans->{prechild}) if is_element_node( $kid );
 			$middle .= _apply_templates($kid);
