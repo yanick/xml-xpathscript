@@ -5,7 +5,7 @@ use Test;
 
 BEGIN 
 { 
-	plan tests => 5, todo => [];
+	plan tests => 6, todo => [];
 	unshift @INC, '../blib/arch';
 	unshift @INC, '../blib/lib';
 
@@ -36,8 +36,13 @@ test_xml( '<doc>dummy</doc>', '<%= apply_templates() %>', '<doc>dummy</doc>' );
 test_xml( '<doc>dummy</doc>', '<% print "Hello!" %>', 'Hello!' );
 
 # processing a comment
-test_xml( '<doc><!-- hello world --></doc>', <<'EOT', 'comment: hello world' );
+test_xml( '<doc><!-- hello world --></doc>', <<'EOT', "<doc>comment: hello world </doc>\n" );
 <% $t->{'#comment'}{pre} = "comment:"; %><%= apply_templates() %>
+EOT
+
+# masking a comment
+test_xml( '<doc><!-- hello world --></doc>', <<'EOT', "<doc></doc>\n" );
+<% $t->{'#comment'}{testcode} = sub{ 0 } %><%= apply_templates() %>
 EOT
 
 exit;

@@ -1,5 +1,8 @@
 use ExtUtils::MakeMaker;
 
+use strict;
+use warnings;
+
 my $XML_parser;
 if( join( ' ', @ARGV ) =~ /XML_PARSER=(\S*)/ )
 {
@@ -21,8 +24,8 @@ else
 	eval "use XML::LibXML";
 	unless( $@ )
 	{ 
-		print "XML::LibXML detected, good!\nsetting XML parser to XML::LibXML";
-		$XM_parser = 'libxml';
+		print "XML::LibXML detected, good!\nsetting XML parser to XML::LibXML\n";
+		$XML_parser = 'XML::LibXML';
 	}
 	else
 	{
@@ -32,7 +35,7 @@ else
 		unless( $@ )
 		{
 			print "XML::XPath detected\nsetting XML parser to XML::XPath\n";
-			$XML_parser = 'xpath';
+			$XML_parser = 'XML::XPath';
 		}
 		else
 		{
@@ -42,13 +45,11 @@ else
 	}
 }
 
-print $XML_parser;
-
 open YPS, "YPathScript.pm" or die "can't open YPathScript.pm: $!\n";
 my $module;
 while( <YPS> )
 {
-	s/^(\$XML_parser = )'.*?';$/$1='$XML_parser';/;
+	s/^(\$XML_parser = )'.*?';$/$1'$XML_parser';/;
 	$module .= $_;
 }
 open YPS, ">YPathScript.pm" or die "can't overwrite YPathScript.pm: $!\n";

@@ -1,16 +1,5 @@
-XPathScript.pm version 0.01
+YPathScript
 ===========================
-
-The README is used to introduce the module and provide instructions on
-how to install the module, any machine dependencies it may have (for
-example C compilers and installed libraries) and any other information
-that should be provided before the module is installed.
-
-A README file is required for CPAN modules since CPAN extracts the
-README file from a module distribution so that people browsing the
-archive can use it get an idea of the modules uses. It is usually a
-good idea to provide version information here so that people can
-decide whether fixes for the module are worth downloading.
 
 INSTALLATION
 
@@ -21,15 +10,11 @@ To install this module type the following:
    make test
    make install
 
-DEPENDENCIES
+   
+During installation, Makefile.PL will check if it should use XML::LibXML 
+or XML::XPath as the default xml parser. if you want to force YPS to use 
+one or the other, do
 
-This module requires these other modules and libraries:
-
-  blah blah blah
-
-COPYRIGHT AND LICENCE
-
-Put the correct copyright and licence information here.
-
-Copyright (C) 2003 A. U. Thor blah blah blah
-
+	perl Makefile.PL XML_parser=XML::libXML
+	or
+	perl Makefile.PL XML_parser=XML::XPath

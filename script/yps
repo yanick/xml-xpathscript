@@ -1,8 +1,7 @@
-#!/usr/bin/perl -ws
-eval 'exec /usr/bin/perl -ws -S $0 ${1+"$@"}'
-    if 0; # not running under some shell
+#!/usr/bin/perl -s
 
 use strict;
+use warnings;
 
 use XML::YPathScript;
 use Getopt::Std;
@@ -17,7 +16,7 @@ getopt('q', \%opt);
 
 # offline dirty magic
 $Fake::Request = AxKit::Apache->request();
-$Fake::Request->param( split /[&=]/, $opt{q} ) if $opt{q};		
+$Fake::Request->param( split /[;&=]/, $opt{q} ) if $opt{q};		
 
 usage() unless @ARGV == 2;
 
@@ -47,6 +46,8 @@ Usage: xpathscript [-q="query-string"] xmlfile stylesheet_file
 
 	-q the string will be used as if it was the 
 		query string passed by the client.
+
+	see 'perldoc yps' for more details
 EOT
     exit(0);
 }
@@ -84,23 +85,38 @@ sub uri
 
 =head1 NAME
 
-dummy - short discription of your program
+yps - YPathScript command-line utility
 
 =head1 SYNOPSIS
 
- how to us your program
+yps [-q=<query_string>] <xml_file> <stylesheet_file>
+
+yps [-q=<query_string>] <name> 
+	-q the string will be used as if it was the 
+		query string passed by the client.
 
 =head1 DESCRIPTION
 
- long description of your program
+If the second type of call is used, yps assumes that the xml source
+file  and the YPS stylesheet are named <name>.xml and <name>.xps.
+
+If the argument -q is used, its value is passed as if it was
+a query string. E.g.,
+
+	yps -q="page=3;withimages=no" doc.xml htmlify.xps
+
 
 =head1 SEE ALSO
 
- need to know things before somebody uses your program
+XML::YPathScript
 
 =head1 AUTHOR
 
- Yanick,,,613-829-4069
+Yanick Champoux, <yanick@babyl.dyndns.org>
+
+=head1 VERSION
+
+Version 0.1, June 29th, 2004.
 
 =cut
 

@@ -1,6 +1,5 @@
-#!/usr/bin/perl -w
-
 use strict;
+use warnings;
 
 =pod
 
@@ -122,35 +121,23 @@ use Exporter;
 # quieten warnings when compiling this module
 sub apply_templates (;$@);
 
+sub findnodes { $XML::YPathScript::xp->findnodes(@_) }
 
-sub findnodes {
-    $XML::YPathScript::xp->findnodes(@_);
-}
-
-sub findvalue {
-    $XML::YPathScript::xp->findvalue(@_);
-}
+sub findvalue { $XML::YPathScript::xp->findvalue(@_) }
 
 sub findvalues {
     my @nodes = findnodes(@_);
-    map { findvalue('.', $_) } @nodes;
+    map { findvalue( '.', $_ ) } @nodes;
 }
 
-sub findnodes_as_string {
-    $XML::YPathScript::xp->findnodes_as_string(@_);
-}
+sub findnodes_as_string {    $XML::YPathScript::xp->findnodes_as_string(@_) }
 
-sub matches {
-    $XML::YPathScript::xp->matches(@_);
-}
+sub matches { $XML::YPathScript::xp->matches(@_) }
 
-sub set_namespace {
-    eval {
-        $XML::YPathScript::xp->set_namespace(@_);
-    };
-    if ($@) {
-        warn "set_namespace failed: $@";
-    }
+sub set_namespace 
+{
+	eval { $XML::YPathScript::xp->set_namespace(@_) };
+	warn "set_namespace failed: $@" if $@;
 }
 
 sub apply_templates (;$@) {
@@ -210,8 +197,10 @@ sub _apply_templates {
     my @nodes = @_;
 
     my $retval = '';
-    foreach my $node (@nodes) {
-        $retval .= translate_node($node);
+    foreach my $node (@nodes) 
+	{
+		# the || is there jsut to quiet the warnings
+        $retval .= translate_node($node) || '';
     }
 
     return $retval;
@@ -221,7 +210,7 @@ sub is_element_node
 {
 	my $node = shift;
 
-    return ( $XML::YPathScript::parser eq 'libxml' ) ? 
+    return ( $XML::YPathScript::XML_parser eq 'XML::LibXML' ) ? 
 		UNIVERSAL::isa( $node, 'XML::LibXML::Element' ) : 
 		$node->isElementNode;
 }
@@ -233,12 +222,12 @@ sub translate_node {
 
     my $translations = $XML::YPathScript::trans;
 
-	if( $XML::YPathScript::parser eq 'libxml' ) 
+	if( $XML::YPathScript::XML_parser eq 'XML::LibXML' ) 
 	{
 		$node = $node->documentElement if UNIVERSAL::isa($node,"XML::LibXML::Document")
 	}
 
-	if( $XML::YPathScript::parser eq 'libxml' and
+	if( $XML::YPathScript::XML_parser eq 'XML::LibXML' and
 		UNIVERSAL::isa( $node, 'XML::LibXML::Comment' ) )
 	{
 		my $trans = $translations->{'#comment'};
@@ -260,11 +249,14 @@ sub translate_node {
 			return if $retval == DO_NOT_PROCESS;
 			$middle = '' if $retval == DO_SELF_ONLY;
 		}
+	
+		$trans->{pre} ||= '';
+		$trans->{post} ||= '';
 
-		return $trans->{pre} . $middle . $trans->{post};
+		return $trans->{pre}. $middle. $trans->{post};
 	}
 
-	if ( ( $XML::YPathScript::parser eq 'libxml' ) ? UNIVERSAL::isa( $node, 'XML::LibXML::Text' )
+	if ( ( $XML::YPathScript::XML_parser eq 'XML::LibXML' ) ? UNIVERSAL::isa( $node, 'XML::LibXML::Text' )
 	                                               : $node->isTextNode) 
 	{
 		my $trans = $translations->{'#text'};
@@ -294,7 +286,7 @@ sub translate_node {
     unless( is_element_node( $node ) ) {
         # don't output top-level PI's
 		# could this be it?
-        if ($XML::YPathScript::parser eq 'xpath' and $node->isPINode) {
+        if ($XML::YPathScript::XML_parser eq 'XML::XPath' and $node->isPINode) {
             return try {
                 if ($node->getParentNode->getParentNode) {
                     return $node->toString;
@@ -319,7 +311,7 @@ sub translate_node {
 
     if (!$trans) {
         return start_tag($node) . 
-                _apply_templates( ( $XML::YPathScript::parser eq 'libxml' ) ? 
+                _apply_templates( ( $XML::YPathScript::XML_parser eq 'XML::LibXML' ) ? 
 					$node->childNodes : $node->getChildNodes) .
                 end_tag($node);
     }
@@ -411,18 +403,18 @@ sub start_tag {
     my $string = "<" . $name;
 
 	# do we need this for libXML?
-	if( $XML::YPathScript::parser eq 'xpath' )
+	if( $XML::YPathScript::XML_parser eq 'XML::XPath' )
 	{
     	$string .= $_->toString for $node->getNamespaceNodes;
 	}
 
-    foreach my $attr ( ( $XML::YPathScript::parser eq 'libxml' ) ? $node->attributes : $node->getAttributeNodes) {
+    foreach my $attr ( ( $XML::YPathScript::XML_parser eq 'XML::LibXML' ) ? $node->attributes : $node->getAttributeNodes) {
 	   #warn "attribute: $attr ";
 	   #warn $attr->toString;
 	   #warn $attr->name;
 	   #warn $attr->value;
 
-	   if( $XML::YPathScript::parser eq 'xpath' )
+	   if( $XML::YPathScript::XML_parser eq 'XML::XPath' )
 	   {
 	   	$string .= $attr->toString;
 	   }
@@ -452,8 +444,9 @@ sub end_tag {
 
 sub interpolate {
     my ($node, $string) = @_;
-    return '' if (!defined $string);
-    return $string if $YPathScript::DoNotInterpolate;
+    return '' unless defined $string;
+    return $string if $XML::YPathScript::DoNotInterpolate;
+
     my $new = '';
     while ($string =~ m/\G(.*?)\{(.*?)\}/gcs) {
         my ($pre, $path) = ($1, $2);
@@ -567,34 +560,32 @@ the matching templates (as hash references).
 
 package XML::YPathScript;
 
-use vars qw($VERSION $parser);
+use vars qw( $VERSION $XML_parser $DoNotInterpolate );
 
 use Symbol;
 use File::Basename;
 
 $VERSION = '0.20';
 
-
-# TODO: change all instances of libxml and xpath to their full name
-$XML_parser = 'libxml';
+$XML_parser = 'XML::LibXML';
 
 sub import
 {
 	my $self = shift @_;
 
-	if( grep $_ eq 'xpath', @_ )
+	if( grep $_ eq 'XML::XPath', @_ )
 	{
-		$XML::YPathScript::parser = 'xpath';
+		$XML::YPathScript::XML_parser = 'XML::XPath';
 	}
-	elsif( grep $_ eq 'libxml', @_ )
+	elsif( grep $_ eq 'XML::LibXML', @_ )
 	{
-		$XML::YPathScript::parser = 'libxml';
+		$XML::YPathScript::XML_parser = 'XML::LibXML';
 	}
 }
 
 INIT
 {
-	if( $parser eq 'xpath' )
+	if( $XML_parser eq 'XML::XPath' )
 	{
 		eval <<EOT;
 			use XML::XPath 1.0;
@@ -702,7 +693,7 @@ sub process {
 
 	#warn "Entering process...";
 
-	if( $parser eq 'xpath' )
+	if( $XML_parser eq 'XML::XPath' )
 	{
 		eval <<EOT;
 			use XML::XPath 1.0;
@@ -724,38 +715,38 @@ EOT
 
 	# a third option should be auto, for which we
 	# would use the already-defined object
-	if( $parser eq 'auto' )
+	if( $XML_parser eq 'auto' )
 	{
 		if (UNIVERSAL::isa($self->{xml},"XML::XPath")) 
 		{
 			$xpath=$self->{xml};
-			$parser = 'xpath';
+			$XML_parser = 'XML::XPath';
 		}
 		elsif(UNIVERSAL::isa($self->{xml},"XML::LibXML" ))
 		{
 			$xpath=$self->{xml};
-			$parser = 'libxml';
+			$XML_parser = 'XML::LibXML';
 		}
 	}
 
     if (UNIVERSAL::isa($self->{xml},"XML::XPath")) 
 	{
-		if( $parser eq 'xpath' or $parser eq 'auto' )
+		if( $XML_parser eq 'XML::XPath' or $XML_parser eq 'auto' )
 		{
 			$xpath=$self->{xml};
-			$parser = 'xpath';
+			$XML_parser = 'XML::XPath';
 		}
-		else 		# parser if libxml
+		else 		# parser if XML::LibXML
 		{
 			$xpath = XML::LibXML->parse_string( $self->{xml}->toString )->documentElement;
 		}
     } 
 	elsif (UNIVERSAL::isa($self->{xml},"XML::libXML")) 
 	{
-		if( $parser eq 'libxml' or $parser eq 'auto' )
+		if( $XML_parser eq 'XML::LibXML' or $XML_parser eq 'auto' )
 		{
 			$xpath=$self->{xml};
-			$parser = 'xpath';
+			$XML_parser = 'XML::LibXML';
 		}
 		else 		# parser if xpath
 		{
@@ -764,17 +755,17 @@ EOT
     } 
 	else
 	{
-		$parser = 'libxml' if $parser eq 'auto';
+		$XML_parser = 'XML::LibXML' if $XML_parser eq 'auto';
 
 		if (ref($self->{xml})) 
 		{
-			$xpath= ( $parser eq 'libxml' ) ? 
+			$xpath= ( $XML_parser eq 'XML::LibXML' ) ? 
 			    XML::LibXML->new->parse_fh( $self->{xml} )->documentElement :
 				XML::XPath->new(ioref => $self->{xml})
 		} 
 		else 
 		{
-			$xpath= ( $parser eq 'libxml' ) ? 
+			$xpath= ( $XML_parser eq 'XML::LibXML' ) ? 
 			    XML::LibXML->new->parse_string( $self->{xml} )->documentElement :
 				XML::XPath->new( xml => $self->{xml});
 		};
@@ -879,9 +870,9 @@ sub extract {
         $script .= "\n#line $line $filename\n";
         if ($type eq '<%=') {
             $contents =~ /\G(.*?)%>/gcs || die "No terminating '%>' after line $line";
-            my $perl = $1;
-            $script .= "$printform( $perl );\n";
-            $line += $perl =~ tr/\n//;
+            my $perlcode = $1;
+            $script .= "$printform( $perlcode );\n";
+            $line += $perlcode =~ tr/\n//;
         }
         elsif ($type eq '<!--#include') {
             my %params;
@@ -906,8 +897,9 @@ sub extract {
         }
     }
 
-    if ($contents =~ /\G(.*)/gcs) {
-        my ($text) = ($1);
+    if($contents =~ /\G(.*)/gcs) 
+	{
+        my $text = $1;
         $text =~ s/\|/\\\|/g;
         $script .= "$printform(q|$text|);";
     }
@@ -1042,8 +1034,8 @@ sub compile {
 		    package $package;
 		    no strict;   # Don't moan on sloppyly
 		    no warnings; # written stylesheets
-			# use XML::XPath::Node;     # I don't think we really need this
-			use XML::LibXML;  # ???
+			
+			use $XML_parser;  
 		    XML::YPathScript::Toys->import;
 		    sub {
 		    	my (undef,undef, $extravars ) = \@_;
@@ -1143,7 +1135,15 @@ __END__
 
 =head1 AUTHOR
 
-Matt Sergeant, matt@sergeant.org
+XPathScript was created by Matt Sergeant <matt@sergeant.org>
+
+And XPathScript begat XML::XPathScript, 
+by the actions of 
+Dominique Quatravaux <dom@ideax.com> and Yanick Champoux <yanick@babyl.dyndns.org>,
+offering impovements and feature merges with 
+Apache::AxKit::Language::XPathScript.
+
+And, by the will of a rather fork-happy Yanick, XML::XPS in turn begat XML::YPS.
 
 =head1 LICENSE
 
