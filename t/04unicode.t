@@ -6,7 +6,7 @@ use XML::XPathScript::Toys;
 
 BEGIN
 {
-	plan tests => 7, todo => [];
+	plan tests => 9, todo => [];
 }
 
 ok( ! is_utf8_tainted(" ") );
