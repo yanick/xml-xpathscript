@@ -105,7 +105,7 @@ xpathscript [-i] [-q=<query_string>] <name>
 =head1 DESCRIPTION
 
 If the second type of call is used, xpathscript assumes that the xml source
-file  and the YPS stylesheet are named <name>.xml and <name>.xps.
+file  and the XPathScript stylesheet are named <name>.xml and <name>.xps.
 
 =head2 ARGUMENTS
 
