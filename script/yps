@@ -1,27 +1,29 @@
-#!/usr/bin/perl -s
+#!/usr/bin/perl
 
 use strict;
 use warnings;
 
 use XML::YPathScript;
-use Getopt::Std;
+use Getopt::Long;
 use Symbol;
 use File::Basename;
 
-my %opt;
-getopt('q', \%opt);
+my ( $query, $interpolate );
+GetOptions( 'query=s' => \$query, 'interpolate' => \$interpolate );
 
 # trick so that xps story  => xps story.xml story.xps
 @ARGV = ( $ARGV[0].'.xml', $ARGV[0].'.xps'  ) if @ARGV == 1;
 
 # offline dirty magic
 $Fake::Request = AxKit::Apache->request();
-$Fake::Request->param( split /[;&=]/, $opt{q} ) if $opt{q};		
+$Fake::Request->param( split /[;&=]/, $query ) if $query;		
 
 usage() unless @ARGV == 2;
 
 my ($xmlfile, $stylefile) = @ARGV;
 $Fake::Request->uri( $xmlfile );
+
+$XML::YPathScript::DoNotInterpolate = !$interpolate if $interpolate;
 
 my $xml = gensym;
 my $stylesheet = gensym;
@@ -38,12 +40,13 @@ exit(0);
 
 sub usage {
     print STDERR <<EOT;
-Usage: xpathscript [-q="query-string"] xmlfile stylesheet_file
+Usage: xpathscript [-i] [-q="query-string"] xmlfile stylesheet_file
        or
-       xpathscript [-q="query-string"] file
+       xpathscript [-i] [-q="query-string"] file
 	     in which case the xml file will be assumed 
 		 to be file.xml and the xps file to be file.xps
 
+	-i interpolation is enabled
 	-q the string will be used as if it was the 
 		query string passed by the client.
 
@@ -89,22 +92,33 @@ yps - YPathScript command-line utility
 
 =head1 SYNOPSIS
 
-yps [-q=<query_string>] <xml_file> <stylesheet_file>
+yps [-i] [-q=<query_string>] <xml_file> <stylesheet_file>
 
-yps [-q=<query_string>] <name> 
-	-q the string will be used as if it was the 
-		query string passed by the client.
-
+yps [-i] [-q=<query_string>] <name> 
+	
 =head1 DESCRIPTION
 
 If the second type of call is used, yps assumes that the xml source
 file  and the YPS stylesheet are named <name>.xml and <name>.xps.
 
-If the argument -q is used, its value is passed as if it was
-a query string. E.g.,
+=head2 ARGUMENTS
 
-	yps -q="page=3;withimages=no" doc.xml htmlify.xps
+=over
 
+=item -i
+
+Enable interpolation
+
+=item -q=<query_string>
+
+query_string is passed as if it was a query string. E.g.,
+
+	yps -q="page=3&images=no" doc.xml htmlify.xps
+	
+will act as if the document was requested from the web server with the url
+'http://your.server.org/doc.xml?page=3&images=no'
+
+=back
 
 =head1 SEE ALSO
 
