@@ -15,7 +15,7 @@ During installation, Makefile.PL will check if it should use XML::LibXML
 or XML::XPath as the default xml parser. if you want to force XPathScript to use 
 one or the other, do
 
-	perl Makefile.PL -parser=XML::libXML
+	perl Makefile.PL -parser=XML::LibXML
 	or
 	perl Makefile.PL -parser=XML::XPath
 
