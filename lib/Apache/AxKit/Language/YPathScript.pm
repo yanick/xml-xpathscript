@@ -5,7 +5,33 @@ use vars qw( @ISA $VERSION $stash );
 
 @ISA = qw/ Apache::AxKit::Language XML::XPathScript /;
 
-=pod
+=head1 NAME
+
+Apache::AxKit::Language::YPathScript - An XML Stylesheet Language
+
+=head1 SYNOPSIS
+
+  AxAddStyleMap "application/x-xpathscript => \
+        Apache::AxKit::Language::YPathScript"
+
+=head1 DESCRIPTION
+
+YPathScript is a fork of the original AxKit's XPathScript and is majoritary
+backward compatible with it. The definitive reference for 
+XPathScript, located at http://axkit.org/docs/xpathscript/guide.dkb,
+also applies to YPathScript, excepts for the differences listed in the
+sections below.
+
+=head1 PRE-DEFINED STYLESHEET VARIABLES 
+
+=item $r
+
+A copy of the Apache::AxKit::request object -- which is itself a wrapper around
+the Apache::request object -- tied to the current document.
+
+=back 
+
+=cut
 
 =head1 Apache::AxKit::Language::YPathScript
 
@@ -60,7 +86,7 @@ use Apache::AxKit::Exception;
 use Apache::AxKit::CharsetConv;
 use XML::XPathScript; 
 
-$VERSION = '1.3';
+$VERSION = '1.4';
 
 =head2 Functions
 
@@ -549,21 +575,3 @@ sub get_mtime {
 
 
 1;
-__END__
-
-=head1 NAME
-
-Apache::AxKit::Language::YPathScript - An XML Stylesheet Language
-
-=head1 SYNOPSIS
-
-  AxAddStyleMap "application/x-xpathscript => \
-        Apache::AxKit::Language::YPathScript"
-
-=head1 DESCRIPTION
-
-This documentation has been removed. The definitive reference for 
-XPathScript is now at http://axkit.org/docs/xpathscript/guide.dkb
-in DocBook format.
-
-=cut
