@@ -1,3 +1,52 @@
+#!/usr/bin/perl
+
+=head1 NAME
+
+XML::XPathScript::Processor - the XML transformation engine in XML::XPathScript
+
+=head1 SYNOPSIS
+
+In a stylesheet C<< ->{testcode} >> sub for e.g. Docbook's C<< <ulink>
+>> tag:
+
+      my $url = findvalue('@url',$self);
+      if (findnodes("node()", $self)) {
+         # ...
+		$t->{pre}=qq'<a href="$url">';
+		$t->{post}=qq'</a>';
+		return DO_SELF_AND_KIDS;
+      } else {
+		$t->{pre}=qq'<a href="$url">$url</a>';
+		$t->{post}=qq'';
+		return DO_SELF_ONLY;
+      };
+
+At the stylesheet's top-level one often finds:
+
+   <%= apply_templates() %>
+
+=head1 DESCRIPTION
+
+The I<XML::XPathScript> distribution offers an XML parser glue, an
+embedded stylesheet language, and a way of processing an XML document
+into a text output. This package implements the latter part: it takes
+an already filled out C<< $t >> template hash and an already parsed
+XML document (which come from L<XML::XPathScript> behind the scenes),
+and provides a simple API to implement stylesheets. In particular, the
+L</apply_templates> function triggers the recursive expansion of
+the whole XML document when used as shown in L</SYNOPSIS>.
+
+=head2 XPathScript Language Functions
+
+All of these functions are intended to be called solely from within
+the C<< ->{testcode} >> templates or C<< <% %> >> or C<< <%= %> >>
+blocks in XPathScript stylesheets. They are automatically exported to
+both these contexts.
+
+=over 4
+
+=cut
+
 package XML::XPathScript::Processor;
 
 use strict;
@@ -683,5 +732,17 @@ sub interpolate {
 	$string =~ s/$regex/ $node->findvalue($1) /egs;
     return $string || '';
 }
+
+=back
+
+=head1 BUGS
+
+Right now I<XML::XPathScript::Processor> is just an auxillary module
+to L<XML::XPathScript> which should not be called directly: in other
+words, XPathScript's XML processing engine is not (yet) properly
+decoupled from the stylesheet language parser, and thus cannot stand
+alone.
+
+=cut
 
 1;
