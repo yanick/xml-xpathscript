@@ -118,7 +118,6 @@ use Exporter;
         findvalues
         findnodes_as_string
         apply_templates
-		call_template
         matches
         set_namespace
 		DO_SELF_AND_KIDS
@@ -152,21 +151,24 @@ sub set_namespace
 	warn "set_namespace failed: $@" if $@;
 }
 
-sub apply_templates (;$@) {
-    unless (@_) {
-        return apply_templates(findnodes('/'));
-    }
-
+sub apply_templates (;$@) 
+{
+	# catch teh calls to apply_templates() 
+	return apply_templates( findnodes('/') ) unless @_;
+	
     my ($arg1, @args) = @_;
 
-    if (!ref($arg1)) {
+    if (!ref($arg1)) 
+	{
         # called with a path to find
-#         warn "apply_templates with path '$arg1'\n";
 		if( my $nodes = findnodes($arg1, @args) )
 		{
         	return apply_templates($nodes);
 		}
-		else{ return }
+		else
+		{ 
+			return 
+		}
     }
 
     my $retval = '';
@@ -186,33 +188,13 @@ sub apply_templates (;$@) {
     return $retval;
 }
 
-sub call_template {
-    my ($self,$t,$template)=@_;
-
-    if (defined(my $sub=$template->{testcode})) {
-	return &$sub($self,$t);
-    } elsif (exists $t->{prechild} || exists $t->{prechildren} ||
-	     exists $t->{postchild} || exists $t->{postchildren}) {
-	warn "XML::YPathScript::Toys::call_template: cannot handle this sort of templates yet";
-	# Attempt to recover
-	$t->{pre}="";
-	$t->{post}="";
-	return 1;
-    } else {
-	$t->{pre}=$template->{pre};
-	$t->{post}=$template->{post};
-	return 1;
-    };
-}
-
-
 sub _apply_templates {
     my @nodes = @_;
 
     my $retval = '';
     foreach my $node (@nodes) 
 	{
-		# the || is there jsut to quiet the warnings
+		# the || is there just to quiet the warnings
         $retval .= translate_node($node) || '';
     }
 
@@ -228,10 +210,9 @@ sub is_element_node
 		$node->isElementNode;
 }
 
-sub translate_node {
+sub translate_node 
+{
     my $node = shift;
-
-	#warn "translate_node: $node";
 
     my $translations = $XML::YPathScript::trans;
 
@@ -1025,7 +1006,7 @@ sub compile {
 	#warn "inside compile";
 
     return $self->{compiledstylesheet}
-      if (defined $self->{compiledstylesheet});
+      if defined $self->{compiledstylesheet};
 
     my $stylesheet;
 
@@ -1068,10 +1049,10 @@ EOT
 	#warn "script ready for compil: $eval";
     local $^W;
 #warn "Compiling: $eval\n";
-    my $retval=eval $eval;
-    die $@ if (!defined $retval);
-	#warn "compil done: $retval";
-    return ($self->{compiledstylesheet}=$retval);
+    my $retval = eval $eval;
+    die $@ unless defined $retval;
+
+    return ( $self->{compiledstylesheet} = $retval );
 }
 
 
@@ -1088,13 +1069,15 @@ The functions below are not methods.
 =item I<XML::XPath::Function::document>
 
 An XPath function made available to XPath expressions in the
-stylesheet. DOCUMENTME.
+stylesheet. Should be removed?
 
 =cut "
 
-sub XML::XPath::Function::document {
+sub XML::XPath::Function::document 
+{
     my $self = shift;
     my ($node, @params) = @_;
+
     die "document: Function takes 1 parameter\n" unless @params == 1;
 
     my $parser = XML::XPath::XMLParser->new();
@@ -1119,12 +1102,14 @@ stylesheet. Never returns twice the same name.
 
 =cut "
 
-do {
-my $uniquifier;
-sub gen_package_name {
-    $uniquifier++;
-    return "XML::YPathScript::STYLESHEET$uniquifier";
-}
+do 
+{
+	my $uniquifier;
+	sub gen_package_name 
+	{
+    	$uniquifier++;
+    	return 'XML::YPathScript::STYLESHEET'.$uniquifier;
+	}
 };
 
 1;
