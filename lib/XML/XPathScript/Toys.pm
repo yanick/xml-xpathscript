@@ -12,6 +12,7 @@ use vars '@ISA', '@EXPORT';
         apply_templates
         matches
         set_namespace
+		is_utf8_tainted
 		DO_SELF_AND_KIDS
 		DO_SELF_ONLY
 		DO_NOT_PROCESS
@@ -51,7 +52,7 @@ current document).  In scalar context returns a NodeSet object.
 =cut "
 
 sub findnodes {
-	$XML::XPathScript::xp->findnodes(@_) 
+	$XML::XPathScript::xp->findnodes(@_)
 }
 
 =pod "
@@ -60,13 +61,15 @@ sub findnodes {
 
 =item  I<findvalue($path, $context)>
 
-Evaluates XPath expression $path and returns the resulting value.
-. If the path returns a set of nodes, the stringification
-is done automatically for you. 
+Evaluates XPath expression $path and returns the resulting value. If
+the path returns a set of nodes, the stringification is done
+automatically for you. The result is an UTF-8 string.
+
 =cut "
 
 sub findvalue {
-	$XML::XPathScript::xp->findvalue(@_) 
+	my $blob = $XML::XPathScript::xp->findvalue(@_);
+	"$blob";
 }
 
 =pod "
@@ -216,8 +219,7 @@ sub call_template {
 }
 
 sub _apply_templates {
-	# the second '' is there just to quiet the warnings
-	return join( '', '', map translate_node($_), @_ ) || '';
+	return join( '', map { translate_node($_) or "" } @_ );
 }
 
 =item  $boolean = is_element( $node )
@@ -240,38 +242,68 @@ sub translate_node {
 		$node = $node->documentElement;
 	}
 
+	my $retval;
 	# little catch: XML::LibXML::Comment is a 
 	# XML::LibXML::Text
 	if(  ( $XML::XPathScript::XML_parser eq 'XML::LibXML' ) ? 
 			UNIVERSAL::isa( $node, 'XML::LibXML::Comment' ) : 
 			$node->getNodeType == XML::XPath::Node::COMMENT_NODE() )
 	{
-		return translate_comment_node( $node );
-	}
-
-	if ( ( $XML::XPathScript::XML_parser eq 'XML::LibXML' ) ? UNIVERSAL::isa( $node, 'XML::LibXML::Text' ) : $node->isTextNode) 
+		$retval = translate_comment_node( $node );
+	} elsif ( ( $XML::XPathScript::XML_parser eq 'XML::LibXML' ) ? UNIVERSAL::isa( $node, 'XML::LibXML::Text' ) : $node->isTextNode) 
 	{
-		return translate_text_node( $node );
-	}
-
-
-	return translate_element_node( $node ) if is_element_node( $node );
-
-
-	# don't output top-level PI's
-	# could this be it?
-	if ($XML::XPathScript::XML_parser eq 'XML::XPath' and $node->isPINode) {
-		return try {
+		$retval = translate_text_node( $node );
+	} elsif (is_element_node( $node )) {
+		$retval = translate_element_node( $node );
+	} elsif ($XML::XPathScript::XML_parser eq 'XML::XPath' and $node->isPINode) {
+		# don't output top-level PI's
+		$retval = eval {
 			if ($node->getParentNode->getParentNode) {
 				return $node->toString;
-			}
-			return '';
-		} catch Error with {
-			return '';
-		};
+			} else { '' }
+		} || '';
+	} else {
+		$retval = $node->toString;
+	};
+
+	if (XML::XPathScript->current()->{binmode} &&
+		is_utf8_tainted($retval)) {
+		use Carp qw(confess);
+		confess("Wrong translation by stylesheet (result is Unicode-tainted)
+$retval\n");
 	}
-	return $node->toString;
+
+	return $retval;
 }
+
+=pod "
+
+=item I<is_utf8_tainted($string)>
+
+Returns true if Perl thinks that $string is a string of characters (in
+UTF-8 internal representation), and false if Perl treats $string as a
+meaningless string of bytes.
+
+The dangerous part of the story is when concatenating a non-tainted
+string with a tainted one, as it causes the whole string to be
+re-interpreted into UTF-8, even the part that was supposedly
+meaningless character-wise, and that happens in a nonportable fashion
+(depends on locale and Perl version). So don't do that - and use this
+function to prevent that from happening.
+
+=cut "
+
+# This implementation is vulnerable to the "é" (e acute) getting
+# crushed when source code gets converted e.g. to EBCDIC. Oh well.
+sub is_utf8_tainted {
+	my ($string)=@_;
+	my $maybe_autopromoted = do { no bytes; no utf8; "é"  . $string};
+
+	use bytes;
+	return ( length($string) + 1 < length($maybe_autopromoted) );
+}
+
+
 
 sub translate_text_node {
 	
