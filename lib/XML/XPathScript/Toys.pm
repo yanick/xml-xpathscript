@@ -31,12 +31,9 @@ numeric values which are harder to remember.
 
 =cut "
 
-use constant
-{
-	DO_SELF_AND_KIDS =>  1,
-	DO_SELF_ONLY     => -1,
-	DO_NOT_PROCESS   =>  0
-};
+use constant DO_SELF_AND_KIDS =>  1;
+use constant DO_SELF_ONLY     => -1;
+use constant DO_NOT_PROCESS   =>  0;
 
 # quieten warnings when compiling this module
 sub apply_templates (;$@);
@@ -371,7 +368,7 @@ sub translate_element_node {
 	$pre .= interpolate($node, $trans->{prechildren}) if $has_kids;
 	
 
-    my $post;
+    my $post = '';
 	$post .= interpolate($node, $trans->{postchildren}) if $has_kids;
 	$post .= end_tag( $node ) if  $trans->{showtag};
 	$post .= interpolate($node, $trans->{post});
@@ -488,13 +485,13 @@ sub interpolate {
 
 	# if string is empty or no interpolation,
 	# we return
-    return $string unless 
+    return( $string || '' ) unless 
 		defined( $string ) and 
 		$XML::XPathScript::current->interpolating();
 
 	my $regex = $XML::XPathScript::current->{interpolation_regex};
 	$string =~ s/$regex/ $node->findvalue($1) /egs;
-    return $string;
+    return $string || '';
 }
 
 1;

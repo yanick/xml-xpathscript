@@ -6,7 +6,9 @@ BEGIN {
 }
 
 use XML::XPathScript;
-use Apache::AxKit::Language::YPathScript;
+
+# not used for now
+#use Apache::AxKit::Language::YPathScript;
 
 ok(1); 
 

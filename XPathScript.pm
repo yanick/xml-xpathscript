@@ -202,7 +202,7 @@ use Symbol;
 use File::Basename;
 use XML::XPathScript::Toys;
 
-$VERSION = '0.12';
+$VERSION = '0.14';
 
 $XML_parser = 'XML::LibXML';
 
