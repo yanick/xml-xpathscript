@@ -12,7 +12,7 @@ To install this module type the following:
 
    
 During installation, Makefile.PL will check if it should use XML::LibXML 
-or XML::XPath as the default xml parser. if you want to force YPS to use 
+or XML::XPath as the default xml parser. if you want to force XPathScript to use 
 one or the other, do
 
 	perl Makefile.PL XML_parser=XML::libXML
@@ -20,8 +20,11 @@ one or the other, do
 	perl Makefile.PL XML_parser=XML::XPath
 
 
-To use YPS under AxKit, add the following to your httpd.conf (the first
-two lines are probably already present):
+XPS comes with its AxKit language module. Not to clash with the 
+Apache::AxKit::Language::XPathScript.pm bundled with AxKit, it is named
+Apache::AxKit::Language::YPathScript.pm. To use this module under AxKit, 
+add the following to your httpd.conf (the first two lines are probably 
+already present):
 
 	PerlModule AxKit
 	AddHandler AxKit .xml

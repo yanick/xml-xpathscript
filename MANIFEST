@@ -5,8 +5,7 @@ README
 XPathScript.pm
 lib/XML/XPathScript/Toys.pm
 lib/Apache/AxKit/Language/YPathScript.pm
-script/yps
-t/base.t
+script/xpathscript
 t/include.xps
 t/include2.xps
 t/include3.xps
