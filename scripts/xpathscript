@@ -3,6 +3,7 @@
 use XML::XPathScript;
 
 use Symbol;
+use File::Basename;
 
 usage() unless @ARGV == 2;
 
@@ -12,7 +13,8 @@ my $xml = gensym;
 my $stylesheet = gensym;
 
 open($xml, $xmlfile) || die "Cannot open XML file '$xmlfile': $!";
-open($stylesheet, $stylefile) || die "Cannot open Stylesheet file '$stylefile': $!";
+chdir dirname($stylefile);
+open($stylesheet, basename($stylefile)) || die "Cannot open Stylesheet file '$stylefile': $!";
 
 my $xps = XML::XPathScript->new(xml => $xml, stylesheet => $stylesheet);
 

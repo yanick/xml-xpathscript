@@ -9,8 +9,9 @@ use XML::XPath::Node;
 use XML::XPath::NodeSet;
 use XML::Parser;
 use Symbol;
+use File::Basename;
 
-$VERSION = '0.01';
+$VERSION = '0.02';
 
 sub new {
     my $class = shift;
@@ -145,8 +146,10 @@ sub include_file {
     # should maybe check for circular includes here...
 #warn "INCLUDE: $filename\n";
     
+    chdir dirname($filename);
+    
     my $sym = gensym;
-    open($sym, $filename) || die "Can't read include file '$filename': $!";
+    open($sym, basename($filename)) || die "Can't read include file '$filename': $!";
     return extract($sym);
 }
 
