@@ -3,7 +3,7 @@ use Test;
 
 BEGIN 
 { 
-	plan tests => 18, todo => [];
+	plan tests => 19, todo => [];
 }
 
 use XML::XPathScript;
@@ -71,6 +71,22 @@ $xps = <<'EOT';
 EOT
 
 test_xml( $xml, $xps, "\n<doc>blue</doc>\n", 'Interpolation (enabled)'  );
+
+############################################################
+# double interpolation 
+
+$xps = <<'EOT';
+<% 
+	$XML::XPathScript::DoNotInterpolate = 0; 
+	$t->{node}{testcode} = sub
+	{ 
+		my( $n, $t ) = @_; 
+		$t->{pre} = '{@color}:{@color}'; 
+		return DO_SELF_ONLY() 
+	}; %>
+<%= apply_templates() %>
+EOT
+test_xml( $xml, $xps, "\n<doc>blue:blue</doc>\n", 'Double interpolation'  );
 
 test_xml( '<doc><apple/><banana/></doc>', <<'EOT', "<doc>!<apple></apple><banana></banana>?</doc>\n", 'Prechildren and Postchildren tags, with children' );
 <%

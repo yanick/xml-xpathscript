@@ -489,14 +489,8 @@ sub interpolate {
     return $string unless $XML::XPathScript::current->interpolating();
 
     my $new = '';
-    while ($string =~ m/\G(.*?)\{(.*?)\}/gcs) {
-        my ($pre, $path) = ($1, $2);
-        $new .= $pre;
-        $new .= $node->findvalue($path);
-    }
-    $string =~ /\G(.*)/gcs;
-    $new .= $1 if defined $1;
-    return $new;
+	$string =~ s/\{(.*?)\}/ $node->findvalue($1) /egs;
+    return $string;
 }
 
 1;
