@@ -118,7 +118,8 @@ sub handler
 
     AxKit::Debug(7, "Running YPathScript script\n");
     local $^W;
-	return $xps->process();
+	$xps->compile( '$r' );
+	return $xps->process( '', $r );
 }
 
 =item $file_content = I<include_file( $filename )>
