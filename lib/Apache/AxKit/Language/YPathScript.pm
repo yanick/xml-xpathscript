@@ -76,8 +76,10 @@ providers.
 sub new
 {
 	my( $class, $xml_provider, $style_provider ) = @_;
+	
+	AxKit::Debug( 10, "creating new A::A::L::YPS instance, class = $class, xml_provider: $xml_provider, style_provider: $style_provider" );
 
-	my $self = new XML::YPathScript( $class, xml_provider => $xml_provider, 
+	my $self = XML::YPathScript::new( $class, xml_provider => $xml_provider, 
 	                                          style_provider => $style_provider );
 
 	return $self;
@@ -93,6 +95,8 @@ sub new
 
 sub handler 
 {
+	AxKit::Debug( 10, "this is Apache::AxKit::Language::YPathScript version $VERSION" );
+	
     my ( $class, $r, $xml_provider, $style_provider) = @_;
 
 	my $xps = new Apache::AxKit::Language::YPathScript( $xml_provider, $style_provider );
@@ -124,7 +128,9 @@ sub handler
 		unless $r->pnotes('xml_string') or $r->dir_config('XPSNoApplyTemplatesOnEmptyOutput');
 }
 
-=item	$file_content = include_file( $filename )
+=item $file_content = I<include_file( $print_form, $filename )>
+
+=item $file_content = I<include_file( $print_form, $filename, @includestack )>
 
 Overloaded from XML::YPathScript in order to provide URI-based
 stylesheet inclusions: $filename may now be any AxKit URI.  The AxKit
@@ -141,12 +147,15 @@ in order to work with AxKit.
 
 =cut
 
-sub include_file {
-    my ($self, $filename, @includestack) = @_;
+sub include_file 
+{
+    my ($self, $printform, $filename, @includestack) = @_;
+	
+	AxKit::Debug(10, "the heck? ".join ':', @_ );
 
 	my $provider = $self->{xml_provider};
 
-    AxKit::Debug(10, "YPathScript: entering include_file");
+    AxKit::Debug(10, "YPathScript: entering include_file ($filename)");
 
     # return if already included
     my $key = $provider->key();
@@ -159,7 +168,8 @@ sub include_file {
     local $AxKit::Cfg = Apache::AxKit::ConfigReader->new( $sub );
     
     my $inc_provider = Apache::AxKit::Provider->new_style_provider( $sub );
-    
+	
+	AxKit::Debug( 10, "File: $filename, Sub: $sub, $inc_provider: $inc_provider" );
     
     my $contents;
     eval 
@@ -170,7 +180,8 @@ sub include_file {
     };
     if ($@) 
 	{
-        $contents = ${ $inc_provider->get_strref() };
+		eval{ $contents = ${ $inc_provider->get_strref() } };
+		if( $@ ){ AxKit::Debug( 10, "couldn't include $filename" ) }
     }
     
     my $r = AxKit::Apache->request();
@@ -188,7 +199,7 @@ sub include_file {
     
     AxKit::Debug(10, "YPathScript: extracting from '$key' contents: $contents\n");
 
-	return $self->XML::YPathScript::extract($contents, $filename, @includestack);
+	return $self->extract( $inc_provider, $printform, @includestack );
 }
 
 =item 	$doc = get_source_tree( $xml_provider  )
@@ -222,6 +233,139 @@ sub get_source_tree
     return $xml;
 }
 
+=item I<extract( $stylesheet, $printform )>
+
+=item I<extract( $stylesheet, $printform, $filename )>
+
+=item I<extract( $stylesheet, $printform, @includestack)> 
+
+Overrides the X::YPS method
+
+The embedded dialect parser. Given $stylesheet, which is a
+provider, returns a string that holds all
+the code in real Perl. Unquoted text and C<< <%= stuff %> >>
+constructs in the stylesheet dialect is converted into invocations of
+I<$printform>, which must be a function-like Perl form ( ``print'' by
+default), while C<< <% stuff %> >> are transcripted verbatim.
+
+C<< <!-- #include --> >> constructs are expanded by passing their
+filename argument to L</include_file> along with @includestack (if any)
+like this:
+
+   $self->include_file($includefilename,@includestack);
+
+@includestack is not interpreted by I<extract()> (except for the first
+entry, to create line tags for the debugger). It is only a bandaid for
+I<include_file()> to pass the inclusion stack to itself across the
+mutual recursion existing between the two methods (see
+L</include_file>).  If I<extract()> is invoked from outside
+I<include_file()>, @includestack should be either empty or of size one.
+
+This method does a purely syntactic job. No special framework
+declaration is prepended for isolating the code in its own package,
+defining $t or the like (L</compile> does that). It may be overriden
+in subclasses to provide different escape forms in the stylesheet
+dialect.
+
+=cut
+
+sub extract 
+{
+    my ( $self, $provider, $printform, @includestack ) = @_;
+	$printform ||= 'print';
+	
+    my $contents;
+	# TODO: this is the big difference between X::YPS::extract and this version
+	# it should be made into a subfunction
+	if( ref( $provider) )
+	{
+    	eval 
+		{	 
+			my $fh = $provider->get_fh();
+			local $/;
+			$contents = <$fh>;
+		};
+		if ($@) {
+			AxKit::Debug( 7, "wasn't able to extract $provider: $@" );
+		}
+	}
+	else
+	{
+		$contents = $provider;  # it's a string
+	}
+    
+    my $r = AxKit::Apache->request();
+    if (my $charset = $r->dir_config('YPathScriptCharset')) {
+        
+        AxKit::Debug(8, "XPS: got charset: $charset");
+        
+        my $map = Apache::AxKit::CharsetConv->new($charset, "utf-8") || die "No such charset: $charset";
+        $contents = $map->convert($contents);
+    }
+    
+	my $key;
+    $key = $provider->key() if ref $provider;
+    $stash->{$key}{includes} = [];
+    
+    AxKit::Debug(10, "YPathScript: extracting from '$key' contents: $contents\n");
+    
+    my $script;
+    
+    my $line = 1;
+    
+    while ($contents =~ /\G(.*?)(<!--\#include|<%=?)/gcs) {
+        my ($text, $type) = ($1, $2);
+        $line += $text =~ tr/\n//;
+        $text =~ s/\|/\\\|/g;
+		$script .= "$printform(q|$text|);";
+        $script .= "\n#line $line $key\n";
+        
+		# <%= $stuff %>
+		if ($type eq '<%=') 
+		{
+            $contents =~ /\G(.*?)%>/gcs || die "No terminating '%>' after line $line ($key)";
+            my $perlcode = $1;
+            $script .= "$printform( $perlcode );\n";
+            $line += $perlcode =~ tr/\n//;
+        }
+        elsif ($type eq '<!--#include')   # <!--$include file="blah.xps" -->
+		{
+            my %params;
+            while ($contents =~ /\G(\s+(\w+)\s*=\s*(["'])([^\3]*?)\3|\s*-->)/gcs) {
+                last if $1 eq '-->';
+                $params{$2} = $4;
+            }
+            
+            if (!$params{file}) {
+                die "No matching file attribute in #include at line $line ($key)";
+            }
+            
+            AxKit::Debug(10, "About to include file $params{file}");
+            $script .= $self->include_file( $printform, $params{file}, @includestack );
+            AxKit::Debug(10, "include done");
+        }
+        else  # <% perl code %>
+		{
+            $contents =~ /\G(.*?)%>/gcs || die "No terminating '%>' after line $line ($key)";
+            my $perl = $1;
+            $perl =~ s/;?$/;/s; # add on ; if its missing. As in <% $foo = 'Hello' %>
+            $script .= $perl;
+            $line += $perl =~ tr/\n//;
+        }
+    }
+    
+	# trailing text
+    if ($contents =~ /\G(.*)/gcs) 
+	{
+        my $text = $1;
+        $text =~ s/\|/\\\|/g;
+		$script .= "$printform(q|$text|);";
+    }
+    
+    return $script;
+}
+
+
 
 =item $self->debug( $level, $message )
 
@@ -230,7 +374,7 @@ is equal or smaller than $level.
 
 =cut
 
-sub debug{ AxKit::Debug( @_ ) }
+sub debug{ shift; AxKit::Debug( @_ ) }
 
 =item $self->die( $suicide_note )
 
@@ -315,108 +459,6 @@ sub check_inc_mtime {
 }
 
 
-=item	$stylesheet = extract( $provider, $scalar_output )
-
-Read the stylesheet from the $provider and
-transform it into an executable perl script.
-the stylesheet <!--#include-->s are dealt with here.
-
-If $scalar_output is true, the compiled stylesheet's output will be piped
-to $__OUTPUT.
-
-Exist in X::X, but with some differences
-
-
-=cut
-
-sub extract {
-    my ($self, $provider,$scalar_output) = @_;
-    
-    my $contents;
-    eval { 
-        my $fh = $provider->get_fh();
-        local $/;
-        $contents = <$fh>;
-    };
-    if ($@) {
-        $contents = ${ $provider->get_strref() };
-    }
-    
-    my $r = AxKit::Apache->request();
-    if (my $charset = $r->dir_config('YPathScriptCharset')) {
-        
-        AxKit::Debug(8, "XPS: got charset: $charset");
-        
-        my $map = Apache::AxKit::CharsetConv->new($charset, "utf-8") || die "No such charset: $charset";
-        $contents = $map->convert($contents);
-    }
-    
-    my $key = $provider->key();
-    $stash->{$key}{includes} = [];
-    
-    AxKit::Debug(10, "YPathScript: extracting from '$key' contents: $contents\n");
-    
-    my $script;
-    
-    my $line = 1;
-    
-    while ($contents =~ /\G(.*?)(<!--\#include|<%=?)/gcs) {
-        my ($text, $type) = ($1, $2);
-        $line += $text =~ tr/\n//;
-        $text =~ s/\|/\\\|/g;
-        if($scalar_output) {
-            $script .= "\$__OUTPUT.=q|$text|;";
-        } else {
-            $script .= "print q|$text|;";
-        }
-        $script .= "\n#line $line $key\n";
-        if ($type eq '<%=') {
-            $contents =~ /\G(.*?)%>/gcs || die "No terminating '%>' after line $line ($key)";
-            my $perl = $1;
-            if(!$scalar_output) {
-                $script .= "print(do { $perl });\n";
-            } else {
-                $script .= "\$__OUTPUT.=join('',(do { $perl }));\n";
-            }
-            $line += $perl =~ tr/\n//;
-        }
-        elsif ($type eq '<!--#include') {
-            my %params;
-            while ($contents =~ /\G(\s+(\w+)\s*=\s*(["'])([^\3]*?)\3|\s*-->)/gcs) {
-                last if $1 eq '-->';
-                $params{$2} = $4;
-            }
-            
-            if (!$params{file}) {
-                die "No matching file attribute in #include at line $line ($key)";
-            }
-            
-            AxKit::Debug(10, "About to include file $params{file}");
-            $script .= include_file($params{file}, $provider, $scalar_output);
-            AxKit::Debug(10, "include done");
-        }
-        else {
-            $contents =~ /\G(.*?)%>/gcs || die "No terminating '%>' after line $line ($key)";
-            my $perl = $1;
-            $perl =~ s/;?$/;/s; # add on ; if its missing. As in <% $foo = 'Hello' %>
-            $script .= $perl;
-            $line += $perl =~ tr/\n//;
-        }
-    }
-    
-    if ($contents =~ /\G(.*)/gcs) {
-        my ($text) = ($1);
-        $text =~ s/\|/\\\|/g;
-        if ($scalar_output) {
-            $script .= "\$__OUTPUT.=q|$text|;";
-        } else {
-            $script .= "print q|$text|;";
-        }
-    }
-    
-    return $script;
-}
-
 =item compile( $package, $provider )
 
 Compile the XPS stylesheet given in $provider into the package
@@ -473,7 +515,7 @@ sub include_file {
 
     # return if already included
     my $key = $provider->key();
-    return '' if grep {$_ eq $filename} @{$stash->{$key}{includes}};
+    return '' if grep $_ eq $filename, @{$stash->{$key}{includes}};
 
     push @{$stash->{$key}{includes}}, $filename;
     
@@ -484,6 +526,7 @@ sub include_file {
     my $inc_provider = Apache::AxKit::Provider->new_style_provider($sub);
     
     return $self->extract($inc_provider, $script_output);
+	
 }
 
 =item  $nodeset = XML::XPath::Function::document( $node, $uri )
