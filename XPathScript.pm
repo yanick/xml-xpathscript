@@ -378,7 +378,7 @@ use XML::XPathScript::Processor;
 
 $VERSION = '0.14';
 
-$XML_parser = 'XML::XPath';
+$XML_parser = 'XML::LibXML';
 
 # By default, we interpolate
 $DoNotInterpolate = 0;
@@ -670,17 +670,7 @@ sub extract {
 
     my $filename=$includestack[0] || "stylesheet";
 
-    my $contents;
-
-	# $stylesheet can be a filehandler
-	# or a string
-    if( ref($stylesheet) ) {
-        local $/;
-        $contents = <$stylesheet>;
-    }
-    else {
-        $contents = $stylesheet;
-    }
+    my $contents = $self->read_stylesheet( $stylesheet );
 
     my $script="#line 1 $filename\n",
     my $line = 1;
@@ -725,6 +715,32 @@ sub extract {
     }
 
     return $script;
+}
+
+=pod "
+
+=item $string = I<read_stylesheet( $stylesheet )>
+
+Read the $stylesheet (which can be a filehandler or a string). 
+Used by I<extract> and exists such that it can be overloaded in
+I<Apache::AxKit::Language::YPathScript>.
+
+=cut
+
+sub read_stylesheet
+{
+	my( $self, $stylesheet ) = @_;
+	
+	# $stylesheet can be a filehandler
+	# or a string
+    if( ref($stylesheet) ) {
+        local $/;
+        return <$stylesheet>;
+    }
+    else {
+        return $stylesheet;
+    }
+	
 }
 
 =pod "
