@@ -2,12 +2,23 @@ Changes
 Makefile.PL
 MANIFEST
 README
-YPathScript.pm
+XPathScript.pm
+lib/XML/XPathScript/Toys.pm
 lib/Apache/AxKit/Language/YPathScript.pm
-script/yps
-t/base.t
+script/xpathscript
 t/include.xps
 t/include2.xps
 t/include3.xps
 t/recursive.xps
+t/01basic.t        
+t/recursive.xps  
+t/t1.xml         
+t/t2.xps
+t/02interpolate.t  
+t/t1_compat.xps  
+t/t1.xps
+t/03general.t      
+t/include.xps   
+t/t1.result      
+t/t2_compat.xps
 META.yml                                 Module meta-data (added by MakeMaker)

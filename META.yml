@@ -1,8 +1,8 @@
 # http://module-build.sourceforge.net/META-spec.html
 #XXXXXXX This is a prototype!!!  It will change in the future!!! XXXXX#
-name:         XML-YPathScript
-version:      0.21
-version_from: YPathScript.pm
+name:         XML-XPathScript
+version:      0.12
+version_from: XPathScript.pm
 installdirs:  site
 requires:
 

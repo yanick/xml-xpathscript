@@ -9,3 +9,9 @@
 * XML::XPath::..:Document -- must revisit
 
 * Add option to change output encoding
+
+* Explain test() and the return code 
+
+* configurable interpolation pattern
+
+$current->interpolation_regex( qq/\[\[(.*)\]\]/ )

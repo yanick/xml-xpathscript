@@ -1,15 +1,12 @@
-#!/usr/bin/perl 
-
 use strict;
 use Test;
 
 BEGIN 
 { 
-	plan tests => 16, todo => [];
-	unshift @INC, '../blib/arch', '../blib/lib';
+	plan tests => 18, todo => [];
 }
 
-use XML::YPathScript;
+use XML::XPathScript;
 use Apache::AxKit::Language::YPathScript;
 
 ok(1); 
@@ -17,8 +14,9 @@ ok(1);
 sub test_xml
 {
 	my( $xml, $style, $result, $comment ) = @_;
-    my $xps = new XML::YPathScript( xml => $xml, stylesheet => $style );
-	my $buffer= $xps->process( 'return' );
+    my $xps = new XML::XPathScript( xml => $xml, stylesheet => $style );
+	my $buffer;
+	$xps->process( \$buffer );
 
 	ok( $buffer, $result, $comment );
 }
@@ -48,14 +46,21 @@ EOT
 
 my $xml = "<doc><node color='blue'>Hello</node></doc>";
 my $xps = <<'EOT';
-<% $t->{node}{testcode} = sub{ my( $n, $t ) = @_; $t->{pre} = '{@color}'; return DO_SELF_ONLY() }; %>
+<% 
+	$XML::XPathScript::DoNotInterpolate = 1;
+	$t->{node}{testcode} = sub { 
+		my( $n, $t ) = @_; 
+		$t->{pre} = '{@color}'; 
+		return DO_SELF_ONLY() 
+	}; 
+%>
 <%= apply_templates() %>
 EOT
 test_xml( $xml, $xps, "\n<doc>{\@color}</doc>\n", 'Interpolation (disabled)'  );
 
 $xps = <<'EOT';
 <% 
-	$XML::YPathScript::DoNotInterpolate = 0; 
+	$XML::XPathScript::DoNotInterpolate = 0; 
 	$t->{node}{testcode} = sub
 	{ 
 		my( $n, $t ) = @_; 
@@ -100,12 +105,37 @@ test_xml( '<doc>empty</doc>', '<!--#include file="t/recursive.xps" -->', "Ooops.
 test_xml( '<doc>empty</doc>', '<!--#include file="t/include3.xps" -->', "Ooops.\n\n", '2 levels of <!--#include --> + recursion' );
 
 # override of printform
-$xps = new XML::YPathScript( xml => '<doc/>', stylesheet => 'how about a shout-o-matic?' );
+$xps = new XML::XPathScript( xml => '<doc/>', stylesheet => 'how about a shout-o-matic?' );
 my $buffer;
 $xps->process( sub{ $buffer .= uc shift } );
 
 ok( $buffer, 'HOW ABOUT A SHOUT-O-MATIC?', 'override of printform' );
 
 
+test_xml( '<doc><a/><b/><c/></doc>', <<'EOXPS', "only b: <b></b>\n", 'xpath testcode return statement' );
+<%
+    $t->{doc}{pre} = 'only b: ';	
+	$t->{doc}{testcode} = sub{ 'b'; }
+%><%= apply_templates() %>
+EOXPS
+
+
 # encoding
 #test_xml( '<doc>&#1000;</doc>', '<%= apply_templates() %>', '', 'Encoding' ); 
+
+# testing for proper STDOUT management
+{
+	my $xps = new XML::XPathScript( xml => '<blah>hello</blah>', stylesheet => '<%= apply_templates()%>' );
+	my $output_file = 't/output.xml';
+	local *STDOUT;
+	die "file $output_file shouldn't be there" if -f $output_file;
+	open STDOUT, ">$output_file" or die $!;
+	$xps->process;
+	close STDOUT;
+	open FILE, $output_file or die "$!";
+	ok( <FILE>, '<blah>hello</blah>', 'STDOUT management');
+	close FILE;
+	unlink $output_file or die $!;
+}
+
+

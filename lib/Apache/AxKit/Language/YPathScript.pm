@@ -1,17 +1,15 @@
 package Apache::AxKit::Language::YPathScript;
 
-# Last Changed: $Date$   Revision: $Rev$
-
 use strict;
 use vars qw( @ISA $VERSION $stash );
 
-@ISA = qw/ Apache::AxKit::Language XML::YPathScript /;
+@ISA = qw/ Apache::AxKit::Language XML::XPathScript /;
 
 =pod
 
 =head1 Apache::AxKit::Language::YPathScript
 
-Sub-class of Apache::AxKit::Language and XML::YPathScript.
+Sub-class of Apache::AxKit::Language and XML::XPathScript.
 
 =head2 global variables
 
@@ -60,7 +58,7 @@ use Apache::AxKit::Language;
 use Apache::AxKit::Cache;
 use Apache::AxKit::Exception;
 use Apache::AxKit::CharsetConv;
-use XML::YPathScript; 
+use XML::XPathScript; 
 
 $VERSION = '1.1';
 
@@ -77,7 +75,7 @@ sub new
 {
 	my( $class, $xml_provider, $style_provider ) = @_;
 	
-	my $self = XML::YPathScript::new( $class, 
+	my $self = XML::XPathScript::new( $class, 
 							xml_provider => $xml_provider, 
 	                        style_provider => $style_provider );
 
@@ -121,17 +119,13 @@ sub handler
     AxKit::Debug(7, "Running YPathScript script\n");
     local $^W;
 	return $xps->process();
-
-	# no output? Try apply_templates
-	print XML::YPathScript::Toys::apply_templates()
-		unless $r->pnotes('xml_string') or $r->dir_config('XPSNoApplyTemplatesOnEmptyOutput');
 }
 
 =item $file_content = I<include_file( $print_form, $filename )>
 
 =item $file_content = I<include_file( $print_form, $filename, @includestack )>
 
-Overloaded from XML::YPathScript in order to provide URI-based
+Overloaded from XML::XPathScript in order to provide URI-based
 stylesheet inclusions: $filename may now be any AxKit URI.  The AxKit
 language class drops support for plain filenames that exists in the
 ancestor class: this means that include directives like
@@ -663,7 +657,7 @@ Apache::AxKit::Language::YPathScript - An XML Stylesheet Language
 =head1 DESCRIPTION
 
 This documentation has been removed. The definitive reference for 
-YPathScript is now at http://axkit.org/docs/xpathscript/guide.dkb
+XPathScript is now at http://axkit.org/docs/xpathscript/guide.dkb
 in DocBook format.
 
 =cut
