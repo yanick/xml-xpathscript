@@ -121,10 +121,6 @@ sub handler
     AxKit::Debug(7, "Running YPathScript script\n");
     local $^W;
 	return $xps->process();
-
-	# no output? Try apply_templates
-	print XML::YPathScript::Toys::apply_templates()
-		unless $r->pnotes('xml_string') or $r->dir_config('XPSNoApplyTemplatesOnEmptyOutput');
 }
 
 =item $file_content = I<include_file( $print_form, $filename )>
