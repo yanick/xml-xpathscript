@@ -88,7 +88,7 @@ A number of callback functions are available from the stylesheet
 proper.  They apply against the current document and template hash,
 which are transparently passed back and forth as global variables (see
 L</Global variables>). They are defined in the
-L<XML::XPathScript::Toys> package, which is implicitly imported into
+L<XML::XPathScript::Processor> package, which is implicitly imported into
 all code written in the embedded stylesheet dialect.
 
 The following methods are also available to peek at the internal state
@@ -183,14 +183,14 @@ presence of the "UTF-8 taint" in the stylesheet output is now a fatal
 error. That is, whenever the result of a template evaluation is marked
 internally in Perl with the "this string is UTF-8" flag (as opposed to
 being treated by Perl as binary data without character meaning, see
-L</perlunicode>), L<XML::XPathScript::Toys/translate_node> will croak;
+L</perlunicode>), L<XML::XPathScript::Processor/translate_node> will croak;
 
 =item *
 
 the stylesheet therefore needs to build an "unicode firewall". That
 is, C<testcode> blocks have to take input in UTF-8 (as per the XML
 standard, UTF-8 indeed is what will be returned by
-L<XML::XPathScript::Toys/findvalue> and such) and provide output in
+L<XML::XPathScript::Processor/findvalue> and such) and provide output in
 binary (in whatever character set is intended for the output), lest
 I<translate_node()> croaks as explained above. The L<Unicode::String>
 module comes in handy to the stylesheet writer to cast from UTF-8 to
@@ -257,7 +257,7 @@ with
 =head3 Do not use DOM method calls, for they make stylesheets non-portable
 
 The I<findvalue()> such functions described in
-L<XML::XPathScript::Toys> are not the only way of extracting bits from
+L<XML::XPathScript::Processor> are not the only way of extracting bits from
 the XML document. Objects passed as the first argument to the I<<
 ->{testcode} >> templates and returned by I<findnodes()> in array
 context are of one of the I<XML::XPath::Node::*> classes, and they
@@ -272,7 +272,7 @@ between L<XML::libXML> and L<XML::XPath> used as back-ends to
 L<XML::XPathScript>, one should refrain from doing that. The exact
 same data is available through appropriate XPath formulae, albeit more
 slowly, and there are also type-checking accessors such as
-C<is_element_node()> in L<XML::XPathScript::Toys>.
+C<is_element_node()> in L<XML::XPathScript::Processor>.
 
 
 =head1 TECHNICAL DOCUMENTATION
@@ -374,11 +374,11 @@ use vars qw( $VERSION $XML_parser $DoNotInterpolate $debug_level );
 
 use Symbol;
 use File::Basename;
-use XML::XPathScript::Toys;
+use XML::XPathScript::Processor;
 
 $VERSION = '0.14';
 
-$XML_parser = 'XML::LibXML';
+$XML_parser = 'XML::XPath';
 
 # By default, we interpolate
 $DoNotInterpolate = 0;
@@ -855,7 +855,7 @@ sub compile {
 		    no warnings; # written stylesheets
 			
 			use $XML_parser;  
-		    BEGIN {XML::XPathScript::Toys->import;}
+		    BEGIN {XML::XPathScript::Processor->import;}
 		    sub {
 		    	my (\$self, $extravars ) = \@_;
 				local \$XML::XPathScript::current=\$self;

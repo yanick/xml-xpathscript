@@ -45,7 +45,7 @@ $stash - Hash table of stylesheets
 
 =item Apache::AxKit::CharsetConv
 
-=item X::X::Toys
+=item X::X::Processor
 
 =back
 
@@ -470,7 +470,7 @@ sub compile {
             $package,
             '; use Apache qw(exit);',
             'use XML::XPath::Node;',
-            'Apache::AxKit::Language::YPathScript::Toys->import;',
+            'Apache::AxKit::Language::YPathScript::Processor->import;',
             'sub handler {',
             'my ($r, $xp, $t) = @_;',
             "\n#line 1 " . $provider->key() . "\n",

@@ -1,4 +1,4 @@
-package XML::XPathScript::Toys;
+package XML::XPathScript::Processor;
 
 use strict;
 
@@ -244,7 +244,7 @@ sub call_template {
 	return &$sub($self,$t);
     } elsif (exists $t->{prechild} || exists $t->{prechildren} ||
 	     exists $t->{postchild} || exists $t->{postchildren}) {
-	warn "XML::XPathScript::Toys::call_template: cannot handle this sort of templates yet";
+	warn "XML::XPathScript::Processor::call_template: cannot handle this sort of templates yet";
 	# Attempt to recover
 	$t->{pre}="";
 	$t->{post}="";

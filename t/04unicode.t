@@ -2,7 +2,7 @@
 
 use strict;
 use Test;
-use XML::XPathScript::Toys;
+use XML::XPathScript::Processor;
 
 BEGIN
 {
