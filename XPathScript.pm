@@ -202,7 +202,7 @@ use Symbol;
 use File::Basename;
 use XML::XPathScript::Toys;
 
-$VERSION = '0.12';
+$VERSION = '0.13';
 
 $XML_parser = 'XML::XPath';
 
@@ -436,7 +436,12 @@ EOT
 	{
 		local *ORIGINAL_STDOUT;
 		*ORIGINAL_STDOUT = *STDOUT;
-   		local *STDOUT = *STDOUT;
+		local *STDOUT;
+
+		# Perl 5.6.1 dislikes closed but tied descriptors (causes SEGVage)
+   		*STDOUT = *ORIGINAL_STDOUT if $^V lt v5.7.0; 
+
+		
 	   	tie *STDOUT, 'XML::XPathScript::StdoutSnatcher';
 	   	my $retval = $self->compile()->( $self, @extravars );
 	   	untie *STDOUT;
