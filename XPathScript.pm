@@ -11,7 +11,7 @@ use XML::Parser;
 use Symbol;
 use File::Basename;
 
-$VERSION = '0.02';
+$VERSION = '0.03';
 
 sub new {
     my $class = shift;

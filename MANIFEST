@@ -1,6 +1,7 @@
 Changes
 Makefile.PL
 MANIFEST
+README
 XPathScript.pm
 t/01basic.t
 scripts/xpathscript
