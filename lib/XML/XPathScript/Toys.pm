@@ -20,6 +20,8 @@ use vars '@ISA', '@EXPORT';
 
 =pod "
 
+=over 4
+
 =item I<DO_SELF_AND_KIDS>
 
 =item I<DO_SELF_ONLY>
@@ -63,7 +65,8 @@ sub findnodes {
 
 Evaluates XPath expression $path and returns the resulting value. If
 the path returns a set of nodes, the stringification is done
-automatically for you. The result is an UTF-8 string.
+automatically for you (see L</XPath scalar return values considered
+harmful>). The result is an UTF-8 string.
 
 =cut "
 
@@ -81,7 +84,8 @@ sub findvalue {
 
 Evaluates XPath expression $path as a nodeset expression, just like
 L</findnodes> would, but returns a list of UTF8-encoded XML strings
-instead of node objects.
+instead of node objects or node sets. See also L</XPath scalar return
+values considered harmful>.
 
 =cut "
 sub findvalues {
@@ -96,7 +100,7 @@ sub findvalues {
 =item I<findnodes_as_string($path, $context)>
 
 Similar to L</findvalues> but concatenates the XML snippets.  The
-result is not guaranteed to be valid XML.
+result obviously is not guaranteed to be valid XML.
 
 =cut "
 
@@ -148,9 +152,9 @@ routines).
 
 If appropriate care is taken in all templates (especially the
 C<testcode> routines and the I<text()> template), the string result of
-I<apply_templates> need not be UTF-8 (see L<perlunicode>): it is thus
-possible using XPathScript to produce output in any character set
-without an extra translation pass.
+I<apply_templates> need not be UTF-8 (see
+L<XML::XPathScript/binmode>): it is thus possible using XPathScript to
+produce output in any character set without an extra translation pass.
 
 =cut "
 
@@ -528,5 +532,37 @@ sub interpolate {
 	$string =~ s/$regex/ $node->findvalue($1) /egs;
     return $string || '';
 }
+
+=back
+
+=head2 XPath scalar return values considered harmful
+
+XML::XPath calls such as I<findvalue()> return objects in an object
+class designed to map one of the types mandated by the XPath spec (see
+L<XML::XPath> for details). This is often not what a Perl programmer
+comes to expect (e.g. strings and numbers cannot be treated the
+same). There are some work-arounds built in XML::XPath, using operator
+overloading: when using those objects as strings (by concatenating
+them, using them in regular expressions etc.), they become strings,
+through a transparent call to one of their methods such as I<<
+->value() >>. However, we do not support this for a variety of reasons
+(from limitations in L</overload> to stylesheet compatibility between
+XML::XPath and XML::LibXML to Unicode considerations), and that is why
+our L</findvalue> and friends return a real Perl scalar, in violation
+of the XPath specification.
+
+On the other hand, L</findnodes> does return a list of objects in list
+context, and an I<XML::XPath::NodeSet> or I<XML::LibXML::NodeList>
+instance in scalar context, obeying the XPath specification in
+full. Therefore you most likely do not want to call I<findnodes()> in
+scalar context, ever: replace
+
+   my $attrnode = findnodes('@url',$xrefnode); # WRONG!
+
+with
+
+   my ($attrnode) = findnodes('@url',$xrefnode);
+
+
 
 1;
