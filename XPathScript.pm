@@ -592,7 +592,7 @@ use XML::Parser;
 use Symbol;
 use File::Basename;
 
-$VERSION = '0.10';
+$VERSION = '0.11';
 
 =pod "
 
