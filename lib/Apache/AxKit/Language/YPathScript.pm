@@ -1,9 +1,11 @@
 package Apache::AxKit::Language::YPathScript;
 
+# Last Changed: $Date$   Revision: $Rev$
+
 use strict;
 use vars qw( @ISA $VERSION $stash );
 
-@ISA = qw/ Apache::AxKit::Language XML::XPathScript /;
+@ISA = qw/ Apache::AxKit::Language XML::YPathScript /;
 
 =pod
 
@@ -53,17 +55,12 @@ $stash - Hash table of stylesheets
 
 use Apache;
 use Apache::File;
-#use XML::XPath 1.00;
-#use XML::XPath::XMLParser;
-#use XML::XPath::Node;
-#use XML::XPath::NodeSet;
-#use XML::Parser;
 use Apache::AxKit::Provider;
 use Apache::AxKit::Language;
 use Apache::AxKit::Cache;
 use Apache::AxKit::Exception;
 use Apache::AxKit::CharsetConv;
-use XML::XPathScript; # qw/ libxml /;
+use XML::YPathScript; # qw/ libxml /;
 
 $VERSION = '1.0';
 
@@ -71,7 +68,7 @@ $VERSION = '1.0';
 
 =item $xps = new Apache::AxKit::Language::YPathScript($xml_provider, $style_provider)
 
-Constructs a new XPathScript language interpreter out of the provided
+Constructs a new YPathScript language interpreter out of the provided
 providers.
 
 =cut
@@ -80,7 +77,7 @@ sub new
 {
 	my( $class, $xml_provider, $style_provider ) = @_;
 
-	my $self = XML::XPathScript::new( $class, xml_provider => $xml_provider, 
+	my $self = new XML::YPathScript( $class, xml_provider => $xml_provider, 
 	                                          style_provider => $style_provider );
 
 	return $self;
@@ -94,10 +91,11 @@ sub new
 
 =cut
 
-sub handler {
+sub handler 
+{
     my ( $class, $r, $xml_provider, $style_provider) = @_;
 
-	my $xps = Apache::AxKit::Language::YPathScript->new( $xml_provider, $style_provider );
+	my $xps = new Apache::AxKit::Language::YPathScript( $xml_provider, $style_provider );
 
     $xps->{local_ent_handler} = $xml_provider->get_ext_ent_handler();
 
@@ -112,7 +110,7 @@ sub handler {
 
 	# $xpath->set_context($source_tree);   what does this do?
 
-	$xps->debug(6, "Recompiling stylesheet\n");
+	AxKit::Debug( 6, "Recompiling stylesheet\n" );
 	$xps->{stylesheet} = get_source_tree($style_provider);
 	
 	#$xps->get_stylesheet( $style_provider );
@@ -122,13 +120,13 @@ sub handler {
 	return $xps->process();
 
 	# no output? Try apply_templates
-	print XML::XPathScript::Toys::apply_templates()
+	print XML::YPathScript::Toys::apply_templates()
 		unless $r->pnotes('xml_string') or $r->dir_config('XPSNoApplyTemplatesOnEmptyOutput');
 }
 
 =item	$file_content = include_file( $filename )
 
-Overloaded from XML::XPathScript in order to provide URI-based
+Overloaded from XML::YPathScript in order to provide URI-based
 stylesheet inclusions: $filename may now be any AxKit URI.  The AxKit
 language class drops support for plain filenames that exists in the
 ancestor class: this means that include directives like
@@ -189,9 +187,8 @@ sub include_file {
     $stash->{$key}{includes} = [];
     
     AxKit::Debug(10, "YPathScript: extracting from '$key' contents: $contents\n");
-    
 
-	return $self->XML::XPathScript::extract($contents, $filename, @includestack);
+	return $self->XML::YPathScript::extract($contents, $filename, @includestack);
 }
 
 =item 	$doc = get_source_tree( $xml_provider  )
@@ -203,18 +200,19 @@ sub include_file {
 
 =cut
 
-sub get_source_tree {
-    my($provider) = shift;
-
+sub get_source_tree 
+{
+    my $provider = shift;
     my $xml;
 
     AxKit::Debug(7, "YPathScript: reparsing file");
 
-    eval {
+    eval 
+	{
         my $fh = $provider->get_fh();
         local $/;
         $xml = <$fh>;
-        close($fh);
+        close $fh;
     };
    
 	# didn't work? try get_strref
