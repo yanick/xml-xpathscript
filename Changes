@@ -1,6 +1,7 @@
 Revision history for Perl module XML::XPathScript.pm
 
 0.14
+	- XML::XPathScript->current()->binmode() for non-UTF8 output
 	- Interpolation regex is now configurable
 	- Corrected Makefile.PL typo for XML::LibXML
 	- General bug and typo fixes
