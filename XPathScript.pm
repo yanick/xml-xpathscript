@@ -928,7 +928,7 @@ sub compile {
     my $package=gen_package_name();
 
 	my $extravars = join ',', @extravars;
-
+	
 	my $eval = <<EOT;
 		    package $package;
 		    no strict;   # Don't moan on sloppyly
@@ -956,6 +956,9 @@ EOT
 
     return $self->{compiledstylesheet} = $retval;
 }
+
+
+
 
 =item I<print($text)>
 
@@ -1016,6 +1019,67 @@ sub gen_package_name {
     return "XML::XPathScript::STYLESHEET$uniquifier";
 }
 };
+
+=item  $nodeset = $xps->document( $uri )
+
+	Reads XML given in $uri, parses it and returns it in a nodeset.
+
+=cut
+
+sub document {
+    # warn "Document function called\n";
+    my( $self, $uri ) = @_;
+	  
+	my( $results, $parser );	
+	if( $XML_parser eq 'XML::XPath' ) {
+		my $xml_parser = XML::Parser->new(
+				ErrorContext => 2,
+				Namespaces => $XML::XPath::VERSION < 1.07 ? 1 : 0,
+				# ParseParamEnt => 1,
+				);
+	
+		$parser = XML::XPath::XMLParser->new(parser => $xml_parser);
+		$results = XML::XPath::NodeSet->new();
+	} 
+	elsif ( $XML_parser eq 'XML::LibXML' ) {
+		$parser = XML::LibXML->new;
+		$results = XML::LibXML::Document->new;
+	}
+	else {
+		$self->die( "xml parser not valid: $XML_parser" );
+	}
+
+	
+    my $newdoc;
+	# TODO: must handle axkit: scheme a little more cleverly
+    if ($uri =~ /^\w\w+:/ and $uri !~ /^axkit:/ ) { # assume it's scheme://foo uri
+        eval {
+         	$self->debug( 5, "trying to parse $uri" );
+			eval "use LWP::Simple";
+            $newdoc = $parser->parse_string( LWP::Simple::get( $uri ) );
+            $self->debug( 5, "Parsed OK into $newdoc\n" );
+        };
+        if (my $E = $@) {
+			$self->debug("Parse of '$uri' failed: $E" );
+        }
+    }
+    else {
+        $self->debug(3, "Parsing local: $uri\n");
+        $newdoc = $parser->parse_file( $uri );
+    }
+
+	if( $newdoc ) {
+		if( $XML_parser eq 'XML::LibXML' ) {
+			$results = $newdoc->documentElement();
+		} 
+		elsif( $XML_parser eq 'XML::XPath' ) {
+			$results->push($newdoc)
+		}
+	}
+	
+    $self->debug(8, "XPathScript: document() returning");
+    return $results;
+}
 
 1;
 
