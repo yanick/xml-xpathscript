@@ -344,16 +344,23 @@ document.
 =cut "
 
 sub get_xpath_of_node {
-	my ($self)=@_;
+	my $self =shift;
 
-	my $parent=($self->can("parentNode") ?
+	# ugly hack to get aroudn XML::XPath::Element and XML::XPath::ElementImp
+	# quirkiness
+	$self = $$self if 
+		$self->isa( 'XML::XPath::Node::Element' ) and not $self->isa( 'XML::XPath::Node::ElementImpl' );
+
+	my $parent = ( $self->can("parentNode") ?
 				$self->parentNode() :
-				$self->getParentNode());
-	return "" if (!defined $parent);
+				$self->getParentNode() );
 
-	my $name=findvalue('name()',$self);
+	return "" unless defined $parent;
 
-	my @brothers=findnodes("../$name",$self);
+	my $name = $self->findvalue('name()');
+
+	# ugly hack, part II
+	my @brothers = map{ ($_->isa( 'XML::XPath::Node::Element' ) ) ? $$_ : $_ } $parent->findnodes("./$name");
 
 	# Short-cut for nodes that have an ID. FIXME: not all DTDs use
 	# attribute named "id" as the SGML ID!
@@ -367,11 +374,12 @@ sub get_xpath_of_node {
 	# XML::XPath gets in the way badly.
 	my $theself=($self =~ m/SCALAR/?$$self:$self);
 
-	for(my $i=0; $i<=$#brothers; $i++) {
+	for my $i ( 0..$#brothers ) {
 		my $thebrother=($brothers[$i] =~ m/SCALAR/?
 						${$brothers[$i]}:$brothers[$i]);
-	    return get_xpath_of_node($parent).sprintf('/%s[%d]',$name,$i+1) if
-		  ($theself eq $thebrother);
+
+		return sprintf '%s/%s[%d]', get_xpath_of_node($parent), $name, $i+1 
+			if $theself eq $thebrother;
 	};
 
 	return get_xpath_of_node($parent)."/$name"."[?]";
