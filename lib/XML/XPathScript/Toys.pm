@@ -217,7 +217,7 @@ sub call_template {
 
 sub _apply_templates {
 	# the second '' is there just to quiet the warnings
-	return join '', '', map translate_node($_), @_;
+	return join( '', '', map translate_node($_), @_ ) || '';
 }
 
 =item  $boolean = is_element( $node )
@@ -242,7 +242,9 @@ sub translate_node {
 
 	# little catch: XML::LibXML::Comment is a 
 	# XML::LibXML::Text
-	if( UNIVERSAL::isa( $node, 'XML::LibXML::Comment' ) )
+	if(  ( $XML::XPathScript::XML_parser eq 'XML::LibXML' ) ? 
+			UNIVERSAL::isa( $node, 'XML::LibXML::Comment' ) : 
+			$node->getNodeType == XML::XPath::Node::COMMENT_NODE() )
 	{
 		return translate_comment_node( $node );
 	}
@@ -417,7 +419,8 @@ sub translate_comment_node {
 
 	return $node->toString unless $trans;
 
-	my $middle = $node->textContent;
+	my $middle = $XML::XPathScript::XML_parser eq 'XML::LibXML' ?
+					$node->textContent : $node->getData;
 
 	if (my $code = $trans->{testcode}) 
 	{
@@ -442,7 +445,7 @@ sub translate_comment_node {
 sub start_tag {
     my $node = shift;
 
-    my $name = $node->getName or return;
+    my $name = $node->getName or return '';
 
     my $string = '<'.$name;
 
