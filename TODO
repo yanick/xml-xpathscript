@@ -6,8 +6,7 @@
 
 * documentation everywhere
 
-* XML::XPath::..:Document -- must revisit
-* Add back document() to A::A::L::XPS
+* XML::XPath::..:Document -- must revisit; Add back document() to A::A::L::XPS
 
 * Explain test() and the return code 
 

@@ -16,8 +16,12 @@ Apache::AxKit::Language::YPathScript - An XML Stylesheet Language
 
 =head1 DESCRIPTION
 
-YPathScript is a fork of the original AxKit's XPathScript and is majoritary
-backward compatible with it. The definitive reference for 
+YPathScript is a fork of the original AxKit's XPathScript using 
+XML::XPathScript as its transforming engine. 
+
+As it is mostly 
+backward compatible with the classic Axkit XPathScript module, 
+the definitive reference for 
 XPathScript, located at http://axkit.org/docs/xpathscript/guide.dkb,
 also applies to YPathScript, excepts for the differences listed in the
 sections below.
@@ -29,51 +33,10 @@ sections below.
 A copy of the Apache::AxKit::request object -- which is itself a wrapper around
 the Apache::request object -- tied to the current document.
 
+	<%	$location = $r->blah() %>
+	<p>URL: <%= $location %></p>
+
 =back 
-
-=cut
-
-=head1 Apache::AxKit::Language::YPathScript
-
-Sub-class of Apache::AxKit::Language and XML::XPathScript.
-
-=head2 global variables
-
-$VERSION 
-
-$stash - Hash table of stylesheets
-
-=head2 Imported modules
-
-=over
-
-=item Apache
-
-=item Apache::File
-
-=item XML::XPath 1.00
-
-=item XML::XPath::XMLParser
-
-=item XML::XPath::Node
-
-=item XML::XPath::NodeSet
-
-=item XML::Parser
-
-=item Apache::AxKit::Provider
-
-=item Apache::AxKit::Language
-
-=item Apache::AxKit::Cache
-
-=item Apache::AxKit::Exception
-
-=item Apache::AxKit::CharsetConv
-
-=item X::X::Processor
-
-=back
 
 =cut
 
@@ -86,7 +49,7 @@ use Apache::AxKit::Exception;
 use Apache::AxKit::CharsetConv;
 use XML::XPathScript; 
 
-$VERSION = '1.4';
+$VERSION = 1.4;
 
 =head2 Functions
 
@@ -307,150 +270,7 @@ sub die{ die @_ }
 
 __END__
 
-=item $compiled_package = $self->get_stylesheet( $stylesheet_provider )
 
-=cut
-
-
-sub get_stylesheet
-{
-	my ( $self, $provider ) = @_;
-    
-    my $mtime = $provider->mtime();
-    my $style_key = $provider->key();
-    my $package = $self->gen_package_name();
-    
-    $self->debug(6, "Checking stylesheet mtime: $mtime\n");
-
-    if ( 0 and $stash->{$style_key}
-		and exists($stash->{$style_key}{mtime})
-		and !$provider->has_changed($stash->{$style_key}{mtime})
-		and check_inc_mtime($stash->{$style_key}{mtime}, $provider, $stash->{$style_key}{includes})) {
-        # cached... just exec.
-        $self->debug(7, "Using stylesheet cache\n");
-		$self->{compiledstylesheet} = $stash->{$style_key};
-    }
-    else {
-        # recompile stylesheet.
-        $self->debug(6, "Recompiling stylesheet: $style_key\n");
-		eval { 
-			my $fh = $provider->get_fh();
-			local $/;
-			$self->{stylesheet} = <$fh>;
-		};
-		if ($@) {
-			$self->{stylesheet} = ${ $provider->get_strref() };
-		}
-        $stash->{$style_key} = $self->compile($package, $provider);
-        $stash->{$style_key}{mtime} = $self->get_mtime( undef, $provider);
-    }
-
-	return $package;
-}
-
-
-=item check_inc_mtime( $mtime, $provider, \@includes )
-
-	Check the modified time of included files
-
-	Use Apache::Axkit::Provider
-
-	Return 0 if recompile is required, 1 otherwise (?)
-
-	Not in X::X.
-
-=cut
-
-sub check_inc_mtime {
-    my ($mtime, $provider, $includes) = @_;
-    
-    my $apache = $provider->apache_request;
-    
-    for my $inc (@$includes) {
-#        warn "Checking mtime for $inc\n";
-        my $sub = $apache->lookup_uri($inc);
-        local $AxKit::Cfg = Apache::AxKit::ConfigReader->new($sub);
-        
-        my $inc_provider = Apache::AxKit::Provider->new_style_provider($sub);
-        
-        if ($inc_provider->has_changed($mtime)) {
-#            warn "$inc newer (" . $inc_provider->mtime() . ") than last compile ($mtime) causing recompile\n";
-            return;
-        }
-    }
-    return 1;
-}
-
-
-=item compile( $package, $provider )
-
-Compile the XPS stylesheet given in $provider into the package
-$package and wrap it in the function &handler of that package.
-
-Pretty much the same as for X::X
-
-
-sub compile {
-    my ($self, $package, $provider) = @_;
-
-    $self->debug( 5, 'Compiling package...' );
-
-    my $script = $self->extract($provider);
-    
-    my $eval = join('',
-            'package ',
-            $package,
-            '; use Apache qw(exit);',
-            'use XML::XPath::Node;',
-            'Apache::AxKit::Language::YPathScript::Processor->import;',
-            'sub handler {',
-            'my ($r, $xp, $t) = @_;',
-            "\n#line 1 " . $provider->key() . "\n",
-            $script,
-            ";\n",
-            'return Apache::Constants::OK;',
-            "\n}",
-            );
-
-    local $^W;
-
-    AxKit::Debug(10, "Compiling script:\n$eval\n");
-    eval $eval;
-    if ($@) {
-        AxKit::Debug(1, "Compilation failed: $@");
-        throw $@;
-    }
-}
-
-=cut
-
-=item	$file_content = include_file( $filename, $provider, $scalar_output )
-
-Wrapper around extract. Verify if $filename hasn't already been
-extracted before.
-
-Exists in X::X in a simplified version.
-
-=cut
-
-sub include_file {
-    my ($self, $filename, $provider, $script_output) = @_;
-
-    # return if already included
-    my $key = $provider->key();
-    return '' if grep $_ eq $filename, @{$stash->{$key}{includes}};
-
-    push @{$stash->{$key}{includes}}, $filename;
-    
-    my $apache = $provider->apache_request;
-    my $sub = $apache->lookup_uri($filename);
-    local $AxKit::Cfg = Apache::AxKit::ConfigReader->new($sub);
-    
-    my $inc_provider = Apache::AxKit::Provider->new_style_provider($sub);
-    
-    return $self->extract( $inc_provider );
-	
-}
 
 =item  $nodeset = XML::XPath::Function::document( $node, $uri )
 
@@ -522,56 +342,4 @@ sub XML::XPath::Function::document {
     return $results;
 }
 
-=item   $mtime =  get_mtime( $class, $provider )
-
-Returns the mtime of $provider. 
-
-$class is not used.
-
-The global $stash is modified as a side-effect.
-
-Does not exist in X::X.
-
-=cut
-
-sub get_mtime {
-
-	return 0;
-	my $self = shift;
-    my $class = shift;
-    my ($provider) = @_;
-
-    my $mtime = $provider->mtime();
-    my $filename = $provider->key();
-
-    if (!$stash->{$filename}) {
-        # compile stylesheet
-        $self->compile( $self->get_package_name($filename), $provider);
-    
-        $stash->{$filename}{mtime} = $mtime;
-        return 0;
-    }
-
-    my $apache = $provider->apache_request;
-    
-    for my $inc (@{$stash->{$filename}{includes}}) {
-        
-        my $sub = $apache->lookup_uri($inc);
-        local $AxKit::Cfg = Apache::AxKit::ConfigReader->new($sub);
-        
-        my $inc_provider = Apache::AxKit::Provider->new_style_provider(
-                $sub, 
-                # uri => $inc,
-                );
-        
-#        warn "Checking mtime of $inc\n";
-        if ($inc_provider->has_changed($mtime)) {
-            $mtime = $inc_provider->mtime();
-        }
-    }
-    
-    return $mtime;
-}
-
-
-1;
+'Apache::AxKit::Language::YPathScript';
