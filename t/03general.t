@@ -2,7 +2,7 @@ use strict;
 use Test;
 
 BEGIN { 
-	plan tests => 21, todo => [];
+	plan tests => 22, todo => [];
 }
 
 use XML::XPathScript;
@@ -184,3 +184,7 @@ STYLESHEET
 
 EXPECTED
 }
+
+
+test_xml( '<rootnode><tag>0</tag></rootnode>', '<%= apply_templates() %>', '<rootnode><tag>0</tag></rootnode>', 'string "0" appears' );
+
