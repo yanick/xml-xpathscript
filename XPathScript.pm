@@ -46,11 +46,11 @@ AxKit project at http://axkit.org/.
 
 XPathScript is a stylesheet language similar in many ways to XSLT (in
 concept, not in appearance), for transforming XML from one format to
-another format (possibly HTML, but XPathScript also shines for
-non-XML-like output).
+another (possibly HTML, but XPathScript also shines for non-XML-like
+output).
 
-Like XSLT, XPathScript has a dialect to mix up verbatim document
-portions and code. Also like XSLT, it leverages the powerful
+Like XSLT, XPathScript offers a dialect to mix verbatim portions of
+documents and code. Also like XSLT, it leverages the powerful
 ``templates/apply-templates'' and ``cascading stylesheets'' design
 patterns, that greatly simplify the design of stylesheets for
 programmers. The availability of the I<XPath> query language inside
@@ -59,11 +59,10 @@ side-effect-free coding style. But unlike XSLT which uses its own
 dedicated control language with an XML-compliant syntax, XPathScript
 uses Perl which is terse and highly extendable.
 
-The result of the merge is an extremely powerful environment for
-development tasks that involve rendering complex XML documents to
-other formats. Stylesheets written in XPathScript are very easy to
-create, extend and reuse, even if they manage hundreds of different
-XML tags.
+The result of the merge is an extremely powerful tool for rendering
+complex XML documents into other formats. Stylesheets written in
+XPathScript are very easy to create, extend and reuse, even if they
+manage hundreds of different XML tags.
 
 =head1 STYLESHEET WRITER DOCUMENTATION
 
