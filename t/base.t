@@ -5,10 +5,9 @@ use Test;
 
 BEGIN 
 { 
-	plan tests => 8, todo => [];
+	plan tests => 10, todo => [];
 	unshift @INC, '../blib/arch';
 	unshift @INC, '../blib/lib';
-
 }
 
 use XML::YPathScript;
@@ -68,3 +67,18 @@ EOT
 
 test_xml( $xml, $xps, "\n<doc>blue</doc>\n", 'Interpolation (enabled)'  );
 
+test_xml( '<doc><apple/><banana/></doc>', <<'EOT', "<doc>!<apple></apple><banana></banana>?</doc>\n", 'Prechildren and Postchildren tags' );
+<%
+	$t->{doc}{prechildren} = '!';
+	$t->{doc}{postchildren} = '?';
+	$t->{doc}{showtag} = 1;
+%><%= apply_templates() %>
+EOT
+
+test_xml( '<doc><apple/><banana/></doc>', <<'EOT', "<doc>!<apple></apple>?!<banana></banana>?</doc>\n", 'Prechild and Postchild tags' );
+<%
+	$t->{doc}{prechild} = '!';
+	$t->{doc}{postchild} = '?';
+	$t->{doc}{showtag} = 1;
+%><%= apply_templates() %>
+EOT
