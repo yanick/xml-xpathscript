@@ -230,99 +230,86 @@ Returns true if $node is an element node, false otherwise.
 =cut
 
 sub is_element_node {
-	my $node = shift;
-
     return ( $XML::XPathScript::XML_parser eq 'XML::LibXML' ) ? 
-		UNIVERSAL::isa( $node, 'XML::LibXML::Element' ) : 
-		$node->isElementNode;
+		UNIVERSAL::isa( $_[0], 'XML::LibXML::Element' ) : 
+		$_[0]->isElementNode;
 }
 
 sub translate_node {
     my $node = shift;
 
-    my $translations = $XML::XPathScript::trans;
-
-	if( $XML::XPathScript::XML_parser eq 'XML::LibXML' and 
-		UNIVERSAL::isa($node,"XML::LibXML::Document") ) 
+	if( UNIVERSAL::isa($node,"XML::LibXML::Document") ) 
 	{
 		$node = $node->documentElement;
 	}
 
-	if( $XML::XPathScript::XML_parser eq 'XML::LibXML' and
-		UNIVERSAL::isa( $node, 'XML::LibXML::Comment' ) )
+	# little catch: XML::LibXML::Comment is a 
+	# XML::LibXML::Text
+	if( UNIVERSAL::isa( $node, 'XML::LibXML::Comment' ) )
 	{
-		my $trans = $translations->{'#comment'} || $translations->{'comment()'};
+		return translate_comment_node( $node );
+	}
 
-		return $node->toString unless $trans;
+	if ( ( $XML::XPathScript::XML_parser eq 'XML::LibXML' ) ? UNIVERSAL::isa( $node, 'XML::LibXML::Text' ) : $node->isTextNode) 
+	{
+		return translate_text_node( $node );
+	}
 
-		my $middle = $node->textContent;
 
-		if (my $code = $trans->{testcode}) 
-		{
-			my $t = {};
-			my $retval = $code->($node, $t);
-			if ($retval and %$t) {
-				foreach my $tkey (keys %$t) {
-					$trans->{$tkey} = $t->{$tkey};
-				}
+	return translate_element_node( $node ) if is_element_node( $node );
+
+
+	# don't output top-level PI's
+	# could this be it?
+	if ($XML::XPathScript::XML_parser eq 'XML::XPath' and $node->isPINode) {
+		return try {
+			if ($node->getParentNode->getParentNode) {
+				return $node->toString;
 			}
+			return '';
+		} catch Error with {
+			return '';
+		};
+	}
+	return $node->toString;
+}
 
-			return if $retval == DO_NOT_PROCESS;
-			$middle = '' if $retval == DO_SELF_ONLY;
-		}
+sub translate_text_node {
 	
-		$trans->{pre} ||= '';
-		$trans->{post} ||= '';
+	my $node = shift;
+    my $translations = $XML::XPathScript::trans;
 
-		return $trans->{pre}. $middle. $trans->{post};
-	}
+	my $trans = $translations->{'#text'} || $translations->{'text()'};
 
-	if ( ( $XML::XPathScript::XML_parser eq 'XML::LibXML' ) ? UNIVERSAL::isa( $node, 'XML::LibXML::Text' )
-	                                               : $node->isTextNode) 
+	return $node->toString unless $trans;
+
+	my $middle = $node->toString;
+	my $retval;
+
+	if (my $code = $trans->{testcode}) 
 	{
-		my $trans = $translations->{'#text'} || $translations->{'text()'};
+		my $t = {};
+		$retval = $code->($node, $t);
+		return if $retval == DO_NOT_PROCESS;
 
-		return $node->toString unless $trans;
-
-		my $middle = $node->toString;
-		my $retval;
-
-		if (my $code = $trans->{testcode}) 
+		if ($retval and %$t) 
 		{
-			my $t = {};
-			$retval = $code->($node, $t);
-			return if $retval == DO_NOT_PROCESS;
-
-			if ($retval and %$t) 
-			{
-				$trans->{$_} = $t->{$_} for keys %$t;
-			}
-			
-			$middle = '' if $retval == DO_SELF_ONLY;
+			$trans->{$_} = $t->{$_} for keys %$t;
 		}
-
-		# not pretty, but keep warning mollified
-		return ($trans->{pre} ||''). 
-		       ($middle       ||'').
-			   ($trans->{post}||'');
+			
+		$middle = '' if $retval == DO_SELF_ONLY;
 	}
 
-    unless( is_element_node( $node ) ) 
-	{
-        # don't output top-level PI's
-		# could this be it?
-        if ($XML::XPathScript::XML_parser eq 'XML::XPath' and $node->isPINode) {
-            return try {
-                if ($node->getParentNode->getParentNode) {
-                    return $node->toString;
-                }
-                return '';
-            } catch Error with {
-                return '';
-            };
-        }
-        return $node->toString;
-    }
+	# not pretty, but keep warning mollified
+	return ($trans->{pre} ||''). 
+		   ($middle       ||'').
+		   ($trans->{post}||'');
+}
+
+sub translate_element_node {
+
+	my $node = shift;
+    my $translations = $XML::XPathScript::trans;
 
     my $node_name = $node->getName;
     my $trans;
@@ -362,9 +349,7 @@ sub translate_node {
         elsif ($result == DO_SELF_ONLY ) {
             $dokids = 0;
         }
-        else { 	# any number beside 0 and -1 will do the kids
-            $dokids = 1;
-        }
+        # any number beside 0 and -1 will do the kids
     }
 
     local $translations->{$node_name};
@@ -393,51 +378,76 @@ sub translate_node {
 
     if ($dokids) 
 	{
-        my $middle = '';
+        my $middle;
         for my $kid ($node->getChildNodes()) 
 		{
-            if ( is_element_node( $kid ) ) 
-			{
-                $middle .= interpolate($node, $trans->{prechild}) .
-                        	_apply_templates($kid) .
-                        	interpolate($node, $trans->{postchild});
-            }
-            else 
-			{
-                $middle .= _apply_templates($kid);
-            }
+			$middle .= interpolate($node, $trans->{prechild})
+				if is_element_node( $kid );
+
+			$middle .= _apply_templates($kid);
+
+			$middle .= interpolate($node, $trans->{postchild})
+				if is_element_node( $kid );
         }
         
-		return $pre . $middle . $post;
+		return ($pre||'') . ($middle||'') . ($post||'');
     }
 	
     if($search) 
 	{
         my $middle = '';
         for my $kid (findnodes($search, $node)) {
-            if ( is_element_node( $kid ) ) {
-                $middle .= interpolate($node, $trans->{prechild}) .
-                        _apply_templates($kid) .
-                        interpolate($node, $trans->{postchild});
-            }
-            else {
-                $middle .= _apply_templates($kid);
-            }
+
+			$middle .= interpolate($node, $trans->{prechild}) if is_element_node( $kid );
+			$middle .= _apply_templates($kid);
+			$middle .= interpolate($node, $trans->{postchild}) if is_element_node( $kid );
+
         }
         return $pre . $middle . $post;
     }
     
 	
 	return $pre . $post;
+
+}
+
+sub translate_comment_node {
+
+	my $node = shift;
+    my $translations = $XML::XPathScript::trans;
+
+	my $trans = $translations->{'#comment'} || $translations->{'comment()'};
+
+	return $node->toString unless $trans;
+
+	my $middle = $node->textContent;
+
+	if (my $code = $trans->{testcode}) 
+	{
+		my $t = {};
+		my $retval = $code->($node, $t);
+		if ($retval and %$t) {
+			foreach my $tkey (keys %$t) {
+				$trans->{$tkey} = $t->{$tkey};
+			}
+		}
+
+		return if $retval == DO_NOT_PROCESS;
+		$middle = '' if $retval == DO_SELF_ONLY;
+	}
+	
+	$trans->{pre} ||= '';
+	$trans->{post} ||= '';
+
+	return $trans->{pre}. $middle. $trans->{post};
 }
 
 sub start_tag {
-    my ($node) = @_;
+    my $node = shift;
 
-    my $name = $node->getName;
-    return '' unless $name;
+    my $name = $node->getName or return;
 
-    my $string = "<" . $name;
+    my $string = '<'.$name;
 
 	# do we need this for libXML?
 	if( $XML::XPathScript::XML_parser eq 'XML::XPath' )
@@ -457,7 +467,7 @@ sub start_tag {
 	   	{
 		   my $value = $attr->value;
 		   $value =~ s/'/&quot;/g;
-			$string .= ' '.$attr->name."='".$value."' ";
+			$string .= ' ' . $attr->name . "='$value' ";
 		}
     }
 
@@ -467,24 +477,22 @@ sub start_tag {
 }
 
 sub end_tag {
-    my ($node) = @_;
-
-    if (my $name = $node->getName) {
-        return "</" . $name . ">";
+    if (my $name = shift->getName) {
+        return "</$name>";
     }
-    else {
-        return '';
-    }
+	return '';
 }
 
 sub interpolate {
     my ($node, $string) = @_;
-    return '' unless defined $string;
-    return $string unless $XML::XPathScript::current->interpolating();
 
-    my $new = '';
+	# if string is empty or no interpolation,
+	# we return
+    return $string unless 
+		defined( $string ) and 
+		$XML::XPathScript::current->interpolating();
+
 	my $regex = $XML::XPathScript::current->{interpolation_regex};
-
 	$string =~ s/$regex/ $node->findvalue($1) /egs;
     return $string;
 }
