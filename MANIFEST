@@ -4,4 +4,11 @@ MANIFEST
 README
 XPathScript.pm
 t/01basic.t
+t/02interpolate.t
+t/t1.result
+t/t1.xml
+t/t1.xps
+t/t1_compat.xps
+t/t2.xps
+t/t2_compat.xps
 scripts/xpathscript

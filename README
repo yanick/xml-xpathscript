@@ -1,6 +1,7 @@
-XPathScript is an XML templating language that has some concepts from ASP
-and some from XSLT. This makes for a very flexible option for transforming
-XML to HTML or text or just about any other format.
+XPathScript is an XML templating language written in and using Perl,
+that has some concepts from ASP and some from XSLT. This makes for a
+very flexible option for transforming XML to HTML or text or just
+about any other format.
 
 An example XPathScript template that turns all XHTML links to italics:
 
@@ -14,11 +15,11 @@ The full power of XPath is available (via XML::XPath) to locate nodes in
 your XML and navigate through your XML tree.
 
 Lots of documentation is available on XPathScript at 
-http://axkit.org/docs/xpathscript/guide.dkb
+http://axkit.org/wiki/view/AxKit/XPathScriptGuide
 
 XPathScript was originally only available in AxKit, but this version is
 independant of AxKit. All the originaly functionality is available,
-except for the lack of a $r (Apache::Request) object.
+except for the lack of a $r (Apache::Request) object and axkit:// URIs.
 
 Help is available on the AxKit users mailing list. See http://axkit.org for
 more details.
