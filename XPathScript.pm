@@ -762,17 +762,17 @@ method in a subclass provides yet another method to redirect output.
 =cut "
 
 sub print {
-    my ($self, $text)=@_;
+    my ($self, @text)=@_;
     my $printer=$self->{printer};
     if (!defined $printer) {
-	print ORIGINAL_STDOUT $text;
+	print ORIGINAL_STDOUT @text;
     } elsif (ref($printer) eq "CODE") {
-	$printer->($text);
+	$printer->(@text);
     } elsif (UNIVERSAL::isa($printer, "SCALAR")) {
-	$$printer.=$text;
+	$$printer.= join '', @text;
     } else {
 	local $\=undef;
-	print $printer $text;
+	print $printer @text;
     };
 }
 
