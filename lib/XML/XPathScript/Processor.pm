@@ -74,6 +74,7 @@ use vars '@ISA', '@EXPORT';
 		DO_SELF_AND_KIDS
 		DO_SELF_ONLY
 		DO_NOT_PROCESS
+		DO_TEXT_AS_SUBNODE
         );
 
 =pod "
@@ -106,13 +107,28 @@ empty string.
 
 =item I<DO_TEXT_AS_SUBNODE>
 
-B<UNIMPLEMENTED>, at design phase
+only meaningful for text nodes. When this value is returned, I<XML::XPathScript::Processor> 
+pretends that the text is a children of the node, which basically means that 
+C<< $t->{pre} >> and C<< $t->{post} >> will frame the text instead of
+replacing it.
+
+E.g.
+
+	$t->{pre} = '<text/>';
+	#  will do <foo>bar</foo>  =>  <foo><text/></foo>
+
+
+	$t->{pre} = '<t>';
+	$t->{post} =  '</t>';
+	$t->{testcode} = sub{ DO_TEXT_AS_SUBNODE };
+	#  will do <foo>bar</foo>  =>  <foo><t>bar</t></foo>
 
 =cut "
 
-use constant DO_SELF_AND_KIDS =>  1;
-use constant DO_SELF_ONLY     => -1;
-use constant DO_NOT_PROCESS   =>  0;
+use constant DO_TEXT_AS_SUBNODE =>  2;
+use constant DO_SELF_AND_KIDS   =>  1;
+use constant DO_SELF_ONLY       => -1;
+use constant DO_NOT_PROCESS     =>  0;
 
 =pod "
 
@@ -533,7 +549,7 @@ sub translate_text_node {
 
 	return $node->toString unless $trans;
 
-	my $middle = $node->toString;
+	my $middle = '';
 	my $retval;
 
 	if (my $code = $trans->{testcode}) 
@@ -546,8 +562,8 @@ sub translate_text_node {
 		{
 			$trans->{$_} = $t->{$_} for keys %$t;
 		}
-			
-		$middle = '' if $retval == DO_SELF_ONLY;
+		
+		$middle = $node->toString if $retval == DO_TEXT_AS_SUBNODE;
 	}
 
 	# not pretty, but keep warning mollified
