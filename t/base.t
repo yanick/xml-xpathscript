@@ -5,12 +5,13 @@ use Test;
 
 BEGIN 
 { 
-	plan tests => 10, todo => [];
+	plan tests => 11, todo => [];
 	unshift @INC, '../blib/arch';
 	unshift @INC, '../blib/lib';
 }
 
 use XML::YPathScript;
+use Apache::AxKit::Language::YPathScript;
 
 ok(1); 
 
@@ -67,7 +68,15 @@ EOT
 
 test_xml( $xml, $xps, "\n<doc>blue</doc>\n", 'Interpolation (enabled)'  );
 
-test_xml( '<doc><apple/><banana/></doc>', <<'EOT', "<doc>!<apple></apple><banana></banana>?</doc>\n", 'Prechildren and Postchildren tags' );
+test_xml( '<doc><apple/><banana/></doc>', <<'EOT', "<doc>!<apple></apple><banana></banana>?</doc>\n", 'Prechildren and Postchildren tags, with children' );
+<%
+	$t->{doc}{prechildren} = '!';
+	$t->{doc}{postchildren} = '?';
+	$t->{doc}{showtag} = 1;
+%><%= apply_templates() %>
+EOT
+
+test_xml( '<doc></doc>', <<'EOT', "<doc></doc>\n", 'Prechildren and Postchildren tags, without children' );
 <%
 	$t->{doc}{prechildren} = '!';
 	$t->{doc}{postchildren} = '?';

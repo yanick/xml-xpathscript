@@ -18,3 +18,17 @@ one or the other, do
 	perl Makefile.PL XML_parser=XML::libXML
 	or
 	perl Makefile.PL XML_parser=XML::XPath
+
+
+To use YPS under AxKit, add the following to your httpd.conf (the first
+two lines are probably already present):
+
+	PerlModule AxKit
+	AddHandler AxKit .xml
+	AxAddStyleMap application/x-ypathscript Apache::AxKit::Language::YPathScript
+
+And to your .htaccess something like:
+
+	<AxStyleName "#default">
+	   AxAddProcessor application/x-ypathscript your_stylesheet.xps
+	</AxStyleName>

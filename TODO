@@ -1,9 +1,12 @@
-* Be able to configure the default parser from configuration:
-	perl Makefile.PL --parser=libXML or
-	perl Makefile.PL --parser=XPath
-	
-* Make sure that everything work (both with XPath and libXML)
+* INCLUDEs for A::A::YPS -> which directory is home?
+	ONLINE
+		plain vanila -> URL
+		prefixed with SRC_DIR
+		prefixed with SS_DIR
 
+* prechildren and prechild and the posts too
 
+* Take care of constants
 
+* Doc the treatment of comments
 
