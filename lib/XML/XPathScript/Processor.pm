@@ -80,24 +80,39 @@ use vars '@ISA', '@EXPORT';
 
 =over 4
 
+=item I<DO_SELF_AND_KIDS>, I<DO_SELF_ONLY>, I<DO_NOT_PROCESS>,
+I<DO_TEXT_AS_SUBNODE>
+
+Symbolic constants evaluating respectively to 1, -1, 0 and 2, to be
+used as mnemotechnic return values in C<< ->{testcode} >> routines
+instead of the numeric values which are harder to
+remember. Specifically:
+
 =item I<DO_SELF_AND_KIDS>
+
+tells I<XML::XPathScript::Processor> to render the current node as C<<
+$t->{pre} >>, followed by the result of the call to
+L</apply_templates> on the subnodes, followed by C<< $t->{post} >>.
 
 =item I<DO_SELF_ONLY>
 
+tells I<XML::XPathScript::Processor> to render the current node simply
+as C<< $t->{pre} >>, followed by C<< $t->{post} >>.
+
 =item I<DO_NOT_PROCESS>
 
-Symbolic constants evaluating respectively to 1, -1 and 0, to be used
-as mnemotechnic return values in C<testcode> routines instead of the
-numeric values which are harder to remember.
+tells I<XML::XPathScript::Processor> to render the current node as the
+empty string.
+
+=item I<DO_TEXT_AS_SUBNODE>
+
+B<UNIMPLEMENTED>, at design phase
 
 =cut "
 
 use constant DO_SELF_AND_KIDS =>  1;
 use constant DO_SELF_ONLY     => -1;
 use constant DO_NOT_PROCESS   =>  0;
-
-# quieten warnings when compiling this module
-sub apply_templates (;$@);
 
 =pod "
 
@@ -222,20 +237,20 @@ sub set_namespace
 
 =item I<apply_templates($xpath, $context)>
 
-=item I<&apply_templates(@nodes)> # mind the "&"!
+=item I<apply_templates(@nodes)>
 
 This is where the whole magic in XPathScript resides: recursively
 applies the stylesheet templates to the nodes provided either
-literally (last invocation form - mind the "&" in this case, otherwise
-the function prototype could coerce your list into a scalar!) or
-through an XPath expression (second and third invocation forms), and
-returns a string concatenation of all results. If called without
-arguments at all, renders the whole document.
+literally (last invocation form) or through an XPath expression
+(second and third invocation forms), and returns a string
+concatenation of all results. If called without arguments at all,
+renders the whole document (same as C<< apply_templates("/") >>).
 
 Calls to I<apply_templates()> may occur both implicitly (at the top of
-the document, and for rendering subnodes when the templates choose not
-to handle that by themselves), and explicitly (from C<testcode>
-routines).
+the document, and for rendering subnodes when the templates choose to
+handle that by themselves), and explicitly (because C<testcode>
+routines require the XML::XPathScript::Processor to
+L</DO_SELF_AND_KIDS>).
 
 If appropriate care is taken in all templates (especially the
 C<testcode> routines and the I<text()> template), the string result of
@@ -246,7 +261,7 @@ pass.
 
 =cut "
 
-sub apply_templates (;$@) {
+sub apply_templates {
 	# catch the calls to apply_templates() 
 	return apply_templates( findnodes('/') ) unless @_;
 	
