@@ -6,6 +6,8 @@
 
 * simplify code of compile (2 versions for no good reason)
 
+* documentation everywhere
+
 * XML::XPath::..:Document -- must revisit
 
 * Explain test() and the return code 
