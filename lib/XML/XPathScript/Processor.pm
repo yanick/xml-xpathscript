@@ -50,6 +50,7 @@ both these contexts.
 package XML::XPathScript::Processor;
 
 use strict;
+use warnings;
 
 use Exporter;
 use vars '@ISA', '@EXPORT';
@@ -351,7 +352,8 @@ sub call_template {
 }
 
 sub _apply_templates {
-	return join( '', map { translate_node($_) or "" } @_ );
+	no warnings 'uninitialized';
+	return join '', map translate_node($_), @_;
 }
 
 =item  is_element_node ( $object )
@@ -603,6 +605,7 @@ sub translate_element_node {
 		unless( $trans = $translations->{$node_name} )
 		{
 			# no specific and no generic? Okay, okay, return as is...
+			no warnings qw/ uninitialized /;
 			return start_tag($node) . 
                 	_apply_templates( ( $XML::XPathScript::XML_parser eq 'XML::LibXML' ) ? 
 										$node->childNodes : $node->getChildNodes) .
@@ -670,7 +673,7 @@ sub translate_element_node {
 				if is_element_node( $kid );
         }
         
-		return ($pre||'') . ($middle||'') . ($post||'');
+		return ($pre||'') . ( $middle||'' ) . ($post||'');
     }
 	
     if($search) 
@@ -766,7 +769,7 @@ sub end_tag {
 
 sub interpolate {
     my ($node, $string) = @_;
-
+	
 	# if string is empty or no interpolation,
 	# we return
     return( $string || '' ) unless 
