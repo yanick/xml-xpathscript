@@ -294,6 +294,12 @@ Re-uses a previous return value of I<compile()> (see L</SYNOPSIS> and
 L</compile>), typically to apply the same stylesheet to several XML
 documents in a row.
 
+=item interpolation_regex => $regex
+
+Sets the interpolation regex to be $regex. Whatever is
+captured in $1 will be used as the xpath expression. 
+Defaults to qr/{(.*?)}/.
+
 =back
 
 =cut "
@@ -303,6 +309,7 @@ sub new {
     die "Invalid hash call to new" if @_ % 2;
     my %params = @_;
     my $self = \%params;
+	$self->{interpolation_regex} ||= qr/{(.*?)}/;
     bless $self, $class;
 }
 

@@ -489,7 +489,9 @@ sub interpolate {
     return $string unless $XML::XPathScript::current->interpolating();
 
     my $new = '';
-	$string =~ s/\{(.*?)\}/ $node->findvalue($1) /egs;
+	my $regex = $XML::XPathScript::current->{interpolation_regex};
+
+	$string =~ s/$regex/ $node->findvalue($1) /egs;
     return $string;
 }
 
