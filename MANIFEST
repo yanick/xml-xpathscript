@@ -5,4 +5,5 @@ README
 YPathScript.pm
 script/yps
 t/base.t
-lib/Apache/Axkit/Language/YPathScript.pm
+lib/Apache/AxKit/Language/YPathScript.pm
+META.yml                                 Module meta-data (added by MakeMaker)
