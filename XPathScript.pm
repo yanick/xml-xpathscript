@@ -1,6 +1,4 @@
 package XML::XPathScript;
-# Revision: $Rev: 12 $
-# Last Changed: $Date: 2004-07-11 16:37:16 -0400 (Sun, 11 Jul 2004) $   
 
 use strict;
 use warnings;
@@ -43,44 +41,23 @@ XML::XPathScript - a Perl framework for XML stylesheets
 
 =head1 DESCRIPTION
 
-I<XML::XPathScript> is a fork of I<XML::XPathScript>, 
-itself a fork of Matt Sergeant's I<XPathScript>, and
-unless where specified otherwise, it is meant to provide
-the same functionality and behaviors than the original XPathScript. 
-
-Notable differences with XPS are:
-
-	* YPS uses either XML::libXML or XML::XPath as its parser.
-	
-	* YPS's interpolation is controlled by the variable 
-		$XML::XPathScript::DoNotInterpolate. By default
-		YPS does not interpolate.
-		
-	* the pre/postchildren template sub-keys are only used if
-		the node actually has children 
-		
-	* the template supports a #comment key. 
-	  E.g.:
-	  	
-		$t->{'#comment'}{pre}  = 'This is a comment {';
-		$t->{'#comment'}{post} = "}\n";
-	
-
-		
-
+This is the I<XML::XPathScript> stylesheet framework, part of the
+AxKit project at http://axkit.org/.
 
 XPathScript is a stylesheet language similar in many ways to XSLT (in
 concept, not in appearance), for transforming XML from one format to
 another format (possibly HTML, but XPathScript also shines for
 non-XML-like output).
 
-Like XSLT, XPathScript uses the powerful ``templates/apply-templates''
-and ``cascading stylesheets'' design patterns, that greatly simplifies
-the design of stylesheets for programmers. The availability of the
-I<XPath> query language inside stylesheets promotes the use of a purely
-document-dependent, side-effect-free coding style. Unlike XSLT which
-uses its own dedicated control language with an XML-compliant syntax,
-XPathScript uses Perl which is terse and highly extendable.
+Like XSLT, XPathScript has a dialect to mix up verbatim document
+portions and code. Also like XSLT, it leverages the powerful
+``templates/apply-templates'' and ``cascading stylesheets'' design
+patterns, that greatly simplify the design of stylesheets for
+programmers. The availability of the I<XPath> query language inside
+stylesheets promotes the use of a purely document-dependent,
+side-effect-free coding style. But unlike XSLT which uses its own
+dedicated control language with an XML-compliant syntax, XPathScript
+uses Perl which is terse and highly extendable.
 
 The result of the merge is an extremely powerful environment for
 development tasks that involve rendering complex XML documents to
@@ -104,7 +81,7 @@ is to be invoked like this:
    xpathscript mydocument.xml mystylesheet.xps
 
 It will produce the resulting document on standard output. For more
-options, refer to yps's man page.
+options, refer to xpathscript's man page.
 
 =head2 Functions and global variables available in the stylesheet
 
@@ -117,7 +94,7 @@ all code written in the embedded stylesheet dialect.
 
 =over
 
-=cut 
+=cut "
 
 
 =pod "
@@ -144,7 +121,8 @@ or other similar packages: instead of having text inside Perl (that
 one I<print()>s), we have Perl inside text, with a special escaping
 form that a preprocessor interprets and extracts. For XPathScript,
 this preprocessor is embodied by the I<xpathscript> shell tool (see
-L</xpathscript Invocation>);
+L</xpathscript Invocation>) and also available through this package's
+API;
 
 =item *
 
@@ -160,13 +138,13 @@ preprocess time.
 
 =head2 Dependencies
 
-Although XPathScript is a core component of AxKit, which will not work
-without this module, there is plenty of motivation for doing
-stylesheets outside of a WWW application server and so
-I<XML::XPathScript> is also distributed as a standalone CPAN module.
-The AxKit XPathScript component inherits from this class and provides
-the coupling with the application framework by overloading and adding
-some methods.
+Although XPathScript is a core component of AxKit, which depends on
+this module to be able to process XPathScript stylesheets, there is
+plenty of motivation for doing stylesheets outside of a WWW
+application server and so I<XML::XPathScript> is also distributed as a
+standalone CPAN module.  The AxKit XPathScript component inherits from
+this class and provides the coupling with the application framework by
+overloading and adding some methods.
 
 I<XML::XPathScript> requires the following Perl packages:
 
@@ -174,8 +152,8 @@ I<XML::XPathScript> requires the following Perl packages:
 
 =item I<Symbol>
 
-For generating a separate namespace in which code from the embedded
-dialect will run. I<Symbol> is bundled with Perl.
+For loading files from anonymous filehandles. I<Symbol> is bundled
+with Perl.
 
 =item I<File::Basename>
 
@@ -218,7 +196,7 @@ the matching templates (as hash references).
 =cut "
 
 
-use vars qw( $VERSION $XML_parser $DoNotInterpolate );
+use vars qw( $VERSION $XML_parser $DoNotInterpolate $debug_level );
 
 use Symbol;
 use File::Basename;
@@ -228,12 +206,12 @@ $VERSION = '0.12';
 
 $XML_parser = 'XML::LibXML';
 
-# By default, no interpolation
-$DoNotInterpolate = 1;
+# By default, we interpolate
+$DoNotInterpolate = 0;
 
 # internal variable for debugging information. 
 # 0 is total silence and 10 is complete verbiage
-my $debug_level = 0;
+$debug_level = 0;
 
 sub import
 {
@@ -322,7 +300,7 @@ documents in a row.
 
 sub new {
     my $class = shift;
-    die "Invalid hash call to new (param: ".join(':',@_).")" if @_ % 2;
+    die "Invalid hash call to new" if @_ % 2;
     my %params = @_;
     my $self = \%params;
     bless $self, $class;
@@ -333,15 +311,24 @@ sub new {
 
 =item I<process()>
 
-=item my $output = I<process( 'return' )>
+=item I<process($printer)>
 
-=item I<process( $stdout_tie, @varvalues )>
+=item I<process($printer,@varvalues)>
 
 Processes the document and stylesheet set at construction time, and
-prints the result to STDOUT by default. If $stdout_tie is set, it
-must be either the name of a class that will be tied to STDOUT, 
-or the string 'return', in which case STDOUT will be tied to the 
-class XML::XPathScript::Blah::Buffer and will be returned by the function. 
+prints the result to STDOUT by default. If $printer is set, it must be
+either a reference to a filehandle open for output, or a reference to
+a string, or a reference to a subroutine which does the output, as in
+
+   my $buffer="";
+   $xps->process(sub {$buffer.=shift;});
+
+or
+
+   $xps->process(sub {print ANOTHERFD (shift);});
+
+(not that the latter would be any good, since C<<
+$xps->process(\*ANOTHERFD) >> would do exactly the same, only faster)
 
 If the stylesheet was I<compile()>d with extra I<varname>s, then the
 calling code should call I<process()> with a corresponding number of
@@ -353,7 +340,11 @@ sentence).
 =cut "
 
 sub process {
-    my ($self,$printsub,@varvalues) = @_;
+    my ($self, $printer, @extravars) = @_;
+
+    do { $$printer="" } if (UNIVERSAL::isa($printer, "SCALAR"));
+    $self->{printer}=$printer if $printer;
+
 
     my $xpath;
 
@@ -437,41 +428,34 @@ EOT
 		};
 	}
 
-	$xpath->ownerDocument->setEncoding( "UTF-8" ) if $XML_parser eq 'XML::LibXML';
+	$self->{dom} = $xpath;
 
-	#warn "XML: $xpath";
-	#warn "preparing to compile";
+	$xpath->ownerDocument->setEncoding( "UTF-8" ) 
+		if $XML_parser eq 'XML::LibXML';
 
-	# special case for 'return'
-	if( $printsub eq 'return' )
 	{
-		local *STDOUT;
-		tie *STDOUT, 'XML::XPathScript::FileHandle::Buffer';
-		$self->compile()->( $xpath );
-		my $t = (tied *STDOUT)->get_contents;
-		untie *STDOUT;
-		return $t;
-   } 
-   
-   return $self->compile()->( $xpath, $printsub );
+   		local *STDOUT;
+	   	tie *STDOUT, 'XML::XPathScript::StdoutSnatcher';
+	   	my $retval = $self->compile()->( $self, @extravars );
+	   	untie *STDOUT;
+	   	return $retval;
+	}
 }
 
 =pod "
 
 =item I<extract($stylesheet)>
 
-=item I<extract($stylesheet,$printform)>
+=item I<extract($stylesheet,$filename)>
 
-=item I<extract($stylesheet,$printform,$filename)>
-
-=item I<extract($stylesheet,$printform,@includestack)> # from include_file() only
+=item I<extract($stylesheet,@includestack)> # from include_file() only
 
 The embedded dialect parser. Given $stylesheet, which is either a
-filehandle reference or a string, returns a string that holds all
-the code in real Perl. Unquoted text and C<< <%= stuff %> >>
-constructs in the stylesheet dialect is converted into invocations of
-I<$printform>, which must be a function-like Perl form ( ``print'' by
-default), while C<< <% stuff %> >> are transcripted verbatim.
+filehandle reference or a string, returns a string that holds all the
+code in real Perl. Unquoted text and C<< <%= stuff %> >> constructs in
+the stylesheet dialect are converted into invocations of I<<
+XML::XPathScript->current()->print() >>, while C<< <% stuff %> >>
+constructs are transcripted verbatim.
 
 C<< <!-- #include --> >> constructs are expanded by passing their
 filename argument to L</include_file> along with @includestack (if any)
@@ -484,7 +468,7 @@ entry, to create line tags for the debugger). It is only a bandaid for
 I<include_file()> to pass the inclusion stack to itself across the
 mutual recursion existing between the two methods (see
 L</include_file>).  If I<extract()> is invoked from outside
-I<include_file()>, @includestack should be either empty or of size one.
+I<include_file()>, the last invocation form should not be used.
 
 This method does a purely syntactic job. No special framework
 declaration is prepended for isolating the code in its own package,
@@ -495,24 +479,19 @@ dialect.
 =cut "
 
 sub extract {
-    my ( $self, $stylesheet, $printform, @includestack ) = @_;
+    my ($self,$stylesheet,@includestack) = @_;
 
-	# if not specified, we just use a simple 'print'
-    $printform ||= "print";
-
-    my $filename = $includestack[0] || "stylesheet";
+    my $filename=$includestack[0] || "stylesheet";
 
     my $contents;
 
 	# $stylesheet can be a filehandler
 	# or a string
-    if( ref($stylesheet) ) 
-	{
+    if( ref($stylesheet) ) {
         local $/;
         $contents = <$stylesheet>;
     }
-    else 
-	{
+    else {
         $contents = $stylesheet;
     }
 
@@ -523,13 +502,13 @@ sub extract {
         my ($text, $type) = ($1, $2);
         $line += $text =~ tr/\n//; # count \n's in text
         $text =~ s/\|/\\\|/g;
-        $script .= "$printform(q|$text|);";
+        $script .= "print(q|$text|);";
         $script .= "\n#line $line $filename\n";
         if ($type eq '<%=') {
             $contents =~ /\G(.*?)%>/gcs || die "No terminating '%>' after line $line";
-            my $perlcode = $1;
-            $script .= "$printform( $perlcode );\n";
-            $line += $perlcode =~ tr/\n//;
+            my $perl = $1;
+            $script .= "print( $perl );\n";
+            $line += $perl =~ tr/\n//;
         }
         elsif ($type eq '<!--#include') {
             my %params;
@@ -541,7 +520,7 @@ sub extract {
 			die "No matching file attribute in #include at line $line"
 				unless $params{file};
 
-            $script .= $self->include_file($printform, $params{file},@includestack);
+            $script .= $self->include_file($params{file},@includestack);
         }
         else {
             $contents =~ /\G(.*?)%>/gcs || die "No terminating '%>' after line $line";
@@ -552,11 +531,10 @@ sub extract {
         }
     }
 
-    if( $contents =~ /\G(.+)/gcs ) 
-	{
+    if ($contents =~ /\G(.+)/gcs) {
         my $text = $1;
         $text =~ s/\|/\\\|/g;
-        $script .= "$printform(q|$text|);";
+        $script .= "print(q|$text|);";
     }
 
     return $script;
@@ -564,9 +542,9 @@ sub extract {
 
 =pod "
 
-=item I<include_file($print_form,$filename)>
+=item I<include_file($filename)>
 
-=item I<include_file($print_form,$filename,@includestack)>
+=item I<include_file($filename,@includestack)>
 
 Resolves a C<< <!--#include file="foo" --> >> directive on behalf of
 I<extract()>, that is, returns the script contents of
@@ -574,20 +552,19 @@ I<$filename>. The return value must be de-embedded too, which means
 that I<extract()> has to be called recursively to expand the contents
 of $filename (which may contain more C<< <!--#include --> >>s etc.)
 
-If $filename is relative (does not begin with "/" or "./"), it is
-resolved according to the basename of the stylesheet that includes it
-(that is, $includestack[0], see below) or "." if we are in the topmost
-stylesheet. Filenames beginning with "./" are considered absolute;
-this gives stylesheet writers a way to specify that they really really
-want stylesheets that are in the system's current working directory.
+$filename has to be slash-separated, whatever OS it is you are using
+(this is the XML way of things). If $filename is relative (e.g. does
+not begin with "/" or "./"), it is resolved according to the basename
+of the stylesheet that includes it (that is, $includestack[0], see
+below) or "." if we are in the topmost stylesheet. Filenames beginning
+with "./" are considered absolute; this gives stylesheet writers a way
+to specify that they really really want a stylesheet that lies in the
+system's current working directory.
 
 @includestack is the include stack currently in use, made up of all
 values of $filename through the stack, lastly added (innermost)
 entries first. The toplevel stylesheet is not in @includestack
 (e.g. the outermost call does not specify an @includestack).
-
-$print_form is an opaque payload for I<extract()> which is passed down
-to it across the mutual recursion that exists between both methods.
 
 This method may be overridden in subclasses to provide support for
 alternate namespaces (e.g. ``axkit://'' URIs).
@@ -595,7 +572,7 @@ alternate namespaces (e.g. ``axkit://'' URIs).
 =cut "
 
 sub include_file {
-    my ($self, $print_form, $filename, @includestack) = @_;
+    my ($self, $filename, @includestack) = @_;
 
     if ($filename !~ m|^\.?/|) {
 	my $reldir;
@@ -620,7 +597,7 @@ sub include_file {
 	use Carp;
 	Carp::croak "Can't read include file '$filename': $!";
     };
-    return $self->extract($sym,$print_form,$filename,@includestack);
+    return $self->extract($sym, $filename, @includestack);
 }
 
 =pod "
@@ -643,9 +620,9 @@ feature better than a lengthy paragraph would do.
 The return value is an opaque token that encapsulates a compiled
 stylesheet.  It should not be used, except as the
 I<compiledstylesheet> argument to I<new()> to initiate new objects and
-amortize the compilation time.  Subclasses may overload the type of
-the return value, but will need to overload I<process()> accordingly
-of course.
+amortize the compilation time.  Subclasses may alter the type of the
+return value, but will need to overload I<process()> accordingly of
+course.
 
 The I<compile()> method is idempotent. Subsequent calls to it will
 return the very same token, and calls to it when a
@@ -656,27 +633,30 @@ said argument.
 
 # Internal documentation: the return value is an anonymous sub whose
 # prototype is
-#     &$compiledfunc($xpath,$outputfunc,$val1,$val2,...);
+#     &$compiledfunc($xpathscriptobj, $val1, $val2,...);
 
 sub compile {
     my ($self,@extravars) = @_;
 
-    return $self->{compiledstylesheet} if defined $self->{compiledstylesheet};
+	return $self->{compiledstylesheet}
+		if defined $self->{compiledstylesheet};
 
     my $stylesheet;
 
     if (exists $self->{stylesheet}) {
-	$stylesheet=$self->{stylesheet};
-    } elsif (exists $self->{stylesheetfile}) {
-	# This hack fails if $self->{stylesheetfile} contains
-	# double quotes.  I think we can ignore this and get
-	# away.
-	$stylesheet=qq:<!--#include file="$self->{stylesheetfile}" -->\n:;
-    } else {
-	die "Cannot compile without a stylesheet";
+		$stylesheet=$self->{stylesheet};
+    } 
+	elsif (exists $self->{stylesheetfile}) {
+		# This hack fails if $self->{stylesheetfile} contains
+		# double quotes.  I think we can ignore this and get
+		# away.
+		$stylesheet=qq:<!--#include file="$self->{stylesheetfile}" -->:;
+    } 
+	else {
+		die "Cannot compile without a stylesheet\n";
     };
 
-    my $script = $self->extract($stylesheet,'$_[1]->');
+    my $script = $self->extract($stylesheet);
 
     my $package=gen_package_name();
 
@@ -690,14 +670,14 @@ sub compile {
 			use $XML_parser;  
 		    XML::XPathScript::Toys->import;
 		    sub {
-		    	my (undef,undef, $extravars ) = \@_;
-		    \$_[1]=sub {print shift} if (!defined \$_[1]);
-		    my \$t = {};
-		    local \$XML::XPathScript::trans = \$t; # Yes,
-		    # this does the sharing! Perl is a bizarre and
-		    # wonderful language.
-		    local \$XML::XPathScript::xp=\$_[0];
-		    $script
+		    	my (\$self, $extravars ) = \@_;
+				local \$XML::XPathScript::current=\$self;
+		    	my \$t = \$XML::XPathScript::current->{t} = {};
+				local \$XML::XPathScript::trans = \$t; # Yes,
+				# this does the sharing! Perl is a bizarre and
+				# wonderful language.
+				local \$XML::XPathScript::xp=\$self->{dom};
+				$script
 		    }
 EOT
 
@@ -707,14 +687,100 @@ EOT
     my $retval = eval $eval;
     die $@ unless defined $retval;
 
-    return ( $self->{compiledstylesheet} = $retval );
+    return $self->{compiledstylesheet} = $retval;
 }
 
-sub debug
-{
+=item I<interpolating()>
+
+=item I<interpolating($boolean)>
+
+Gets (first call form) or sets (second form) the XPath interpolation
+boolean flag. If true, values set in C<< $template->{pre} >> and
+similar may contain expressions within braces, that will be
+interpreted as XPath expressions and substituted in place: for
+example, when interpolation is on, the following code
+
+   $t->{'link'}{pre} = '<a href="{@url}">';
+   $t->{'link'}{post} = '</a>';
+
+is enough for rendering a C<< <link> >> element as an HTML hyperlink.
+The interpolation-less version is slightly more complex as it requires a
+C<testcode>:
+
+   $t->{'link'}{testcode} = sub {
+      my ($currentnode, $t) = @_;
+      my $url = findvalue('@url', $currentnode);
+      $t->{pre}="<a href='$url'>";
+      $t->{post}='</a>';
+	  return DO_SELF_AND_KIDS();
+   };
+
+Interpolation is on by default. A (now undocumented) global variable
+used to change the default to off, but don't do that.
+
+=cut "
+
+sub interpolating {
+    my $self=shift;
+
+    $self->{interpolating}=shift if (@_);
+
+    return exists $self->{interpolating} ?
+			$self->{interpolating} :
+		    !$XML::XPathScript::DoNotInterpolate; # Obsolete, for compatibility:
+}
+
+
+#  $self->debug( $level, $message )
+#	Display debugging information
+
+sub debug {
 	warn $_[2] if $_[1] <= $debug_level;
 }
 
+=item I<print($text)>
+
+Outputs a chunk of text on behalf of the stylesheet. The default
+implementation is to use the second argument to L</process>, which was
+stashed in C<< $self->{printer} >> by said function. Overloading this
+method in a subclass provides yet another method to redirect output.
+
+
+=cut "
+
+sub print {
+    my ($self, $text)=@_;
+    my $printer=$self->{printer};
+    if (!defined $printer) {
+	print $text;
+    } elsif (ref($printer) eq "CODE") {
+	$printer->($text);
+    } elsif (UNIVERSAL::isa($printer, "SCALAR")) {
+	$$printer.=$text;
+    } else {
+	local $\=undef;
+	print $printer $text;
+    };
+}
+
+=pod "
+
+=item I<current()>
+
+This class method (e.g. C<< XML::XPathScript->current() >>) returns
+the stylesheet object currently being applied. This can be called from
+anywhere within the stylesheet, except a BEGIN or END block or
+similar.
+
+=cut "
+
+sub current {
+    unless (defined $XML::XPathScript::current) {
+	use Carp;
+	Carp::croak "Wrong context for calling current()";
+    };
+    return $XML::XPathScript::current;
+}
 
 =pod "
 
@@ -725,32 +791,6 @@ sub debug
 The functions below are not methods.
 
 =over
-
-=item I<XML::XPath::Function::document>
-
-An XPath function made available to XPath expressions in the
-stylesheet. Should be removed?
-
-=cut "
-
-sub XML::XPath::Function::document 
-{
-    my $self = shift;
-    my ($node, @params) = @_;
-
-    die "document: Function takes 1 parameter\n" unless @params == 1;
-
-    my $parser = XML::XPath::XMLParser->new();
-
-    my $results = XML::XPath::NodeSet->new();
-    my $newdoc;
-    my $sym = gensym;
-    my $file = $params[0];
-    open($sym, $file) || die "Cannot open document() file '$file': $!";
-    $newdoc = $parser->parse( ioref => $sym );
-    $results->push($newdoc) if $newdoc;
-    return $results;
-}
 
 
 =pod "
@@ -763,28 +803,26 @@ stylesheet. Never returns twice the same name.
 =cut "
 
 do {
-	my $uniquifier;
-	sub gen_package_name {
-    	$uniquifier++;
-    	return 'XML::XPathScript::STYLESHEET'.$uniquifier;
-	}
+my $uniquifier;
+sub gen_package_name {
+    $uniquifier++;
+    return "XML::XPathScript::STYLESHEET$uniquifier";
+}
 };
 
 1;
 
-package XML::XPathScript::FileHandle::Buffer;
-# shamelessly stolen  from Tie::FileHandle::Buffer
+# small package to catch print statements within
+# the stylesheets
+package XML::XPathScript::StdoutSnatcher;
 
 sub TIEHANDLE { my $self = ''; bless \$self, $_[0] }
+sub PRINT {
+	my $self = shift;
+	XML::XPathScript::current()->print( @_ );
+}
 
-sub PRINT { ${$_[0]} .= $_[1] }
-
-sub get_contents { ${$_[0]} }
-
-sub clear { ${$_[0]} = '' }
-
-'end of XML::XPathScript::FileHandle::Buffer';
-
+'end of XML::XPathScript::StdoutSnatcher' ;
 
 __END__
 
