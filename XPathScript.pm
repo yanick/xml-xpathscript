@@ -378,7 +378,7 @@ use XML::XPathScript::Toys;
 
 $VERSION = '0.14';
 
-$XML_parser = 'XML::LibXML';
+$XML_parser = 'XML::XPath';
 
 # By default, we interpolate
 $DoNotInterpolate = 0;
@@ -855,7 +855,7 @@ sub compile {
 		    no warnings; # written stylesheets
 			
 			use $XML_parser;  
-		    XML::XPathScript::Toys->import;
+		    BEGIN {XML::XPathScript::Toys->import;}
 		    sub {
 		    	my (\$self, $extravars ) = \@_;
 				local \$XML::XPathScript::current=\$self;
