@@ -15,3 +15,8 @@
 * configurable interpolation pattern
 
 $current->interpolation_regex( qq/\[\[(.*)\]\]/ )
+
+* It would be quite easy to come
+	up with a variation of XPS that output a DOM tree rather than
+	text. It wouldn't be as flexible as classic XPS, but it would probably
+	be a little more zippy for long transformation chains
