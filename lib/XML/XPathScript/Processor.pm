@@ -74,7 +74,7 @@ use vars '@ISA', '@EXPORT';
 		DO_SELF_AND_KIDS
 		DO_SELF_ONLY
 		DO_NOT_PROCESS
-		DO_TEXT_AS_SUBNODE
+		DO_TEXT_AS_CHILD
         );
 
 =pod "
@@ -82,7 +82,7 @@ use vars '@ISA', '@EXPORT';
 =over 4
 
 =item I<DO_SELF_AND_KIDS>, I<DO_SELF_ONLY>, I<DO_NOT_PROCESS>,
-I<DO_TEXT_AS_SUBNODE>
+I<DO_TEXT_AS_CHILD>
 
 Symbolic constants evaluating respectively to 1, -1, 0 and 2, to be
 used as mnemotechnic return values in C<< ->{testcode} >> routines
@@ -105,10 +105,10 @@ as C<< $t->{pre} >>, followed by C<< $t->{post} >>.
 tells I<XML::XPathScript::Processor> to render the current node as the
 empty string.
 
-=item I<DO_TEXT_AS_SUBNODE>
+=item I<DO_TEXT_AS_CHILD>
 
 only meaningful for text nodes. When this value is returned, I<XML::XPathScript::Processor> 
-pretends that the text is a children of the node, which basically means that 
+pretends that the text is a child of the node, which basically means that 
 C<< $t->{pre} >> and C<< $t->{post} >> will frame the text instead of
 replacing it.
 
@@ -120,15 +120,15 @@ E.g.
 
 	$t->{pre} = '<t>';
 	$t->{post} =  '</t>';
-	$t->{testcode} = sub{ DO_TEXT_AS_SUBNODE };
+	$t->{testcode} = sub{ DO_TEXT_AS_CHILD };
 	#  will do <foo>bar</foo>  =>  <foo><t>bar</t></foo>
 
 =cut "
 
-use constant DO_TEXT_AS_SUBNODE =>  2;
-use constant DO_SELF_AND_KIDS   =>  1;
-use constant DO_SELF_ONLY       => -1;
-use constant DO_NOT_PROCESS     =>  0;
+use constant DO_TEXT_AS_CHILD =>  2;
+use constant DO_SELF_AND_KIDS =>  1;
+use constant DO_SELF_ONLY     => -1;
+use constant DO_NOT_PROCESS   =>  0;
 
 =pod "
 
@@ -280,7 +280,7 @@ pass.
 sub apply_templates {
 	# catch the calls to apply_templates() 
 	return apply_templates( findnodes('/') ) unless @_;
-	
+
     my ($arg1, @args) = @_;
 
     unless( ref($arg1) ) { # called with a path to find
@@ -563,7 +563,7 @@ sub translate_text_node {
 			$trans->{$_} = $t->{$_} for keys %$t;
 		}
 		
-		$middle = $node->toString if $retval == DO_TEXT_AS_SUBNODE;
+		$middle = $node->toString if $retval == DO_TEXT_AS_CHILD;
 	}
 
 	# not pretty, but keep warning mollified

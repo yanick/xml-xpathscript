@@ -23,10 +23,10 @@ test_xml( '<doc>dummy</doc>', <<'STYLESHEET', "<doc>replaced</doc>\n", 'string r
 %><%= apply_templates() %>
 STYLESHEET
 
-test_xml( '<doc>dummy</doc>', <<'STYLESHEET', "<doc><txt>dummy</txt></doc>\n", 'string replacement with DO_TEXT_AS_SUBNODE' );
+test_xml( '<doc>dummy</doc>', <<'STYLESHEET', "<doc><txt>dummy</txt></doc>\n", 'string replacement with DO_TEXT_AS_CHILD' );
 <%
 	$t->{'#text'}{pre}  = '<txt>';
 	$t->{'#text'}{post} = '</txt>';
-	$t->{'#text'}{testcode} = sub { DO_TEXT_AS_SUBNODE };
+	$t->{'#text'}{testcode} = sub { DO_TEXT_AS_CHILD };
 %><%= apply_templates() %>
 STYLESHEET
