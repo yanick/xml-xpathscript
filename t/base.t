@@ -5,23 +5,23 @@ use Test;
 
 BEGIN 
 { 
-	plan tests => 6, todo => [];
+	plan tests => 8, todo => [];
 	unshift @INC, '../blib/arch';
 	unshift @INC, '../blib/lib';
 
 }
 
-use XML::YPathScript qw/ libxml /;
+use XML::YPathScript;
 
 ok(1); 
 
 sub test_xml
 {
-	my( $xml, $style, $result ) = @_;
+	my( $xml, $style, $result, $comment ) = @_;
     my $xps = new XML::YPathScript( xml => $xml, stylesheet => $style );
 	my $buffer= $xps->process( 'return' );
 
-	ok( $buffer, $result );
+	ok( $buffer, $result, $comment );
 }
 
 
@@ -45,46 +45,26 @@ test_xml( '<doc><!-- hello world --></doc>', <<'EOT', "<doc></doc>\n" );
 <% $t->{'#comment'}{testcode} = sub{ 0 } %><%= apply_templates() %>
 EOT
 
-exit;
+# testing Interpolation
 
-my $style = <<'EOT';
-<%  
-	$t->{turkey}{pre} =  'llama';
-	$t->{chicken}{showtag} = 1;
-	$t->{chicken}{testcode} = sub { return DO_SELF_ONLY() };
-	$t->{'text()'}{testcode} = sub { $_[1]->{pre} = uc $_[0]->string_value; -1  };
-%><%= apply_templates() %>
+my $xml = "<doc><node color='blue'>Hello</node></doc>";
+my $xps = <<'EOT';
+<% $t->{node}{testcode} = sub{ my( $n, $t ) = @_; $t->{pre} = '{@color}'; return DO_SELF_ONLY() }; %>
+<%= apply_templates() %>
+EOT
+test_xml( $xml, $xps, "\n<doc>{\@color}</doc>\n", 'Interpolation (disabled)'  );
+
+$xps = <<'EOT';
+<% 
+	$XML::YPathScript::DoNotInterpolate = 0; 
+	$t->{node}{testcode} = sub
+	{ 
+		my( $n, $t ) = @_; 
+		$t->{pre} = '{@color}'; 
+		return DO_SELF_ONLY() 
+	}; %>
+<%= apply_templates() %>
 EOT
 
-my $xml = <<'EOT';
-<doc>
-<chicken>
-<egg>Pok</egg>
-</chicken>
-<turkey />
-<ostrich>gloo?</ostrich>
-</doc>
-EOT
-
-my $result = <<'EOT';
-<doc>
-<chicken></chicken>
-llama
-<ostrich>GLOO?</ostrich>
-</doc>
-EOT
-
-my $xps = new XML::YPathScript( xml => $xml, stylesheet => $style );
-
-my $buffer="";
-$xps->process(sub {$buffer.=shift;});
-
-ok $buffer, $result;
-
-my( $style, $xml );
-open $style, "t2.xps";
-open $xml, "t1.xml";
-my $xps = new XML::YPathScript( xml => $xml, stylesheet => $style );
-
-ok $xps->process(), '<chicken></chicken>';
+test_xml( $xml, $xps, "\n<doc>blue</doc>\n", 'Interpolation (enabled)'  );
 
