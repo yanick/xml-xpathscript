@@ -376,9 +376,9 @@ use Symbol;
 use File::Basename;
 use XML::XPathScript::Processor;
 
-$VERSION = '0.14';
+$VERSION = '0.15';
 
-$XML_parser = 'XML::LibXML';
+$XML_parser = 'XML::XPath';
 
 # By default, we interpolate
 $DoNotInterpolate = 0;

@@ -145,7 +145,13 @@ values considered harmful>).
 =cut "
 
 sub findnodes {
-	$XML::XPathScript::xp->findnodes(@_)
+	if ($XML::XPathScript::xp->isa("XML::XPath")) {
+		return $XML::XPathScript::xp->findnodes(@_);
+	}
+
+	my ($path, $context) = @_;
+	$context = $XML::XPathScript::xp if (!defined $context);
+	return $context->findnodes($path);
 }
 
 =pod "
@@ -162,7 +168,13 @@ L</xpath_to_string>.
 =cut "
 
 sub findvalue {
-	return xpath_to_string(scalar $XML::XPathScript::xp->findvalue(@_));
+	if ($XML::XPathScript::xp->isa("XML::XPath")) {
+		return xpath_to_string(scalar $XML::XPathScript::xp->findvalue(@_));
+	}
+
+	my ($path, $context) = @_;
+	$context = $XML::XPathScript::xp if (!defined $context);
+	return xpath_to_string($context->findvalue($path));
 }
 
 =pod "
