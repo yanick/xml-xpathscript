@@ -182,7 +182,7 @@ sub include_file
     }
     
     my $r = AxKit::Apache->request();
-    if (my $charset = $r->dir_config('YPathScriptCharset')) {
+    if (my $charset = $r->dir_config('AxOutputCharset')) {
         
         AxKit::Debug(8, "XPS: got charset: $charset");
         
@@ -292,7 +292,7 @@ sub extract
 	}
     
     my $r = AxKit::Apache->request();
-    if (my $charset = $r->dir_config('YPathScriptCharset')) {
+    if (my $charset = $r->dir_config('AxOutputCharset')) {
         
         AxKit::Debug(8, "XPS: got charset: $charset");
         
