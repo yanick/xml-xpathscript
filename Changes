@@ -1,13 +1,35 @@
 Revision history for Perl module XML::YPathScript.pm
 
-0.21
+0.12
+	- Added support for XML::LibXML
+	- Added tests for prechild, prechildren, postchild and postchildren
+	- DO_NOT_PROCESS, DO_SELF_ONLY, DO_SELF_AND_KIDS are now constants
+	- XML::XPathScript::Toys now has its own file
+	- Added Apache::Axkit::Language::XPathScript to the distribution 
 	- Added tests for prechild, prechildren, postchild and postchildren
 	- Worked on the YPS docs
 	- DO_NOT_PROCESS, DO_SELF_ONLY, DO_SELF_AND_KIDS are now bona fide constants
 	- X::Y::Toys now has its own little file
 	- Fixed bugs in AAL::YPS 
+	- Added the template keys '#text' and '#comment' -- synonyms for
+		'text()' and 'comment()'. Although, behavior of those two
+		types of node altered: DO_SELF_ONLY will only print pre and
+		post keys, whereas DO_SELF_AND_KIDS will print the enclosed 
+		text.
 
-0.20  Mon Jun  2 13:11:04 2003
-	- ground zero
+0.10  Wed Aug 06 2003
+	- Enriched object-oriented interface, providing cache and
+	  code factoring with Apache::AxKit::Language::XPathScript
+	- Added ability to print to something else than STDOUT
+	- Support for text() template and document() XPath function
+	- Added same-directory searching for #include's
 
+0.03  Wed Jan 10 2000
+	- Added README
+
+0.02  Wed Jan 10 2000
+	- Change directory to stylesheet dir so relative stylesheets work
+
+0.01  Wed Dec 27 17:52:37 2000
+	- original version; created by h2xs 1.19
 

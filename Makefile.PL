@@ -40,28 +40,28 @@ else
 		else
 		{
 			print "XML::XPath not found\n";
-			die "XML::YPathScript needs either XML::LibXML or XML::XPath to be installed\n";
+			die "XML::XPathScript needs either XML::LibXML or XML::XPath to be installed\n";
 		}
 	}
 }
 
-open YPS, "YPathScript.pm" or die "can't open YPathScript.pm: $!\n";
+open YPS, "XPathScript.pm" or die "can't open XPathScript.pm: $!\n";
 my $module;
 while( <YPS> )
 {
 	s/^(\$XML_parser = )'.*?';$/$1'$XML_parser';/;
 	$module .= $_;
 }
-open YPS, ">YPathScript.pm" or die "can't overwrite YPathScript.pm: $!\n";
+open YPS, ">XPathScript.pm" or die "can't overwrite XPathScript.pm: $!\n";
 print YPS $module;
 close YPS;
 
 
 WriteMakefile(
-    'NAME'		=> 'XML::YPathScript',
-    'VERSION_FROM'	=> 'YPathScript.pm', 
-	'EXE_FILES' => [ qw( script/yps ) ],
-    ( $] >= 5.005 ?    
-      (ABSTRACT_FROM => 'YPathScript.pm', 
-       AUTHOR     => 'Yanick Champoux <yanick@babyl.dyndns.org>') : ()),
+    NAME		=> 'XML::XPathScript',
+    VERSION_FROM	=> 'XPathScript.pm', 
+	EXE_FILES => [ qw( script/xpathscript ) ],
+     ABSTRACT_FROM => 'XPathScript.pm', 
+     AUTHOR     => 'Dominique Quatravaux <dom@ideax.com> and Yanick Champoux <yanick@babyl.dyndns.org>',
 );
+
