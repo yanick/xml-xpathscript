@@ -1,12 +1,14 @@
 use ExtUtils::MakeMaker;
+use Getopt::Long;
 
 use strict;
 use warnings;
 
 my $XML_parser;
-if( join( ' ', @ARGV ) =~ /XML_PARSER=(\S*)/ )
+GetOptions( 'parser=s' => \$XML_parser );
+
+if( $XML_parser )
 {
-	$XML_parser = $1;
 	unless( grep $XML_parser eq $_, qw/ XML::XPath XML::libXML / )
 	{
 		die "XML parser $XML_parser not supported\nplease choose XML::XPath or XML::libXML\n";
