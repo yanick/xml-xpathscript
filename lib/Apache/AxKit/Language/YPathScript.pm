@@ -26,17 +26,25 @@ XPathScript, located at http://axkit.org/docs/xpathscript/guide.dkb,
 also applies to YPathScript, excepts for the differences listed in the
 sections below.
 
-=head1 PRE-DEFINED STYLESHEET VARIABLES 
+=head1 PRE-DEFINED STYLESHEET VARIABLES AND FUNCTIONS
+
+=head2 VARIABLES
 
 =item $r
 
 A copy of the Apache::AxKit::request object -- which is itself a wrapper around
 the Apache::request object -- tied to the current document.
 
-	<%	$location = $r->blah() %>
-	<p>URL: <%= $location %></p>
+	<%	%args = $r->args() %>
+	<p>args: <%= join ' : ', map "$_ => $args{$_}", keys %args %></p>
 
 =back 
+
+=head2 FUNCTIONS
+
+=item $node = XML::XPathScript::current->document( $uri )
+
+Fetch the xml document located at $uri and return it as a dom node.
 
 =cut
 
@@ -55,7 +63,7 @@ $VERSION = 1.4;
 
 =item $xps = new Apache::AxKit::Language::YPathScript($xml_provider, $style_provider)
 
-Constructs a new YPathScript language interpreter out of the provided
+Construct a new YPathScript language interpreter out of the provided
 providers.
 
 =cut
@@ -73,9 +81,7 @@ sub new
 
 =item	$rc = handler( $class, $request, $xml_provider, $style_provider )
 
-	The function called by Apache. Does all cache-managing magic.
-	Not present in X::X.
-
+	The handler function called by Apache. 
 
 =cut
 
@@ -185,10 +191,7 @@ sub include_file
 
 =item 	$doc = get_source_tree( $xml_provider  )
 
-	Reads an XML document from the provider.
-	Return the doc as a string.
-
-	Not present in X::X
+Read an XML document from the provider and return it as a string.
 
 =cut
 
@@ -216,10 +219,7 @@ sub get_source_tree
 
 =item $string = I<read_stylesheet( $stylesheet )>
 
-Read the $stylesheet (which can be a filehandler or a string). 
-Used by I<extract>.
-
-Overrides the XML::XPathScript method
+Retrieve and return the $stylesheet (which can be a filehandler or a string) as a string. 
 
 =cut
 
@@ -255,7 +255,7 @@ sub read_stylesheet
 
 =item $self->debug( $level, $message )
 
-Prints $message if the requested debug level 
+Print $message if the requested debug level 
 is equal or smaller than $level.
 
 =cut
@@ -264,53 +264,55 @@ sub debug{ shift; AxKit::Debug( @_ ) }
 
 =item $self->die( $suicide_note )
 
+Print the $suicide_note and exit;
+
 =cut
 
 sub die{ die @_ }
 
-__END__
+=item  $nodeset = $self->document( $uri )
 
+Read XML document located at $uri, parse it and return it in a node object.
 
-
-=item  $nodeset = XML::XPath::Function::document( $node, $uri )
-
-	Reads XML given in $uri, parses it and returns it in a nodeset.
-
-	Pretty similar to the one in X::X, except for details like inclusion
-	of scheme axkit://.
+The $uri can be specified using the regular schemes ('http://foo.org/bar.xml', 
+'ftp://foo.org/bar.xml'), or the Axkit scheme ('axkit://baz.xml'), or as
+a local file ('/home/web/foo.xml', './foo.xml' ).
 
 =cut
 
-sub XML::XPath::Function::document {
+sub document {
     # warn "Document function called\n";
     return unless $Apache::AxKit::Language::YPathScript::local_ent_handler;
-    my $self = shift;
-    my ($node, @params) = @_;
-    die "document: Function takes 1 parameter\n" unless @params == 1;
+    my( $self, $uri ) = @_;
 
-    my $xml_parser = XML::Parser->new(
-            ErrorContext => 2,
-            Namespaces => $XML::XPath::VERSION < 1.07 ? 1 : 0,
-            # ParseParamEnt => 1,
-            );
-
-    my $parser = XML::XPath::XMLParser->new(parser => $xml_parser);
-
-    my $results = XML::XPath::NodeSet->new();
-    my $uri = $params[0];
+	my( $results, $parser );	
+	if( $XML_parser eq 'XML::XPath' ) {
+		my $xml_parser = XML::Parser->new(
+				ErrorContext => 2,
+				Namespaces => $XML::XPath::VERSION < 1.07 ? 1 : 0,
+				# ParseParamEnt => 1,
+				);
+	
+		$parser = XML::XPath::XMLParser->new(parser => $xml_parser);
+		$results = XML::XPath::NodeSet->new();
+	} elsif {
+		$parser = new XML::LibXML;
+		$result = new XML::LibXML::Node;
+	}
+	
     my $newdoc;
     if ($uri =~ /^axkit:/) {
         $newdoc = $parser->parse( AxKit::get_axkit_uri($uri) );
     }
     elsif ($uri =~ /^\w\w+:/) { # assume it's scheme://foo uri
         eval {
-            # warn "Trying to parse $params[0]\n";
+         	$self->debug( 5, "trying to parse $uri" );
             $newdoc = $parser->parse(
                     $Apache::AxKit::Language::YPathScript::local_ent_handler->(
                         undef, undef, $uri
                     )
                 );
-            # warn "Parsed OK into $newdoc\n";
+            $self->debug( 5, warn "Parsed OK into $newdoc\n" );
         };
         if (my $E = $@) {
             if ($E->isa('Apache::AxKit::Exception::IO')) {
@@ -325,20 +327,16 @@ sub XML::XPath::Function::document {
         AxKit::Debug(3, "Parsing local: $uri\n");
         
         # create a subrequest, so we get the right AxKit::Cfg for the URI
-        my $apache = AxKit::Apache->request;
-        my $sub = $apache->lookup_uri($uri);
+        my $sub = AxKit::Apache->request->lookup_uri($uri);
         local $AxKit::Cfg = Apache::AxKit::ConfigReader->new($sub);
         
         my $provider = Apache::AxKit::Provider->new_content_provider($sub);
         
         $newdoc = $parser->parse( xml => get_source_tree($provider) );
-        undef $provider;
-        undef $apache;
-        undef $sub;
     }
 
     $results->push($newdoc) if $newdoc;
-    #AxKit::Debug(8, "YPathScript: document() returning");
+    $self->debug(8, "YPathScript: document() returning");
     return $results;
 }
 
