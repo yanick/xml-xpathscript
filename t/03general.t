@@ -2,7 +2,7 @@ use strict;
 use Test;
 
 BEGIN { 
-	plan tests => 20, todo => [];
+	plan tests => 21, todo => [];
 }
 
 use XML::XPathScript;
@@ -162,3 +162,21 @@ EOXPS
 	unlink $output_file or die $!;
 }
 
+# get_xpath_of_node()
+
+{
+	my $xps = new XML::XPathScript( xml => '<coucou><bloh><blah /><blah><text>hello</text></blah></bloh></coucou>',
+									stylesheet => <<'STYLESHEET' );
+<%
+    $t->{'*'}{pre}="";
+    $t->{text}{testcode} = sub {
+            my ($self, $t)=@_;
+            $t->{pre} = get_xpath_of_node($self); 
+            return DO_SELF_AND_KIDS;
+    }
+%><%= apply_templates() %>
+STYLESHEET
+	my $result=""; $xps->process(\$result);
+	ok($result eq "/coucou[1]/bloh[1]/blah[2]/text[1]\n") or
+		warn $result;
+}

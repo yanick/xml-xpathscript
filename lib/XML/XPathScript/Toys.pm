@@ -12,7 +12,13 @@ use vars '@ISA', '@EXPORT';
         apply_templates
         matches
         set_namespace
+		is_element_node
+		is_text_node
+        is_comment_node
+		is_pi_node
+		is_nodelist
 		is_utf8_tainted
+		get_xpath_of_node
 		DO_SELF_AND_KIDS
 		DO_SELF_ONLY
 		DO_NOT_PROCESS
@@ -49,7 +55,9 @@ sub apply_templates (;$@);
 
 Returns a list of nodes found by XPath expression $path, optionally
 using $context as the context node (default is the root node of the
-current document).  In scalar context returns a NodeSet object.
+current document).  In scalar context returns a NodeSet object (but
+you do not want to do that, see L<XML::XPathScript/XPath scalar return
+values considered harmful>).
 
 =cut "
 
@@ -65,14 +73,17 @@ sub findnodes {
 
 Evaluates XPath expression $path and returns the resulting value. If
 the path returns a set of nodes, the stringification is done
-automatically for you (see L</XPath scalar return values considered
-harmful>). The result is an UTF-8 string.
+automatically for you (see L<XML::XPathScript/XPath scalar return
+values considered harmful>). The result is an UTF-8 string.
 
 =cut "
 
 sub findvalue {
 	my $blob = $XML::XPathScript::xp->findvalue(@_);
-	"$blob";
+	return $blob if (! ref($blob));
+	# Was "$blob" but Perl 5.6.1 seems to have issues with
+	# UTF8-flag used in overloaded stringification :-(
+	return $blob->value();
 }
 
 =pod "
@@ -84,8 +95,8 @@ sub findvalue {
 
 Evaluates XPath expression $path as a nodeset expression, just like
 L</findnodes> would, but returns a list of UTF8-encoded XML strings
-instead of node objects or node sets. See also L</XPath scalar return
-values considered harmful>.
+instead of node objects or node sets. See also
+L<XML::XPathScript/XPath scalar return values considered harmful>.
 
 =cut "
 sub findvalues {
@@ -119,10 +130,10 @@ Returns true if the node matches the path (optionally in context $context)
 =cut "
 
 sub matches {
-	$XML::XPathScript::xp->matches(@_) 
+	$XML::XPathScript::xp->matches(@_)
 }
 
-sub set_namespace 
+sub set_namespace
 {
 	eval { $XML::XPathScript::xp->set_namespace(@_) };
 	warn "set_namespace failed: $@" if $@;
@@ -176,7 +187,7 @@ sub apply_templates (;$@) {
     }
 
     my $retval = '';
-	if ( $arg1->isa('XML::XPath::NodeSet') or $arg1->isa('XML::LibXML::NodeList') ) 
+	if (is_nodelist($arg1))
 	{
         foreach my $node ($arg1->get_nodelist) {
             $retval .= translate_node($node);
@@ -226,58 +237,72 @@ sub _apply_templates {
 	return join( '', map { translate_node($_) or "" } @_ );
 }
 
-=item  $boolean = is_element( $node )
+=item  is_element_node ( $object )
 
-Returns true if $node is an element node, false otherwise.
+Returns true if $object is an element node, false otherwise.
 
 =cut
 
 sub is_element_node {
-    return ( $XML::XPathScript::XML_parser eq 'XML::LibXML' ) ? 
-		UNIVERSAL::isa( $_[0], 'XML::LibXML::Element' ) : 
-		$_[0]->isElementNode;
+	UNIVERSAL::isa( $_[0], 'XML::XPath::Node::Element' ) or
+		UNIVERSAL::isa( $_[0], 'XML::LibXML::Element' );
 }
 
-sub translate_node {
-    my $node = shift;
+=pod "
 
-	if( UNIVERSAL::isa($node,"XML::LibXML::Document") ) 
-	{
-		$node = $node->documentElement;
-	}
+=item  is_text_node ( $object )
 
-	my $retval;
-	# little catch: XML::LibXML::Comment is a 
+Returns true if $object is a "true" text node (B<not> a comment node),
+false otherwise.
+
+=cut "
+
+sub is_text_node {
+	UNIVERSAL::isa($_[0], 'XML::XPath::Node::Text') or
+	# little catch: XML::LibXML::Comment is a
 	# XML::LibXML::Text
-	if(  ( $XML::XPathScript::XML_parser eq 'XML::LibXML' ) ? 
-			UNIVERSAL::isa( $node, 'XML::LibXML::Comment' ) : 
-			$node->getNodeType == XML::XPath::Node::COMMENT_NODE() )
-	{
-		$retval = translate_comment_node( $node );
-	} elsif ( ( $XML::XPathScript::XML_parser eq 'XML::LibXML' ) ? UNIVERSAL::isa( $node, 'XML::LibXML::Text' ) : $node->isTextNode) 
-	{
-		$retval = translate_text_node( $node );
-	} elsif (is_element_node( $node )) {
-		$retval = translate_element_node( $node );
-	} elsif ($XML::XPathScript::XML_parser eq 'XML::XPath' and $node->isPINode) {
-		# don't output top-level PI's
-		$retval = eval {
-			if ($node->getParentNode->getParentNode) {
-				return $node->toString;
-			} else { '' }
-		} || '';
-	} else {
-		$retval = $node->toString;
-	};
+		( UNIVERSAL::isa($_[0], 'XML::LibXML::Text') &&
+		  ! UNIVERSAL::isa($_[0], 'XML::LibXML::Comment') );
+}
 
-	if (XML::XPathScript->current()->{binmode} &&
-		is_utf8_tainted($retval)) {
-		use Carp qw(confess);
-		confess("Wrong translation by stylesheet (result is Unicode-tainted)
-$retval\n");
-	}
+=pod "
 
-	return $retval;
+=item  is_comment_node ( $object )
+
+Returns true if $object is an XML comment node, false otherwise.
+
+=cut "
+
+sub is_comment_node {
+		UNIVERSAL::isa( $_[0], 'XML::LibXML::Comment' ) or
+			UNIVERSAL::isa( $_[0], 'XML::XPath::Node::Comment' );
+}
+
+=pod "
+
+=item  is_pi_node ( $object )
+
+Returns true iff $object is a processing instruction node.
+
+=cut "
+
+sub is_pi_node {
+	UNIVERSAL::isa($_[0], "XML::LibXML::PI") ||
+		UNIVERSAL::isa($_[0], "XML::XPath::Node::PI");
+}
+
+=pod "
+
+=item  is_nodelist ( $object )
+
+Returns true if $node is a node list (as returned by L</findnodes> in
+scalar context), false otherwise.
+
+=cut "
+
+sub is_nodelist {
+	UNIVERSAL::isa($_[0], 'XML::XPath::NodeSet') or
+		UNIVERSAL::isa($_[0], 'XML::LibXML::NodeList');
 }
 
 =pod "
@@ -302,11 +327,95 @@ function to prevent that from happening.
 sub is_utf8_tainted {
 	my ($string)=@_;
 	my $maybe_autopromoted = do { no bytes; no utf8; "é"  . $string};
-
 	use bytes;
 	return ( length($string) + 1 < length($maybe_autopromoted) );
 }
 
+# Getting an XPath that leads to some node (e.g. for warning messages)
+
+=pod "
+
+=item I<get_xpath_of_node($node)>
+
+Returns an XPath string that points to $node, from the root. Useful to
+create error messages that point at some location in the original XML
+document.
+
+=cut "
+
+sub get_xpath_of_node {
+	my ($self)=@_;
+
+	my $parent=($self->can("parentNode") ?
+				$self->parentNode() :
+				$self->getParentNode());
+	return "" if (!defined $parent);
+
+	my $name=findvalue('name()',$self);
+
+	my @brothers=findnodes("../$name",$self);
+
+	# Short-cut for nodes that have an ID. FIXME: not all DTDs use
+	# attribute named "id" as the SGML ID!
+	if (my $id=findvalue('@id',$self)) {
+		return get_xpath_of_node($parent).sprintf('/%s[@id="%s"]', $name, $id);
+	}
+
+	# Bug: the matches() function from XML::XPath is hosed, and only
+	# works towards ancestors. We resort to comparing references for
+	# identity, but even then the clever refcount-proof aliasing in
+	# XML::XPath gets in the way badly.
+	my $theself=($self =~ m/SCALAR/?$$self:$self);
+
+	for(my $i=0; $i<=$#brothers; $i++) {
+		my $thebrother=($brothers[$i] =~ m/SCALAR/?
+						${$brothers[$i]}:$brothers[$i]);
+	    return get_xpath_of_node($parent).sprintf('/%s[%d]',$name,$i+1) if
+		  ($theself eq $thebrother);
+	};
+
+	return get_xpath_of_node($parent)."/$name"."[?]";
+}
+
+
+########################## End of exportable stuff ####################
+
+sub translate_node {
+    my $node = shift;
+
+	if( UNIVERSAL::isa($node,"XML::LibXML::Document") ) 
+	{
+		$node = $node->documentElement;
+	}
+
+	my $retval;
+	if ( is_comment_node($node) ) {
+		$retval = translate_comment_node( $node );
+	} elsif ( is_text_node($node) )
+	{
+		$retval = translate_text_node( $node );
+	} elsif (is_element_node( $node )) {
+		$retval = translate_element_node( $node );
+	} elsif ( is_pi_node($node) ) {
+		# don't output top-level PI's
+		$retval = eval {
+			if ($node->getParentNode->getParentNode) {
+				return $node->toString;
+			} else { '' }
+		} || '';
+	} else {
+		$retval = $node->toString;
+	};
+
+	if (XML::XPathScript->current()->{binmode} &&
+		is_utf8_tainted($retval)) {
+		use Carp qw(confess);
+		confess("Wrong translation by stylesheet (result is Unicode-tainted)
+$retval\n");
+	}
+
+	return $retval;
+}
 
 
 sub translate_text_node {
@@ -532,37 +641,5 @@ sub interpolate {
 	$string =~ s/$regex/ $node->findvalue($1) /egs;
     return $string || '';
 }
-
-=back
-
-=head2 XPath scalar return values considered harmful
-
-XML::XPath calls such as I<findvalue()> return objects in an object
-class designed to map one of the types mandated by the XPath spec (see
-L<XML::XPath> for details). This is often not what a Perl programmer
-comes to expect (e.g. strings and numbers cannot be treated the
-same). There are some work-arounds built in XML::XPath, using operator
-overloading: when using those objects as strings (by concatenating
-them, using them in regular expressions etc.), they become strings,
-through a transparent call to one of their methods such as I<<
-->value() >>. However, we do not support this for a variety of reasons
-(from limitations in L</overload> to stylesheet compatibility between
-XML::XPath and XML::LibXML to Unicode considerations), and that is why
-our L</findvalue> and friends return a real Perl scalar, in violation
-of the XPath specification.
-
-On the other hand, L</findnodes> does return a list of objects in list
-context, and an I<XML::XPath::NodeSet> or I<XML::LibXML::NodeList>
-instance in scalar context, obeying the XPath specification in
-full. Therefore you most likely do not want to call I<findnodes()> in
-scalar context, ever: replace
-
-   my $attrnode = findnodes('@url',$xrefnode); # WRONG!
-
-with
-
-   my ($attrnode) = findnodes('@url',$xrefnode);
-
-
 
 1;

@@ -82,13 +82,13 @@ is to be invoked like this:
 It will produce the resulting document on standard output. For more
 options, refer to xpathscript's man page.
 
-=head2 Functions and global variables available in the stylesheet
+=head2 XPathScript methods available from within the stylesheet
 
 A number of callback functions are available from the stylesheet
 proper.  They apply against the current document and template hash,
 which are transparently passed back and forth as global variables (see
 L</Global variables>). They are defined in the
-I<XML::XPathScript::Toys> package, which is implicitly imported into
+L<XML::XPathScript::Toys> package, which is implicitly imported into
 all code written in the embedded stylesheet dialect.
 
 The following methods are also available to peek at the internal state
@@ -217,6 +217,64 @@ sub binmode {
 
 =back
 
+=head2 Stylesheet Guidelines
+
+Here are a few things to watch out for when coding stylesheets.
+
+=head3 The Unicode mess
+
+is explained above, under L</binmode>.
+
+=head3 XPath scalar return values considered harmful
+
+XML::XPath calls such as I<findvalue()> return objects in an object
+class designed to map one of the types mandated by the XPath spec (see
+L<XML::XPath> for details). This is often not what a Perl programmer
+comes to expect (e.g. strings and numbers cannot be treated the
+same). There are some work-arounds built in XML::XPath, using operator
+overloading: when using those objects as strings (by concatenating
+them, using them in regular expressions etc.), they become strings,
+through a transparent call to one of their methods such as I<<
+->value() >>. However, we do not support this for a variety of reasons
+(from limitations in L</overload> to stylesheet compatibility between
+XML::XPath and XML::LibXML to Unicode considerations), and that is why
+our L</findvalue> and friends return a real Perl scalar, in violation
+of the XPath specification.
+
+On the other hand, L</findnodes> does return a list of objects in list
+context, and an I<XML::XPath::NodeSet> or I<XML::LibXML::NodeList>
+instance in scalar context, obeying the XPath specification in
+full. Therefore you most likely do not want to call I<findnodes()> in
+scalar context, ever: replace
+
+   my $attrnode = findnodes('@url',$xrefnode); # WRONG!
+
+with
+
+   my ($attrnode) = findnodes('@url',$xrefnode);
+
+
+=head3 Do not use DOM method calls, for they make stylesheets non-portable
+
+The I<findvalue()> such functions described in
+L<XML::XPathScript::Toys> are not the only way of extracting bits from
+the XML document. Objects passed as the first argument to the I<<
+->{testcode} >> templates and returned by I<findnodes()> in array
+context are of one of the I<XML::XPath::Node::*> classes, and they
+feature some data extraction methods by themselves, conforming to the
+DOM specification.
+
+However, the names of those methods are not standardized even among
+DOM parsers (the accessor to the C<childNodes> property, for example,
+is named C<childNodes()> in I<XML::LibXML> and C<getChildNodes() in
+I<XML::XPath>!). In order to write a stylesheet that is portable
+between L<XML::libXML> and L<XML::XPath> used as back-ends to
+L<XML::XPathScript>, one should refrain from doing that. The exact
+same data is available through appropriate XPath formulae, albeit more
+slowly, and there are also type-checking accessors such as
+C<is_element_node()> in L<XML::XPathScript::Toys>.
+
+
 =head1 TECHNICAL DOCUMENTATION
 
 The rest of this POD documentation is B<not> useful to programmers who
@@ -320,7 +378,7 @@ use XML::XPathScript::Toys;
 
 $VERSION = '0.14';
 
-$XML_parser = 'XML::LibXML';
+$XML_parser = 'XML::XPath';
 
 # By default, we interpolate
 $DoNotInterpolate = 0;

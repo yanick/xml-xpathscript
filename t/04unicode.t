@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/perl -w
 
 use strict;
 use Test;
@@ -6,7 +6,7 @@ use XML::XPathScript::Toys;
 
 BEGIN
 {
-	plan tests => 9, todo => [];
+	plan tests => 10, todo => [];
 }
 
 ok( ! is_utf8_tainted(" ") );
@@ -31,6 +31,7 @@ my $isostring = do {
 			" qu'il soit naïf ou râleur"
 };
 
+ok(! is_utf8_tainted($isostring));
 
 my $style = <<'STYLE';
 <%
@@ -62,19 +63,19 @@ my $xps = new XML::XPathScript(xml => <<"XML", stylesheet => $style);
 XML
 
 my $result="";
+
 $xps->process(\$result);
 ok(! is_utf8_tainted($result));
 ok($result eq $isostring."\n") or warn $result;
-
 
 $xps = new XML::XPathScript(xml => <<"XML", stylesheet => $style);
 <?xml version="1.0" encoding="iso-8859-1" ?>
 <convertfail>$isostring</convertfail>
 XML
-1;
 
 $result="";
-ok(! eval {$xps->process(\$result); 1});
+ok(! eval {$xps->process(\$result); 1}) or warn $result;
 ok($@ =~ m/taint/i);
 
-
+# Dying while STDOUT is butchered by process() is fatal in Perl 5.6.1, so
+# please do not add any tests below :-/
