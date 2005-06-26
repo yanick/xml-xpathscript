@@ -1,9 +1,10 @@
 Revision history for Perl module XML::XPathScript.pm
 
 0.15 
-	- Added new tests
 	- In stylesheets under A::A::L::YPS, the variable $r is now pre-defined.
 	- Added function document() for XML::XPathScript and Apache::Axkit::Language::YPathScript.
+	- Fixed argument interpolation bugs ("<foo bar='&lt;"> was being transformed into "<foo bar='<'>")
+	- Fixed function document() for XML::XPath
 	- Bug fixes
 
 0.14 Thu Sep 23 2004

@@ -739,16 +739,17 @@ sub start_tag {
     for my $attr ( ( $XML::XPathScript::XML_parser eq 'XML::LibXML' ) ? 
 						$node->attributes : $node->getAttributeNodes) 
 	{
-	   
+	  
+	  	
 		if( $XML::XPathScript::XML_parser eq 'XML::XPath' )
 	   	{
 	   		$string .= $attr->toString;
 	   	}
 	   	else
 	   	{
-		   my $value = $attr->value;
-		   $value =~ s/'/&quot;/g;
-			$string .= ' ' . $attr->name . "='$value' ";
+			#my $att = $attr->toString( 0, 1 );
+		    	#$att =~ s/'/&quot;/g;
+			$string .= $attr->toString( 0, 1 );
 		}
     }
 

@@ -442,7 +442,7 @@ use XML::XPathScript::Processor;
 
 $VERSION = '0.15';
 
-$XML_parser = 'XML::LibXML';
+$XML_parser = 'XML::XPath';
 
 # By default, we interpolate
 $DoNotInterpolate = 0;
@@ -1065,7 +1065,12 @@ sub document {
     }
     else {
         $self->debug(3, "Parsing local: $uri\n");
-        $newdoc = $parser->parse_file( $uri );
+		if( $XML_parser eq 'XML::LibXML' ) {
+        	$newdoc = $parser->parse_file( $uri );
+		} elsif( $XML_parser eq 'XML::XPath' ) {
+			$newdoc = XML::XPath->new( filename => $uri );
+		}
+		else { die "invalid parser: $XML_parser\n"; }
     }
 
 	if( $newdoc ) {
@@ -1073,7 +1078,7 @@ sub document {
 			$results = $newdoc->documentElement();
 		} 
 		elsif( $XML_parser eq 'XML::XPath' ) {
-			$results->push($newdoc)
+			$results = $newdoc->findnodes('/')->[0]->getChildNodes->[0];
 		}
 	}
 	

@@ -9,6 +9,8 @@
     <projectdirectory>.</projectdirectory>
     <absoluteprojectpath>false</absoluteprojectpath>
     <versioncontrol>KDevsubversion</versioncontrol>
+    <description/>
+    <ignoreparts/>
   </general>
   <kdevscriptproject>
     <run>
