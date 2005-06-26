@@ -21,6 +21,7 @@ t/05textnode.t
 t/06testcode.t
 t/07stylesheetcallbacks.t
 t/08document.t
+t/09argencoding.t
 t/document_file.txt
 t/t1_compat.xps  
 t/t1.xps

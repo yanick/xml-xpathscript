@@ -582,10 +582,8 @@ sub translate_text_node {
 		$middle = $node->toString if $retval == DO_TEXT_AS_CHILD;
 	}
 
-	# not pretty, but keep warning mollified
-	return ($trans->{pre} ||''). 
-		   ($middle       ||'').
-		   ($trans->{post}||'');
+	no warnings 'uninitialized';
+	return $trans->{pre} . $middle . $trans->{post};
 }
 
 sub translate_element_node {
@@ -649,13 +647,15 @@ sub translate_element_node {
 	my $has_kids = $XML::XPathScript::XML_parser eq 'XML::LibXML' ? 
 						$node->hasChildNodes() : $node->getFirstChild();
 	
+	no warnings 'uninitialized';
     my $pre = interpolate($node, $trans->{pre});
 	$pre .= start_tag( $node ) if $trans->{showtag};
+	$pre .= $trans->{intro};
 	$pre .= interpolate($node, $trans->{prechildren}) if $has_kids;
 	
-
-    my $post = '';
+	my $post;
 	$post .= interpolate($node, $trans->{postchildren}) if $has_kids;
+	$post .= $trans->{extro};
 	$post .= end_tag( $node ) if  $trans->{showtag};
 	$post .= interpolate($node, $trans->{post});
 
@@ -673,7 +673,8 @@ sub translate_element_node {
 				if is_element_node( $kid );
         }
         
-		return ($pre||'') . ( $middle||'' ) . ($post||'');
+		no warnings 'uninitialized';
+		return $pre . $middle . $post;
     }
 	
     if($search) 
@@ -720,9 +721,7 @@ sub translate_comment_node {
 		$middle = '' if $retval == DO_SELF_ONLY;
 	}
 	
-	$trans->{pre} ||= '';
-	$trans->{post} ||= '';
-
+	no warnings 'uninitialized';
 	return $trans->{pre}. $middle. $trans->{post};
 }
 
@@ -742,16 +741,17 @@ sub start_tag {
     for my $attr ( ( $XML::XPathScript::XML_parser eq 'XML::LibXML' ) ? 
 						$node->attributes : $node->getAttributeNodes) 
 	{
-	   
+	  
+	  	
 		if( $XML::XPathScript::XML_parser eq 'XML::XPath' )
 	   	{
 	   		$string .= $attr->toString;
 	   	}
 	   	else
 	   	{
-		   my $value = $attr->value;
-		   $value =~ s/'/&quot;/g;
-			$string .= ' ' . $attr->name . "='$value' ";
+			#my $att = $attr->toString( 0, 1 );
+		    	#$att =~ s/'/&quot;/g;
+			$string .= $attr->toString( 0, 1 );
 		}
     }
 
@@ -778,7 +778,9 @@ sub interpolate {
 
 	my $regex = $XML::XPathScript::current->{interpolation_regex};
 	$string =~ s/$regex/ $node->findvalue($1) /egs;
-    return $string || '';
+	
+	no warnings 'uninitialized';
+    return $string;
 }
 
 =back

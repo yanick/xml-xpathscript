@@ -2,7 +2,7 @@ use strict;
 use Test;
 
 BEGIN { 
-	plan tests => 22, todo => [];
+	plan tests => 24, todo => [];
 }
 
 use XML::XPathScript;
@@ -187,4 +187,28 @@ EXPECTED
 
 
 test_xml( '<rootnode><tag>0</tag></rootnode>', '<%= apply_templates() %>', '<rootnode><tag>0</tag></rootnode>', 'string "0" appears' );
+
+{
+my $xps = <<'XPS';
+<%
+	$t->{foo}{showtag} = 1;
+	$t->{foo}{pre} = "before ";
+	$t->{foo}{intro} = " post-opening ";
+	$t->{foo}{prechildren} = "pre-children ";
+	$t->{foo}{postchildren} = " post-children";
+	$t->{foo}{extro} = " pre-closing ";
+	$t->{foo}{post} = " post-closing";
+%><%= apply_templates() %>
+XPS
+
+test_xml( '<foo><child/></foo>', $xps, 
+	"before <foo> post-opening pre-children <child></child> post-children pre-closing </foo> post-closing\n", 
+	'full template with child');
+
+test_xml( '<foo></foo>', $xps, 
+	"before <foo> post-opening  pre-closing </foo> post-closing\n", 
+	'full template without child');
+
+
+}
 

@@ -3,6 +3,8 @@ package XML::XPathScript;
 use strict;
 use warnings;
 
+# $Revision: 115 $ - $Date: 2005-06-26 17:41:59 -0400 (Sun, 26 Jun 2005) $
+
 =pod "
 
 =head1 NAME
@@ -440,7 +442,7 @@ use Symbol;
 use File::Basename;
 use XML::XPathScript::Processor;
 
-$VERSION = '0.14.1';
+$VERSION = '0.15';
 
 $XML_parser = 'XML::LibXML';
 
@@ -1065,7 +1067,12 @@ sub document {
     }
     else {
         $self->debug(3, "Parsing local: $uri\n");
-        $newdoc = $parser->parse_file( $uri );
+		if( $XML_parser eq 'XML::LibXML' ) {
+        	$newdoc = $parser->parse_file( $uri );
+		} elsif( $XML_parser eq 'XML::XPath' ) {
+			$newdoc = XML::XPath->new( filename => $uri );
+		}
+		else { die "invalid parser: $XML_parser\n"; }
     }
 
 	if( $newdoc ) {
@@ -1073,7 +1080,7 @@ sub document {
 			$results = $newdoc->documentElement();
 		} 
 		elsif( $XML_parser eq 'XML::XPath' ) {
-			$results->push($newdoc)
+			$results = $newdoc->findnodes('/')->[0]->getChildNodes->[0];
 		}
 	}
 	
