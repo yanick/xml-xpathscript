@@ -647,13 +647,15 @@ sub translate_element_node {
 	my $has_kids = $XML::XPathScript::XML_parser eq 'XML::LibXML' ? 
 						$node->hasChildNodes() : $node->getFirstChild();
 	
+	no warnings 'uninitialized';
     my $pre = interpolate($node, $trans->{pre});
 	$pre .= start_tag( $node ) if $trans->{showtag};
+	$pre .= $trans->{intro};
 	$pre .= interpolate($node, $trans->{prechildren}) if $has_kids;
 	
-
-    my $post = '';
+	my $post;
 	$post .= interpolate($node, $trans->{postchildren}) if $has_kids;
+	$post .= $trans->{extro};
 	$post .= end_tag( $node ) if  $trans->{showtag};
 	$post .= interpolate($node, $trans->{post});
 

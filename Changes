@@ -1,10 +1,22 @@
 Revision history for Perl module XML::XPathScript.pm
 
 0.15 
+	- Template now supports two new tags: intro and extro. When a tag is processed, the elements
+		of the templates are outputed as follow:
+		
+		pre
+		<tag>              # if showtag == 1
+		intro   
+		prechildren        # if <tag> has children
+		[ children ... ]
+		postchildren       # if <tag has children
+		extro
+		</tag>             # if showtag == 1
+		post
+		
 	- In stylesheets under A::A::L::YPS, the variable $r is now pre-defined.
 	- Added function document() for XML::XPathScript and Apache::Axkit::Language::YPathScript.
 	- Fixed argument interpolation bugs ("<foo bar='&lt;"> was being transformed into "<foo bar='<'>")
-	- Fixed function document() for XML::XPath
 	- Bug fixes
 
 0.14 Thu Sep 23 2004
