@@ -1,6 +1,6 @@
 Revision history for Perl module XML::XPathScript.pm
 
-0.15 
+0.15 Sun Jun 26 2005
 	- Template now supports two new tags: intro and extro. When a tag is processed, the elements
 		of the templates are outputed as follow:
 		
