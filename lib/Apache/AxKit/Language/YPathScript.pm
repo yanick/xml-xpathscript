@@ -30,6 +30,8 @@ sections below.
 
 =head2 VARIABLES
 
+=over
+
 =item $r
 
 A copy of the Apache::AxKit::request object -- which is itself a wrapper around
