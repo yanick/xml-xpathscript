@@ -8,6 +8,8 @@
 
 * documentation everywhere
 
+* Add <%# comments %>
+
 * Add Apache2 mode
 
 * XML::XPath::..:Document -- must revisit; Add back document() to A::A::L::XPS
