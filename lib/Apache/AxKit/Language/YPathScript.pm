@@ -44,9 +44,13 @@ the Apache::request object -- tied to the current document.
 
 =head2 FUNCTIONS
 
+=over
+
 =item $node = XML::XPathScript::current->document( $uri )
 
 Fetch the xml document located at $uri and return it as a dom node.
+
+=back
 
 =cut
 
@@ -62,6 +66,8 @@ use XML::XPathScript;
 $VERSION = 1.4;
 
 =head2 Functions
+
+=over
 
 =item $xps = new Apache::AxKit::Language::YPathScript($xml_provider, $style_provider)
 

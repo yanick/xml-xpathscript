@@ -28,4 +28,5 @@ t/t1.xps
 t/include.xps   
 t/t1.result      
 t/t2_compat.xps
+t/pod.t
 META.yml                                 Module meta-data (added by MakeMaker)

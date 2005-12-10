@@ -104,10 +104,6 @@ and for all at the beginning of the stylesheet.
 
 =over
 
-=cut "
-
-=pod "
-
 =item I<current()>
 
 This class method (e.g. C<< XML::XPathScript->current() >>) returns
@@ -741,7 +737,7 @@ sub extract {
     my $script="#line 1 $filename\n",
     my $line = 1;
 
-    while ($contents =~ /\G(.*?)(<!--#include|<%=?)/gcs) {
+    while ($contents =~ /\G(.*?)(<!--#include|<%[#=]?)/gcs) {
         my ($text, $type) = ($1, $2);
         $line += $text =~ tr/\n//; # count \n's in text
         $text =~ s/\|/\\\|/g;
@@ -768,8 +764,10 @@ sub extract {
         else {
             $contents =~ /\G(.*?)%>/gcs || die "No terminating '%>' after line $line";
             my $perl = $1;
-            $perl =~ s/;?$/;/s; # add on ; if its missing. As in <% $foo = 'Hello' %>
-            $script .= $perl;
+	    if( $type ne '<%#' ) {
+		    $perl =~ s/;?$/;/s; # add on ; if its missing. As in <% $foo = 'Hello' %>
+		    $script .= $perl;
+	    }
             $line += $perl =~ tr/\n//;
         }
     }
@@ -1003,9 +1001,6 @@ sub debug {
 The functions below are not methods.
 
 =over
-
-
-=pod "
 
 =item I<gen_package_name()>
 
