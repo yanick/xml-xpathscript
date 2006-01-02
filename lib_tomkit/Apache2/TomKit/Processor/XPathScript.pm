@@ -7,6 +7,9 @@ use Carp;
 use base qw( Apache2::TomKit::Processor::AbstractProcessor XML::XPathScript );
 
 use Apache2::TomKit::Processor::DefinitionProvider::FileSystemProvider;
+use XML::LibXML;
+
+# $Id$
 
 sub new {
     my $class  = shift;
@@ -32,19 +35,15 @@ sub setUp {
 
     return if( $this->{stylesheet} );
 
-	# FIXME
     if( $this->{processordef}->isFile() ) {
-    	$this->{stylesheet} = $this->{processordef}->getInstructions();
+        open my $STYLESHEET, $this->{processordef}->getInstructions();
+        local $/ = undef;
+        $this->{stylesheet} = <$STYLESHEET>;
     } else {
     	$this->{stylesheet} = $this->{processordef}->getInstructions();
     }
     
-        
-    open my $STYLESHEET, $this->{processordef}->getInstructions();
-    $this->{stylesheet} = "";
-    $this->{stylesheet} .= $_ while <$STYLESHEET>;
-    
-    $this->{logger}->debug( 0, "XPathScript: stylesheet is $this->{stylesheet}" );
+    $this->{logger}->debug( 9, "XPathScript: stylesheet is $this->{stylesheet}" );
 
 }
 
@@ -52,11 +51,11 @@ sub process {
     my $this = shift;
     my $input = shift;
 
-    $this->{logger}->debug(0,"XPathScript: Is processing the source with stylesheet: " . $this->{processordef} );
+    $this->{logger}->debug( 9,
+        "XPathScript: Is processing the source with stylesheet: " . $this->{processordef} );
 
-	# FIXME
 	$this->{xml} = $input;
-	$this->{logger}->debug( 0, "XPathScript: source is $input" );
+	$this->{logger}->debug( 9, "XPathScript: source is $input" );
 	
 	my $output;
 	$this->{printer} = \$output;
@@ -75,15 +74,11 @@ sub process {
 	   	untie *STDOUT;
 	}
 	
-	$this->{logger}->debug( 0, "XPathScript: output is $output" );
+	$this->{logger}->debug( 9, "XPathScript: output is $output" );
 	
-	use XML::LibXML;
 	my $parser = XML::LibXML->new();
 	return $parser->parse_string( $output );
-	#return $output;
 
-	
-    # return $this->{stylesheet}->transform( $input );
 }
 
 sub getMTime {
