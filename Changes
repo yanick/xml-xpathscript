@@ -1,7 +1,10 @@
 Revision history for Perl module XML::XPathScript.pm
 
 0.16
-	- Added Test::Pod and Test::Pod::Coverage in the module's tests
+	- Added alpha support for TomKit.
+	- Makefile.PL now only install AxKit and TomKit processors if they are
+	   detected.
+	- Added Test::Pod and Test::Pod::Coverage checks in the module's tests	   
 
 0.15 Sun Jun 26 2005
 	- Template now supports two new tags: intro and extro. When a tag is processed, the elements

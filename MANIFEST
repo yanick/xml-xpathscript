@@ -4,7 +4,8 @@ MANIFEST
 README
 XPathScript.pm
 lib/XML/XPathScript/Processor.pm
-lib/Apache/AxKit/Language/YPathScript.pm
+lib_axkit/Apache/AxKit/Language/YPathScript.pm
+lib_tomkit/Apache2/TomKit/Processor/XPathScript.pm
 script/xpathscript
 t/include.xps
 t/include2.xps

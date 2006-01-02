@@ -438,7 +438,7 @@ use Symbol;
 use File::Basename;
 use XML::XPathScript::Processor;
 
-$VERSION = '0.15';
+$VERSION = '0.16';
 
 $XML_parser = 'XML::LibXML';
 
