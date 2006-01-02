@@ -58,7 +58,7 @@ open YPS, ">XPathScript.pm" or die "can't overwrite XPathScript.pm: $!\n";
 print YPS $module;
 close YPS;
 
-my @pmlibdirs = ( 'lib ', '$(BASEEXT)' );
+my @pmlibdirs = ( 'lib', '$(BASEEXT)' );
 
 eval "use AxKit";
 unless( $@ ) {
