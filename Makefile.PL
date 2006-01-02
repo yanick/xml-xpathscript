@@ -58,11 +58,26 @@ open YPS, ">XPathScript.pm" or die "can't overwrite XPathScript.pm: $!\n";
 print YPS $module;
 close YPS;
 
+my @pmlibdirs = ( 'lib', '$(BASEEXT)' );
+
+eval "use AxKit";
+unless( $@ ) {
+	print "AxKit detected, adding Apache::Axkit::Language::YPathScript to installation\n";
+	push @pmlibdirs, 'lib_axkit';
+}
+
+
+eval "use Apache2::TomKit";
+unless( $@ ) {
+	print "TomKit detected, adding Apache2::TomKit::Processor::XPathScript to installation\n";
+	push @pmlibdirs, 'lib_tomkit';	
+}
 
 WriteMakefile(
     NAME		=> 'XML::XPathScript',
     VERSION_FROM	=> 'XPathScript.pm', 
 	EXE_FILES => [ qw( script/xpathscript ) ],
+	PMLIBDIRS => \@pmlibdirs, 
      ABSTRACT_FROM => 'XPathScript.pm', 
      AUTHOR     => 'Dominique Quatravaux <dom@idealx.com> and Yanick Champoux <yanick@babyl.dyndns.org>',
 );

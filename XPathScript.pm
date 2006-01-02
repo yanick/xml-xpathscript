@@ -3,7 +3,7 @@ package XML::XPathScript;
 use strict;
 use warnings;
 
-# $Revision: 115 $ - $Date: 2005-06-26 17:41:59 -0400 (Sun, 26 Jun 2005) $
+# $Revision: 124 $ - $Date: 2006-01-02 16:45:53 -0500 (Mon, 02 Jan 2006) $
 
 =pod "
 
@@ -103,10 +103,6 @@ specified. Better tweak the stylesheet globals (e.g. L</binmode>) once
 and for all at the beginning of the stylesheet.
 
 =over
-
-=cut "
-
-=pod "
 
 =item I<current()>
 
@@ -442,7 +438,7 @@ use Symbol;
 use File::Basename;
 use XML::XPathScript::Processor;
 
-$VERSION = '0.15';
+$VERSION = '0.16';
 
 $XML_parser = 'XML::LibXML';
 
@@ -741,7 +737,7 @@ sub extract {
     my $script="#line 1 $filename\n",
     my $line = 1;
 
-    while ($contents =~ /\G(.*?)(<!--#include|<%=?)/gcs) {
+    while ($contents =~ /\G(.*?)(<!--#include|<%[#=]?)/gcs) {
         my ($text, $type) = ($1, $2);
         $line += $text =~ tr/\n//; # count \n's in text
         $text =~ s/\|/\\\|/g;
@@ -768,8 +764,10 @@ sub extract {
         else {
             $contents =~ /\G(.*?)%>/gcs || die "No terminating '%>' after line $line";
             my $perl = $1;
-            $perl =~ s/;?$/;/s; # add on ; if its missing. As in <% $foo = 'Hello' %>
-            $script .= $perl;
+	    if( $type ne '<%#' ) {
+		    $perl =~ s/;?$/;/s; # add on ; if its missing. As in <% $foo = 'Hello' %>
+		    $script .= $perl;
+	    }
             $line += $perl =~ tr/\n//;
         }
     }
@@ -1003,9 +1001,6 @@ sub debug {
 The functions below are not methods.
 
 =over
-
-
-=pod "
 
 =item I<gen_package_name()>
 

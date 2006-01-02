@@ -458,42 +458,44 @@ Returns an XPath string that points to $node, from the root. Useful to
 create error messages that point at some location in the original XML
 document.
 
+=back
+
 =cut "
 
-sub get_xpath_of_node {
-	my $self =shift;
+	sub get_xpath_of_node {
+		my $self =shift;
 
-	# ugly hacks all over in this function, because the quirky
-	# refcount-proof aliasing (i.e. XML::XPath::Element versus
-	# XML::XPath::ElementImpl) in XML::XPath gets in the way badly
-	$self = $$self if
-		$self->isa( 'XML::XPath::Node::Element' ) and not $self->isa( 'XML::XPath::Node::ElementImpl' );
+		# ugly hacks all over in this function, because the quirky
+		# refcount-proof aliasing (i.e. XML::XPath::Element versus
+		# XML::XPath::ElementImpl) in XML::XPath gets in the way badly
+		$self = $$self if
+			$self->isa( 'XML::XPath::Node::Element' ) and not $self->isa( 'XML::XPath::Node::ElementImpl' );
 
-	my $parent = ( $self->can("parentNode") ?
-				$self->parentNode() :
-				$self->getParentNode() );
+		my $parent = ( $self->can("parentNode") ?
+					$self->parentNode() :
+					$self->getParentNode() );
 
-	return "" unless defined $parent;
+		return "" unless defined $parent;
 
-	my $name;
-	if (is_element_node($self)) {
-		$name = $self->findvalue('name()');
-	} elsif (is_text_node($self)) {
-		$name = "text()";
-    } elsif (is_comment_node($self)) {
-		$name = "comment()";
-	} elsif (is_pi_node($self)) {
-		$name = "processing-instruction()";
-	} else {
-		# YKYBPTMNW...
-		return get_xpath_of_node($parent)."/strange-node()";
-	}
+		my $name;
+		if (is_element_node($self)) {
+			$name = $self->findvalue('name()');
+		} elsif (is_text_node($self)) {
+			$name = "text()";
+	    } elsif (is_comment_node($self)) {
+			$name = "comment()";
+		} elsif (is_pi_node($self)) {
+			$name = "processing-instruction()";
+		} else {
+			# YKYBPTMNW...
+			return get_xpath_of_node($parent)."/strange-node()";
+		}
 
-	# ugly hack, part II
-	my @brothers = map{ ($_->isa( 'XML::XPath::Node::Element' ) ) ? $$_ : $_ } $parent->findnodes("./$name");
+		# ugly hack, part II
+		my @brothers = map{ ($_->isa( 'XML::XPath::Node::Element' ) ) ? $$_ : $_ } $parent->findnodes("./$name");
 
-	# Short-cut for nodes that have an ID. FIXME: not all DTDs use
-	# attribute named "id" as the SGML ID!
+		# Short-cut for nodes that have an ID. FIXME: not all DTDs use
+		# attribute named "id" as the SGML ID!
 	if (is_element_node($self) && (my $id=findvalue('@id',$self))) {
 		return get_xpath_of_node($parent).sprintf('/%s[@id="%s"]', $name, $id);
 	}
@@ -782,6 +784,8 @@ sub interpolate {
 	no warnings 'uninitialized';
     return $string;
 }
+
+=pod
 
 =back
 
