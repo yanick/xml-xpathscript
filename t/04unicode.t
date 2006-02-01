@@ -88,11 +88,11 @@ use XML::XPathScript;
 
 
 my $isostring = do {
-	no utf8; # This is latin1 actually.
+	no utf8; use bytes; # This is latin1 actually.
     <<"LATIN1_STRING_IN_FRENCH_WITH_MANY_ACCENTS";
-O\x{f9} qu'il r\x{e9}side, \x{e0} N\x{ee}mes ou m\x{ea}me Capharna\x{fc}m,
-tout Fran\x{e7}ais inscrit au r\x{f4}le payera son d\x{fb} d\x{e8}s avant
-No\x{eb}l, qu'il soit na\x{ef}f ou r\x{e2}leur
+O\xf9 qu'il r\xe9side, \xe0 N\xeemes ou m\xeame Capharna\xfcm,
+tout Fran\xe7ais inscrit au r\xf4le payera son d\xfb d\xe8s avant
+No\xebl, qu'il soit na\xeff ou r\xe2leur
 LATIN1_STRING_IN_FRENCH_WITH_MANY_ACCENTS
     # Sorry for the escaping, but we want to keep the test file itself
     # pure-ASCII (so that it won't bugger up in the text editor
