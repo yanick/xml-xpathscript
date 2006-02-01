@@ -51,7 +51,6 @@ open YPS, "XPathScript.pm" or die "can't open XPathScript.pm: $!\n";
 my $module;
 while( <YPS> )
 {
-	s/^(\$XML_parser = )'.*?';$/$1'$XML_parser';/;
 	$module .= $_;
 }
 open YPS, ">XPathScript.pm" or die "can't overwrite XPathScript.pm: $!\n";
@@ -80,5 +79,7 @@ WriteMakefile(
 	PMLIBDIRS => \@pmlibdirs, 
      ABSTRACT_FROM => 'XPathScript.pm', 
      AUTHOR     => 'Dominique Quatravaux <dom@idealx.com> and Yanick Champoux <yanick@babyl.dyndns.org>',
+   # Quoting fest!
+    PM_FILTER => "$^X dist/rewrite-default-xml-parser $XML_parser",
 );
 
