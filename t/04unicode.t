@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w
+#!/usr/bin/perl -wT
 
 use strict;
 use Test;
@@ -6,32 +6,99 @@ use XML::XPathScript::Processor;
 
 BEGIN
 {
-	plan tests => 10, todo => [];
+	plan tests => 11, todo => [];
 }
 
-ok( ! is_utf8_tainted(" ") );
+=head1 NAME
 
-my $utf8=do { use utf8; "Ã©" }; # literal e acute in UTF-8
-ok ($utf8 eq "é");
+04unicode.t - Test Unicode issues (see L<XML::XPathScript/The Unicode
+mess>).
 
-ok( is_utf8_tainted($utf8) );
+=head1 DESCRIPTION
 
-# Regression
-ok(!is_utf8_tainted("Documentation d<39>administration de IDX<45>ReverseProxyé"));
+We first test that is_utf8_tainted() works correctly, by comparing
+it's result to <Convert::Scalar/utf8> (if Convert::Scalar is
+available) against a set of strings whose UTF8ness is known.
+
+=cut
 
 
-ok (is_utf8_tainted("\x{263A}"));
+eval { require Convert::Scalar }; # Not fatal if absent
+
+sub ok_utf8_tainted {
+    my ($string, $comment) = @_;
+    if ($Convert::Scalar::VERSION && ! Convert::Scalar::utf8($string)) {
+        ok(1, 0, "$comment - Oops, Convert::Scalar disagrees! (error in the test suite)");
+        return;
+    }
+    ok(!!is_utf8_tainted($string), 1, $comment);
+}
+
+sub ok_not_utf8_tainted {
+    my ($string, $comment) = @_;
+    if ($Convert::Scalar::VERSION && Convert::Scalar::utf8($string)) {
+        ok(1, 0, "$comment - Oops, Convert::Scalar disagrees! (error in the test suite)");
+        return;
+    }
+    ok(!!is_utf8_tainted($string), '', $comment);
+}
+
+ok_not_utf8_tainted(" ", "typical plain string");
+my $utf8 = do { use utf8; "\x{1e9}" };
+ok_utf8_tainted($utf8, "typical UTF-8 string");
+my $byte = do { use bytes; substr($utf8, 1) };
+ok_not_utf8_tainted($byte,
+                    "byte string forcibly extracted from UTF-8 string");
+
+=pod
+
+=head2 Unicode and tainting
+
+There is a fairly serious Perl bug concerning Unicode and taint bits
+interacting badly together, for all versions ranging from 5.6.1 to
+5.8.4 (look up the history of t/op/utftaint.t in the Perl source
+tree). We cater for this too to some extent: we cannot prevent Perl
+from SEGVing, but at least is_utf8_tainted() still works and therefore
+an appropriate error will be raised when using
+C<< XML::XPathScript->current()->binmode() >>.
+
+=cut
+
+my $tainted_null_string = substr($0, 0, 0);
+if (eval { kill 0 => $tainted_null_string; 1 }) {
+    warn "Taint mode disabled, UTF8 and taint checks skipped";
+    ok(1) for (1..3);
+} else {
+    ok_not_utf8_tainted("foo" . $tainted_null_string);
+    ok_not_utf8_tainted($byte . $tainted_null_string);
+    ok_utf8_tainted($utf8 . $tainted_null_string);
+}
+
+=pod
+
+=head2 Integration with XML::XPathScript->current()->binmode()
+
+We then proceed to testing that the UTF-8 safeguards in the stylesheet
+processor work correctly. They are implemented in terms of
+is_utf8_tainted().
+
+=cut
 
 use XML::XPathScript;
 
-my $isostring = do {
-	no utf8;
-	"Où qu'il réside, à Nîmes ou même Capharnaüm,".
-		" tout Français inscrit au rôle payera son dû dès avant Noël,".
-			" qu'il soit naïf ou râleur"
-};
 
-ok(! is_utf8_tainted($isostring));
+my $isostring = do {
+	no utf8; # This is latin1 actually.
+    <<"LATIN1_STRING_IN_FRENCH_WITH_MANY_ACCENTS";
+O\x{f9} qu'il r\x{e9}side, \x{e0} N\x{ee}mes ou m\x{ea}me Capharna\x{fc}m,
+tout Fran\x{e7}ais inscrit au r\x{f4}le payera son d\x{fb} d\x{e8}s avant
+No\x{eb}l, qu'il soit na\x{ef}f ou r\x{e2}leur
+LATIN1_STRING_IN_FRENCH_WITH_MANY_ACCENTS
+    # Sorry for the escaping, but we want to keep the test file itself
+    # pure-ASCII (so that it won't bugger up in the text editor
+    # regardless of i18n settings)
+};
+ok_not_utf8_tainted($isostring, "real-world Latin1 text");
 
 my $style = <<'STYLE';
 <%
@@ -65,8 +132,9 @@ XML
 my $result="";
 
 $xps->process(\$result);
-ok(! is_utf8_tainted($result));
-ok($result eq $isostring."\n") or warn $result;
+ok_not_utf8_tainted($result,
+   "XML::XPathScript->current()->binmode() output not tainted");
+ok($result, $isostring."\n");
 
 $xps = new XML::XPathScript(xml => <<"XML", stylesheet => $style);
 <?xml version="1.0" encoding="iso-8859-1" ?>
