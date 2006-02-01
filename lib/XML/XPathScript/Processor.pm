@@ -441,13 +441,30 @@ function to prevent that from happening.
 
 =cut "
 
-# This implementation is vulnerable to the "é" (e acute) getting
-# crushed when source code gets converted e.g. to EBCDIC. Oh well.
 sub is_utf8_tainted {
-	my ($string)=@_;
-	my $maybe_autopromoted = do { no bytes; no utf8; "é"  . $string};
-	use bytes;
-	return ( length($string) + 1 < length($maybe_autopromoted) );
+    my ($string) = @_;
+
+    my $ghost = ($string x 0) .
+        "ab"; # Very quick and conserves UTF-8 flag (and taintedness)
+
+    $ghost .= do { use bytes; "\xc3" };
+    $ghost .= do { use bytes; "\xa9" };
+    my $charlength = do { no bytes; length($ghost) };
+    my $bytelength = do { use bytes; length($ghost) };
+
+    if ($charlength == 3) {
+        # The two bytes we added got lumped in core into a single
+        # UTF-8 char. This is a Perl bug (arising e.g. because $string
+        # is tainted, see t/04unicode.t) but we recover gracefully.
+        return 1;
+    } elsif ($charlength == 4 && $bytelength == 4) {
+        return 0;
+    } elsif ($charlength == 4 && $bytelength == 6) {
+        return 1; # The bytes were upgraded
+    } else {
+        die "is_utf8_tainted assertion check failed".
+            " (charlength = $charlength, bytelength=$bytelength)";
+    }
 }
 
 =pod "
