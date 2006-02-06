@@ -19,7 +19,9 @@ GetOptions( 'query=s' => \$query,
 sub die_version {
     my( $revision );
 
-    my $date = q$Date$;
+    my( $date ) = q$Date$ 
+                    =~ /\((.*?)\)/;
+    my( $revision ) = q$Revision$ =~ /(\d+)/;
 
     die <<"END_VERSION";
 using XML::XPathScript version $XML::XPathScript::VERSION
