@@ -49,6 +49,7 @@ package XML::XPathScript::Processor;
 
 use strict;
 use warnings;
+use Carp;
 
 use Exporter;
 use vars '@ISA', '@EXPORT';
@@ -606,10 +607,25 @@ sub translate_element_node {
 	my $node = shift;
     my $translations = $XML::XPathScript::trans;
 
-    # FIXME  this will beak as soon as XPath is chosen
-    my $node_name = $node->localname;
-    my $ns = $node->getNamespaces();
-    my $namespace = $ns ? $ns->getData() : undef ;
+    my $node_name = 
+        $XML::XPathScript::XML_parser eq 'XML::LibXML' ? $node->localname
+      : $XML::XPathScript::XML_parser eq 'XML::XPath'  ? $node->getLocalName 
+      :           croak "unsupported parser:  $XML::XPathScript::XML_parser"
+      ;
+
+    my $namespace;
+    if( $XML::XPathScript::XML_parser eq 'XML::LibXML' ) {
+        my $ns = $node->getNamespaces();
+        $namespace = $ns ? $ns->getData() : undef ;
+    }
+    elsif( $XML::XPathScript::XML_parser eq 'XML::XPath' ) {
+        if( my $prefix = $node->getPrefix ) {
+            $namespace = $node->getNamespace( $prefix )->getExpanded();
+        }
+    }
+    else {
+        croak "unsupported parser:  $XML::XPathScript::XML_parser"
+    }
 
     my $trans = XML::XPathScript::Template::resolve( $translations, 
                                                 $namespace, $node_name );
