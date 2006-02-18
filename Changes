@@ -1,21 +1,27 @@
 Revision history for Perl module XML::XPathScript.pm
 
-0.16
+XXX
+    - API to stylesheet template re-worked (see pod of
+      XML::XPathScript::Template).
+    - UTF8 support improved.
+    
+
+0.16 Jan 2 2005
 	- Added alpha support for TomKit.
 	- Makefile.PL now only install AxKit and TomKit processors if they are
 	   detected.
 	- Added Test::Pod and Test::Pod::Coverage checks in the module's tests	   
 
 0.15 Sun Jun 26 2005
-	- Template now supports two new tags: intro and extro. When a tag is processed, the elements
-		of the templates are outputed as follow:
+	- Template now supports two new tags: intro and extro. When a tag 
+       is processed, the elements of the templates are outputed as follow:
 		
 		pre
 		<tag>              # if showtag == 1
 		intro   
 		prechildren        # if <tag> has children
 		[ children ... ]
-		postchildren       # if <tag has children
+		postchildren       # if <tag> has children
 		extro
 		</tag>             # if showtag == 1
 		post

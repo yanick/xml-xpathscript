@@ -1,5 +1,9 @@
 * Clear the version mess.
 
+* add SVN tags on files
+
+* Add namespace support
+
 * INCLUDEs for A::A::YPS -> which directory is home?
 	ONLINE
 		plain vanila -> URL
@@ -47,3 +51,6 @@ html
 <xpsMakefile/>
 
 
+* Change DO_CHILD with $DO_CHILD (ReadOnly)
+
+* doc, doc, doc
