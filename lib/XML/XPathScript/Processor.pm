@@ -1,5 +1,3 @@
-#!/usr/bin/perl
-
 =head1 NAME
 
 XML::XPathScript::Processor - the XML transformation engine in XML::XPathScript
@@ -76,6 +74,8 @@ use vars '@ISA', '@EXPORT';
 		DO_SELF_ONLY
 		DO_NOT_PROCESS
 		DO_TEXT_AS_CHILD
+	set_template
+    dump_templates
         );
 
 my $VERSION = 0.1;
@@ -610,32 +610,31 @@ sub translate_element_node {
 	my $node = shift;
     my $translations = $XML::XPathScript::trans;
 
-    my $node_name = $node->getName;
-    my $trans;
-	$trans = $translations->{$node_name} if defined $node_name;
+    # FIXME  this will beak as soon as XPath is chosen
+    my $node_name = $node->localname;
+    my $ns = $node->getNamespaces();
+    my $namespace = $ns ? $ns->getData() : undef ;
 
-	# no specific transformation? use the generic '*'
-    unless( $trans ) 
-	{
-        $node_name = '*';
-        
-		unless( $trans = $translations->{$node_name} )
-		{
-			# no specific and no generic? Okay, okay, return as is...
-			no warnings qw/ uninitialized /;
-			return start_tag($node) . 
-                	_apply_templates( ( $XML::XPathScript::XML_parser eq 'XML::LibXML' ) ? 
-										$node->childNodes : $node->getChildNodes) .
-                	end_tag($node);	
-		}
+    my $trans = XML::XPathScript::Template::resolve( $translations, 
+                                                $namespace, $node_name );
+
+    unless( $trans ) {
+        # no specific and no generic? Okay, okay, return as is...
+        no warnings qw/ uninitialized /;
+        return start_tag($node) . 
+                _apply_templates( ( $XML::XPathScript::XML_parser eq 'XML::LibXML' ) ? 
+                                    $node->childNodes : $node->getChildNodes) .
+                end_tag($node);	
+		
     }
 
     my $dokids = 1;  # by default we do the kids
     my $search;
-    my $t = {};
+    my $t = new XML::XPathScript::Template::Tag;
+    $t->{$_} = $trans->{$_} 
+        for keys %{$trans};
     
-	if ($trans->{testcode}) 
-	{
+	if ($trans->{testcode}) {
         my $result = $trans->{testcode}->($node, $t);
 
 		if( $result !~ /^-?\d+/ ) {
@@ -652,66 +651,38 @@ sub translate_element_node {
         # any number beside 0 and -1 will do the kids
     }
 
-    local $translations->{$node_name};
-    # copy old values in
-    %{$translations->{$node_name}} = %$trans;
-
-    if (%$t) 
-	{
-        $translations->{$node_name}{$_} = $t->{$_} for keys %$t;
-        $trans = $translations->{$node_name};
-    }
-
     # default: process children too.
 	my $has_kids = $XML::XPathScript::XML_parser eq 'XML::LibXML' ? 
 						$node->hasChildNodes() : $node->getFirstChild();
 	
 	no warnings 'uninitialized';
-    my $pre = interpolate($node, $trans->{pre});
-	$pre .= start_tag( $node ) if $trans->{showtag};
-	$pre .= $trans->{intro};
-	$pre .= interpolate($node, $trans->{prechildren}) if $has_kids;
+    my $pre = interpolate($node, $t->{pre});
+	$pre .= start_tag( $node ) if $t->{showtag};
+	$pre .= $t->{intro};
+	$pre .= interpolate($node, $t->{prechildren}) if $has_kids;
 	
 	my $post;
-	$post .= interpolate($node, $trans->{postchildren}) if $has_kids;
-	$post .= $trans->{extro};
-	$post .= end_tag( $node ) if  $trans->{showtag};
-	$post .= interpolate($node, $trans->{post});
+	$post .= interpolate($node, $t->{postchildren}) if $has_kids;
+	$post .= $t->{extro};
+	$post .= end_tag( $node ) if  $t->{showtag};
+	$post .= interpolate($node, $t->{post});
 
-    if ($dokids) 
+	my $middle;
+	my @kids = $dokids ? $node->getChildNodes()
+			 : $search ? $node->findnodes($search)
+			 : ();
+	for my $kid ( @kids ) 
 	{
-        my $middle;
-        for my $kid ($node->getChildNodes()) 
-		{
-			$middle .= interpolate($node, $trans->{prechild})
-				if is_element_node( $kid );
+		$middle .= interpolate($node, $trans->{prechild}) 
+			if is_element_node( $kid );
 
-			$middle .= _apply_templates($kid);
+		$middle .= _apply_templates($kid);
 
-			$middle .= interpolate($node, $trans->{postchild})
-				if is_element_node( $kid );
-        }
+		$middle .= interpolate($node, $trans->{postchild})
+			if is_element_node( $kid );
+	}
         
-		no warnings 'uninitialized';
-		return $pre . $middle . $post;
-    }
-	
-    if($search) 
-	{
-        my $middle = '';
-        for my $kid ( $node->findnodes($search)) {
-
-			$middle .= interpolate($node, $trans->{prechild}) if is_element_node( $kid );
-			$middle .= _apply_templates($kid);
-			$middle .= interpolate($node, $trans->{postchild}) if is_element_node( $kid );
-
-        }
-        return $pre . $middle . $post;
-    }
-    
-	
-	return $pre . $post;
-
+	return $pre . $middle . $post
 }
 
 sub translate_comment_node {
@@ -770,7 +741,12 @@ sub start_tag {
 	   	{
 			#my $att = $attr->toString( 0, 1 );
 		    	#$att =~ s/'/&quot;/g;
-			$string .= $attr->toString( 0, 1 );
+            if( $attr->isa( 'XML::LibXML::Namespace' ) ) {
+                $string .= ' xmlns:'.$attr->getName().'="'.$attr->value().'" ';
+            } 
+            else {
+                $string .= $attr->toString( 0, 1 );
+            }
 		}
     }
 
