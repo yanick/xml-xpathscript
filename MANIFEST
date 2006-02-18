@@ -11,10 +11,10 @@ t/include.xps
 t/include2.xps
 t/include3.xps
 t/recursive.xps
-t/recursive.xps  
-t/t1.xml         
+t/recursive.xps
+t/t1.xml
 t/t2.xps
-t/01basic.t        
+t/01basic.t
 t/02interpolate.t  
 t/03general.t      
 t/04unicode.t
@@ -23,6 +23,13 @@ t/06testcode.t
 t/07stylesheetcallbacks.t
 t/08document.t
 t/09argencoding.t
+t/10comments.t
+t/11new_interface.tt
+t/12template.t
+t/13namespace.t
+t/testdocs/namespace.xml
+t/testdocs/namespace.xps
+t/testdocs/namespace.expected
 t/document_file.txt
 t/t1_compat.xps  
 t/t1.xps
