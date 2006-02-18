@@ -3,9 +3,11 @@ package XML::XPathScript;
 use strict;
 use warnings;
 
+
+
 # $Revision$ - $Date$
 
-=pod "
+=pod 
 
 =head1 NAME
 
@@ -437,6 +439,7 @@ use vars qw( $VERSION $XML_parser $DoNotInterpolate $debug_level );
 use Symbol;
 use File::Basename;
 use XML::XPathScript::Processor;
+use XML::XPathScript::Template;
 
 $VERSION = '0.16';
 
@@ -451,16 +454,14 @@ $debug_level = 0;
 
 sub import
 {
-	my $self = shift @_;
+    my $self = shift @_;
 
-	if( grep $_ eq 'XML::XPath', @_ )
-	{
-		$XML::XPathScript::XML_parser = 'XML::XPath';
-	}
-	elsif( grep $_ eq 'XML::LibXML', @_ )
-	{
-		$XML::XPathScript::XML_parser = 'XML::LibXML';
-	}
+    if ( grep $_ eq 'XML::XPath', @_ ) {
+        $XML::XPathScript::XML_parser = 'XML::XPath';
+    }
+    elsif ( grep $_ eq 'XML::LibXML', @_ ) {
+        $XML::XPathScript::XML_parser = 'XML::LibXML';
+    }
 }
 
 INIT
@@ -939,7 +940,9 @@ sub compile {
 		    sub {
 		    	my (\$self, $extravars ) = \@_;
 				local \$XML::XPathScript::current=\$self;
-		    	my \$t = \$XML::XPathScript::current->{t} = {};
+		    	my \$t = \$XML::XPathScript::current->{t} 
+                            = XML::XPathScript::Template->new();
+                my \$template = \$t;
 				local \$XML::XPathScript::trans = \$t; # Yes,
 				# this does the sharing! Perl is a bizarre and
 				# wonderful language.
