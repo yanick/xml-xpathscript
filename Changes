@@ -1,6 +1,6 @@
 Revision history for Perl module XML::XPathScript.pm
 
-XXX
+1.00
     - API to stylesheet template re-worked (see pod of
       XML::XPathScript::Template).
     - UTF8 support improved.

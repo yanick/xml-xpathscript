@@ -24,6 +24,12 @@ sub new {
    return $self;
 }
 
+sub get {
+    my( $self, @attributes ) = @_;
+
+    return map { $self->{$_} || '' } @attributes;
+}
+
 sub set {
 	my( $self, $attribute_ref ) = @_;
 
@@ -48,25 +54,21 @@ __END__
 
 =head1 NAME
 
-XML::XPathScript::Template - XML::XPathScript transformation template 
+XML::XPathScript::Template::Tag - Tag within a XML::XPathScript::Template 
 
 =head1 SYNOPSIS
 
     <%
-        $t->set( 'important' => { 'pre' => '<blink>', 
-                                  'post' => '</blink>',
-                                  'prechild' => '<u>',
-                                  'postchild' => '</u>',
-                                  } );
+        $tag->set( 'foo' => { testcode => \&frumble  } );
 
-        # urgent and annoying share the 'pre' and 'post'
-        # of important
-        $t->copy( 'important' => [ qw/ urgent annoying / ], 
-                    [ qw/ pre post / ] );
+        sub frumble {
+            my( $n, $t ) = @_;
 
-        # redHot is a synonym of important
-        $t->alias( 'important' => 'redHot' );
+            $t->set({ 'pre' =>  '<bar>' });
 
+            return DO_SELF_AND_CHILDREN();
+
+        }
      %>
      <%= apply_templates() %>
 
@@ -75,7 +77,7 @@ XML::XPathScript::Template - XML::XPathScript transformation template
 The XML::XPathScript::Tag class is used to represent tags 
 within an XPathScript template. 
 
-=head2 As Argument to the testcode Functions
+=head2 Called as Argument to the testcode Functions
 
 Typically, the only time you'll be exposed to those objects is
 via the testcode functions, which receive as arguments a reference
@@ -88,7 +90,7 @@ template, you'll have to access I<$template> directly.
 Example:
 
     <%
-        $t->set( 'foo' => { testcode => \&frumble  } );
+        $template->set( 'foo' => { testcode => \&frumble  } );
 
         sub frumble {
             my( $n, $t ) = @_;
@@ -97,11 +99,11 @@ Example:
                 # we've been whonk'ed! This foo must
                 # blink
                 $t->set({ 'pre' => '<blink>', 'post' => '</blink>' });
-                
+
                 # and the next foos will be in italic
                 $template->set( foo => { pre => '<i>', post => '</i>' } );
             }
-            return $DO_SELF_AND_CHILDREN;
+            return DO_SELF_AND_CHILDREN();
         }
     %>
 
@@ -119,11 +121,22 @@ Example:
 
     $t->set({ pre => '<a>', post => '</a>' });
 
+=item get
+
+    my @values = $tag->get( @attributes );
+
+Returns the values of @attributes.
+
+Example:
+
+    my @values = $tag->get( 'pre', 'post' );
+
 =back
 
 =head1 BACKWARD COMPATIBILITY
 
-As for XML::XPathScript::Template, the tags within the template of a
+As for XML::XPathScript::Template, prior to XPathScript version 1.0, 
+the tags within the template of a
 stylesheet were not objects but simple hash references. Modifications
 to the tag attributes were done by manipulating the hash directly.
 
@@ -137,7 +150,7 @@ to the tag attributes were done by manipulating the hash directly.
         };
     %>
 
-Don't tell anyone, but as an XML::XPathScript::Tag is
+Don't tell anyone, but as an XML::XPathScript::Template::Tag is
 a blessed hash reference this way of doing things will 
 still work. However, direct manipulation of the tag's hash
 is deprecated. Instead, it is recommended to use the object's 

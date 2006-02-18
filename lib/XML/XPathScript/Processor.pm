@@ -74,11 +74,7 @@ use vars '@ISA', '@EXPORT';
 		DO_SELF_ONLY
 		DO_NOT_PROCESS
 		DO_TEXT_AS_CHILD
-	set_template
-    dump_templates
         );
-
-my $VERSION = 0.1;
 
 =pod "
 

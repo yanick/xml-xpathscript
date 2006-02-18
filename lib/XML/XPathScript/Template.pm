@@ -79,8 +79,9 @@ sub dump {
 sub clear {
     my( $self, $tags ) = @_;
 
-    delete $self->{ $_ } for $tags ? @$tags : keys %$self;
+    delete $self->{ $_ } for $tags ? @$tags : grep { !/^:/ } keys %$self;
 }
+
 
 sub is_alias {
     my( $self, $tag ) = @_;
@@ -136,31 +137,34 @@ __END__
 
 =head1 NAME
 
-XML::XPathScript::Tag - Tag within a XML::XPathScript transformation template 
+XML::XPathScript::Template - XML::XPathScript transformation template 
 
 =head1 SYNOPSIS
 
     <%
-        $t->set( 'foo' => { testcode => \&frumble  } );
+        $t->set( 'important' => { 'pre' => '<blink>', 
+                                  'post' => '</blink>',
+                                  'prechild' => '<u>',
+                                  'postchild' => '</u>',
+                                  } );
 
-        sub frumble {
-            my( $n, $t ) = @_;
+        # urgent and annoying share the 'pre' and 'post'
+        # of important
+        $t->copy( 'important' => [ qw/ urgent annoying / ], 
+                    [ qw/ pre post / ] );
 
-            $t->set({ 'pre' =>  '<bar>' });
+        # redHot is a synonym of important
+        $t->alias( 'important' => 'redHot' );
 
-            return $DO_SELF_AND_CHILDREN;
-
-        }
      %>
      <%= apply_templates() %>
 
 =head1 DESCRIPTION
 
-
 A stylesheet's template defines the transformations and actions that 
 are performed on the tags of a document as they are processed.
 
-The template of a stylesheet is aliased by default to the variables 
+The template of a stylesheet can be accessed via variables 
 I<$t> and I<$template>.
 
 
@@ -168,12 +172,18 @@ I<$t> and I<$template>.
 
 =over
 
+=item new
+
+    my $template = new XML::XPathScript::Template;
+
+Creates and returns a new, empty template.
+
 =item  set
 
     $template->( $tag, \%attributes )
     $template->set_template( \@tags , \%attributes )
 
-Update the tag(s) $tag or @tags in the template with the 
+Update the $tag or @tags in the template with the 
 given %attributes.
 
 Example:
@@ -237,6 +247,17 @@ Example:
     $template->set( 'bar' => { pre => '<c>' } );    # affects only bar
     $template->set( 'baz' => { pre => '<b>' } );    # affects foo and baz
 
+=item clear
+
+    $template->clear()
+    $template->clear( \@tags )
+
+Delete all tags, or those given by @tags, from the template.
+
+Example:
+
+    $template->clear([ 'foo', 'bar' ]);
+
 =item dump
 
     $template->dump()
@@ -258,14 +279,60 @@ Example:
     #                        }
     #             };
 
-=cut
+
+=item namespace
+
+    my $subtemplate = $template->namespace( $uri );
+
+Returns the sub-template associated to the namespace defined by $uri.
+
+Example:
+
+    $template->set( 'foo' => { 'pre' => 'within default namespace' } );
+    my $subtemplate = $template->namespace( 'http://www.www3c.org/blah/' );
+    $subtemplate->set( 'foo' => { 'pre' => "within 'blah' namespace" } );
+
+=item resolve
+
+    my $tag = $template->resolve( $namespace, $tagname );
+    my $tag = $template->resolve( $tagname );
+
+Returns the tag object within $template that matches $namespace and
+$tagname best. The returned match is the first one met in the following
+list:
+
+=over
+
+=item $namespace:$tagname
+
+=item $namespace:*
+
+=item $tagname
+
+=item *
+
+=item undef
 
 =back
 
+Example:
+
+    $template->set( foo => { pre => 'a' } );
+    $template->set( '*' => { pre => 'b' } );
+    $template->namespace( 'http://blah' )->set( foo => { pre => 'c' } );
+    $template->namespace( 'http://blah' )->set( '*' => { pre => 'd' } );
+
+    $template->resolve( 'foo' )->get( 'pre' );  # returns 'a'
+    $template->resolve( 'baz' )->get( 'pre' );  # returns 'b'
+    $template->resolve( 'http://meeh', 'foo' )->get( 'pre' );  # returns 'a'
+    $template->resolve( 'http://blah', 'foo' )->get( 'pre' );  # returns 'c'
+    $template->resolve( 'http://blah', 'baz' )->get( 'pre' );  # returns 'd'
+
+=back
 
 =head1 BACKWARD COMPATIBILITY
 
-Prior to version FIXME of XML::XPathScript, the template of a
+Prior to version 1.0 of XML::XPathScript, the template of a
 stylesheet was not an object but a simple hash reference. Modifications
 to the template were done by manipulating the hash directly.
 

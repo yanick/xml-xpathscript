@@ -54,3 +54,7 @@ html
 * Change DO_CHILD with $DO_CHILD (ReadOnly)
 
 * doc, doc, doc
+
+* Remove VERSION on all but XML::XPathScript
+
+* Build.PL
