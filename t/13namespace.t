@@ -8,21 +8,23 @@ BEGIN {
 
 sub test_file {
     my $filename = shift;
-    my $comment = shift;
 
     local $/ = undef;
 
-    open my $xml, "t/testdocs/$filename.xml" or die;
+    open my $xml, "$filename.xml" or die;
 
     my $xps = XML::XPathScript->new(xml => join( '', <$xml> ), 
-                                    stylesheetfile => "t/testdocs/$filename.xps" );
+                                    stylesheetfile => "$filename.xps" );
 
     my $doc;
     $xps->process( \$doc );
 
-    open my $expected, "t/testdocs/$filename.expected" or die;
+    open my $expected, "$filename.expected" or die;
 
-    is( $doc, <$expected>, $comment );
+    is( $doc, <$expected>, "t/testdocs/$filename.xml" );
 }
 
-test_file( 'namespace', 'namespace' );
+chdir "t/testdocs" or die "can't change dir to t/testdocs\n";
+opendir my $dir, "." or die;
+my @files = readdir $dir;
+test_file( $_ ) for grep { s/\.xml$// } @files;
