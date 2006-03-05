@@ -224,8 +224,6 @@ When run, the stylesheet is expected to fill in the I<template object>
 $template, which is a lexically-scoped variable made available to it at
 preprocess time.
 
-=back
-
 =cut "
 
 use vars qw( $VERSION $XML_parser $DoNotInterpolate $debug_level );
@@ -235,7 +233,7 @@ use File::Basename;
 use XML::XPathScript::Processor;
 use XML::XPathScript::Template;
 
-$VERSION = '0.16';
+$VERSION = '1.000_001';
 
 $XML_parser = 'XML::LibXML';
 

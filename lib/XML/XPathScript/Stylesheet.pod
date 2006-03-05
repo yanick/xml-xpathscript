@@ -88,12 +88,12 @@ utility methods that can be called from within the stylesheet.
 
 =head1  TRANSFORMATION TEMPLATE
 
-FIXME If the name of a node doesn't resolve in the template,
-it is outputed verbatim. 
+The transformation template defines the modification that
+will automatically be brought on document elements when 
+'apply_templates' is called. 
 
-=head2 Namespaces
-
-FIXME
+See the L<XML::XPathScript::Template> manpage for 
+details on how to configure the template.
 
 =head2 Special tags
 
@@ -108,7 +108,7 @@ corresponding nodes in the document, and '*', a catch-all tag.
 Match text nodes.
 
 Note that text nodes can be assigned a special action.
-See L<TAG ATTRIBUTES/action> below. FIXME
+See section L</action> of this manpage. 
 
 Example:
 
@@ -124,7 +124,7 @@ Match comment nodes.
 =item '*'
 
 Will match any regular tag (that is, not comments nor text) that 
-isn't explicitly matched. See FIXME
+isn't explicitly matched. 
 
 =back
 
@@ -152,15 +152,19 @@ are outputed in the following order:
     </tag>             # if showtag == 1
     post
 
-If interpolation is enabled (see FIXME), XPath expressions delimited 
+If interpolation is enabled, XPath expressions delimited 
 by curly braces can be imbedded in any of these attributes. 
 
     $template->set( 'movie' => { 
         pre => 'title: {./@title}, year: {./year}' 
     } );
 
-The expressions' delimiter can be modified to be something else
-via FIXME.
+Interpolation is enabled via the XML::XPathScript object's method
+L<interpolation|XML::XPathScript/interpolation>.
+
+The expressions' delimiter can be modified 
+via the XML::XPathScript object's method 
+L<interpolation_regex|XML::XPathScript/interpolation_regex>.
 
 =item showtag
 

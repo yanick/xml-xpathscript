@@ -153,7 +153,7 @@ XML::XPathScript::Template - XML::XPathScript transformation template
         # urgent and annoying share the 'pre' and 'post'
         # of important
         $t->copy( 'important' => [ qw/ urgent annoying / ], 
-                    [ qw/ pre post / ] );
+                    [ qw/ pre post / ],        );
 
         # redHot is a synonym of important
         $t->alias( 'important' => 'redHot' );
@@ -305,15 +305,25 @@ list:
 
 =over
 
-=item * $namespace:$tagname
+=item * 
 
-=item * $namespace:*
+$namespace:$tagname
 
-=item * $tagname
+=item * 
 
-=item * *
+$namespace:*
 
-=item * undef
+=item * 
+
+$tagname
+
+=item * 
+
+*
+
+=item * 
+
+undef
 
 =back
 

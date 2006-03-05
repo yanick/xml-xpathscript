@@ -745,8 +745,6 @@ sub interpolate {
 
 =pod
 
-=back
-
 =head1 BUGS
 
 Right now I<XML::XPathScript::Processor> is just an auxillary module
