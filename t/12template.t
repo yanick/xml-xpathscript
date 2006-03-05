@@ -1,5 +1,5 @@
 use strict;
-use Test::More qw/ no_plan /;
+use Test::More tests => 11;
 
 BEGIN {
     use_ok( 'XML::XPathScript::Template' );
