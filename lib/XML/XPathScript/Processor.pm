@@ -4,18 +4,19 @@ XML::XPathScript::Processor - the XML transformation engine in XML::XPathScript
 
 =head1 SYNOPSIS
 
-In a stylesheet C<< ->{testcode} >> sub for e.g. Docbook's C<< <ulink>
->> tag:
+In a stylesheet C<< ->{testcode} >> sub for e.g. Docbook's 
+C<< <ulink> >> tag:
 
       my $url = findvalue('@url',$self);
       if (findnodes("node()", $self)) {
          # ...
-		$t->{pre}=qq'<a href="$url">';
-		$t->{post}=qq'</a>';
+		$t->set({ pre  => "<a href='$url'>", 
+                  post => '</a>'             });
 		return DO_SELF_AND_KIDS;
-      } else {
-		$t->{pre}=qq'<a href="$url">$url</a>';
-		$t->{post}=qq'';
+      } 
+      else {
+        $t->set({  pre  => "<a href='$url'>$url</a>",
+                   post => ''                          });
 		return DO_SELF_ONLY;
       };
 
@@ -28,7 +29,7 @@ At the stylesheet's top-level one often finds:
 The I<XML::XPathScript> distribution offers an XML parser glue, an
 embedded stylesheet language, and a way of processing an XML document
 into a text output. This package implements the latter part: it takes
-an already filled out C<< $t >> template hash and an already parsed
+an already filled out C<< $template >> template object and an already parsed
 XML document (which come from L<XML::XPathScript> behind the scenes),
 and provides a simple API to implement stylesheets. In particular, the
 L</apply_templates> function triggers the recursive expansion of
@@ -76,54 +77,6 @@ use vars '@ISA', '@EXPORT';
 		DO_NOT_PROCESS
 		DO_TEXT_AS_CHILD
         );
-
-=pod "
-
-=over 4
-
-=item I<DO_SELF_AND_KIDS>, I<DO_SELF_ONLY>, I<DO_NOT_PROCESS>,
-I<DO_TEXT_AS_CHILD>
-
-Symbolic constants evaluating respectively to 1, -1, 0 and 2, to be
-used as mnemotechnic return values in C<< ->{testcode} >> routines
-instead of the numeric values which are harder to
-remember. Specifically:
-
-=item I<DO_SELF_AND_KIDS>
-
-tells I<XML::XPathScript::Processor> to render the current node as C<<
-$t->{pre} >>, followed by the result of the call to
-L</apply_templates> on the subnodes, followed by C<< $t->{post} >>.
-
-=item I<DO_SELF_ONLY>
-
-tells I<XML::XPathScript::Processor> to render the current node simply
-as C<< $t->{pre} >>, followed by C<< $t->{post} >>.
-
-=item I<DO_NOT_PROCESS>
-
-tells I<XML::XPathScript::Processor> to render the current node as the
-empty string.
-
-=item I<DO_TEXT_AS_CHILD>
-
-only meaningful for text nodes. When this value is returned, I<XML::XPathScript::Processor> 
-pretends that the text is a child of the node, which basically means that 
-C<< $t->{pre} >> and C<< $t->{post} >> will frame the text instead of
-replacing it.
-
-E.g.
-
-	$t->{pre} = '<text/>';
-	#  will do <foo>bar</foo>  =>  <foo><text/></foo>
-
-
-	$t->{pre} = '<t>';
-	$t->{post} =  '</t>';
-	$t->{testcode} = sub{ DO_TEXT_AS_CHILD };
-	#  will do <foo>bar</foo>  =>  <foo><t>bar</t></foo>
-
-=cut "
 
 use constant DO_TEXT_AS_CHILD =>  2;
 use constant DO_SELF_AND_KIDS =>  1;
@@ -582,24 +535,24 @@ sub translate_text_node {
 	return $node->toString unless $trans;
 
 	my $middle = '';
-	my $retval;
 
+    my $action = $trans->{action};
+
+    my $t = new XML::XPathScript::Template::Tag;
+    $t->{$_} = $trans->{$_} for keys %{$trans};
 	if (my $code = $trans->{testcode}) 
 	{
-		my $t = {};
-		$retval = $code->($node, $t);
-		return if $retval == DO_NOT_PROCESS;
 
-		if ($retval and %$t) 
-		{
-			$trans->{$_} = $t->{$_} for keys %$t;
-		}
+		$action = $code->($node, $t);
+    }
 		
-		$middle = $node->toString if $retval == DO_TEXT_AS_CHILD;
-	}
-
 	no warnings 'uninitialized';
-	return $trans->{pre} . $middle . $trans->{post};
+    return if defined($action) and $action == DO_NOT_PROCESS;
+
+    $middle = $node->toString if defined($action) 
+                                    and $action == DO_TEXT_AS_CHILD;
+
+	return $t->{pre} . $middle . $t->{post};
 }
 
 sub translate_element_node {
@@ -643,31 +596,31 @@ sub translate_element_node {
     my $dokids = 1;  # by default we do the kids
     my $search;
     my $t = new XML::XPathScript::Template::Tag;
-    $t->{$_} = $trans->{$_} 
-        for keys %{$trans};
+    $t->{$_} = $trans->{$_} for keys %{$trans};
+
+    my $action = $trans->{action};
     
 	if ($trans->{testcode}) {
-        my $result = $trans->{testcode}->($node, $t);
+        $action = $trans->{testcode}->($node, $t);
+    }
 
-		if( $result !~ /^-?\d+/ ) {
-			# ah, an xpath expression
-            $dokids = 0;
-            $search = $result;
-		}
-		elsif ($result == DO_NOT_PROCESS ) {
-			return;
-		}
-        elsif ($result == DO_SELF_ONLY ) {
-            $dokids = 0;
-        }
-        # any number beside 0 and -1 will do the kids
+	no warnings 'uninitialized';
+    if( defined( $action) and $action !~ /^-?\d+/ ) {
+        # ah, an xpath expression
+        $dokids = 0;
+        $search = $action;
+    }
+    elsif ( defined($action) and $action == DO_NOT_PROCESS ) {
+        return;
+    }
+    elsif ($action == DO_SELF_ONLY ) {
+        $dokids = 0;
     }
 
     # default: process children too.
 	my $has_kids = $XML::XPathScript::XML_parser eq 'XML::LibXML' ? 
 						$node->hasChildNodes() : $node->getFirstChild();
 	
-	no warnings 'uninitialized';
     my $pre = interpolate($node, $t->{pre});
 	$pre .= start_tag( $node ) if $t->{showtag};
 	$pre .= $t->{intro};
@@ -768,7 +721,7 @@ sub start_tag {
 }
 
 sub end_tag {
-    if (my $name = shift->getName) {
+    if (my $name = $_[0]->getName) {
         return "</$name>";
     }
 	return '';
@@ -801,6 +754,11 @@ to L<XML::XPathScript> which should not be called directly: in other
 words, XPathScript's XML processing engine is not (yet) properly
 decoupled from the stylesheet language parser, and thus cannot stand
 alone.
+
+=head1 AUTHORS
+
+Yanick Champoux <yanick@cpan.org> 
+and Dominique Quatravaux <dom@idealx.com>
 
 =cut
 

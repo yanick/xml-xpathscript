@@ -23,6 +23,8 @@ sub new {
 
 
 sub set {
+    croak "method set called with more than two arguments" if @_ > 3;
+
 	my( $self, $tag, $attribute_ref ) = @_;
 
     my $type = reftype $tag;
@@ -174,7 +176,7 @@ I<$t> and I<$template>.
 
 =item new
 
-    my $template = new XML::XPathScript::Template;
+    $template = new XML::XPathScript::Template;
 
 Creates and returns a new, empty template.
 
@@ -197,7 +199,7 @@ Example:
     $template->copy( $original_tag, \@copy_tags );
     $template->copy( $original_tag, \@copy_tags, \@attributes );
 
-Copies all attributes (or a subset of them if \@attributes is given)
+Copies all attributes (or a subset of them if @attributes is given)
 of $original_tag to $copy_tag.
 
 Note that subsequent modifications of the original tag will not
@@ -261,7 +263,7 @@ Example:
 =item dump
 
     $template->dump()
-    $template->dump( \@tags )
+    $template->dump( @tags )
 
 Returns a pretty-printed dump of the templates. If @tags are
 specified, only return their templates.
@@ -294,8 +296,8 @@ Example:
 
 =item resolve
 
-    my $tag = $template->resolve( $namespace, $tagname );
-    my $tag = $template->resolve( $tagname );
+    $tag = $template->resolve( $namespace, $tagname );
+    $tag = $template->resolve( $tagname );
 
 Returns the tag object within $template that matches $namespace and
 $tagname best. The returned match is the first one met in the following
@@ -303,15 +305,15 @@ list:
 
 =over
 
-=item $namespace:$tagname
+=item * $namespace:$tagname
 
-=item $namespace:*
+=item * $namespace:*
 
-=item $tagname
+=item * $tagname
 
-=item *
+=item * *
 
-=item undef
+=item * undef
 
 =back
 
@@ -337,7 +339,7 @@ stylesheet was not an object but a simple hash reference. Modifications
 to the template were done by manipulating the hash directly.
 
     <%
-        # pre-FIXME way of manipulating the template
+        # pre-1.0 way of manipulating the template
         $t->{important}{pre}  = '<blink>';
         $t->{important}{post} = '</blink>';
     
@@ -372,7 +374,7 @@ access methods.
 
 There are no known bugs in this module.
 
-Please report problems to Yanick Champoux (yanick@cpan.org)
+Please report problems to Yanick Champoux <yanick@cpan.org>
 
 Patches are welcome.
 

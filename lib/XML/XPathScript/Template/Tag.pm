@@ -13,7 +13,8 @@ use Data::Dumper;
 {
 
 our @ALLOWED_ATTRIBUTES =  qw/ pre post testcode showtag
-                               intro extro prechildren postchildren /;
+                               intro extro prechildren postchildren
+                               prechild postchild action /;
 
 sub new {
    my( $class ) = @_;
@@ -111,6 +112,12 @@ Example:
 
 =over
 
+=item new
+
+    $tag = new XML::XPathScript::Template::Tag;
+
+Create a new, empty tag.
+
 =item set
 
     $t->set( \%attributes );
@@ -129,13 +136,13 @@ Returns the values of @attributes.
 
 Example:
 
-    my @values = $tag->get( 'pre', 'post' );
+    @values = $tag->get( 'pre', 'post' );
 
 =back
 
 =head1 BACKWARD COMPATIBILITY
 
-As for XML::XPathScript::Template, prior to XPathScript version 1.0, 
+As for XML::XPathScript::Template, prior to release 1.0 of XPathScript, 
 the tags within the template of a
 stylesheet were not objects but simple hash references. Modifications
 to the tag attributes were done by manipulating the hash directly.
@@ -161,7 +168,7 @@ access methods.
             my( $n, $t ) = @_;
             $t->set({ pre => '<a>', post => '</a>' });
 
-            return $DO_SELF_AND_CHILDREN;
+            return DO_SELF_AND_CHILDREN;
         };
     %>
 
@@ -169,13 +176,13 @@ access methods.
 
 There are no known bugs in this module.
 
-Please report problems to Yanick Champoux (yanick@cpan.org)
+Please report problems to Yanick Champoux <yanick@cpan.org>
 
 Patches are welcome.
 
 =head1 AUTHOR
 
-Yanick Champoux (yanick@cpan.org)
+Yanick Champoux <yanick@cpan.org>
 
 =cut
 
