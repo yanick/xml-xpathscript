@@ -1,8 +1,8 @@
-* Clear the version mess.
+* Add link to Bug report 
+
+* Add license in pods
 
 * add SVN tags on files
-
-* Add namespace support
 
 * INCLUDEs for A::A::YPS -> which directory is home?
 	ONLINE
@@ -58,3 +58,5 @@ html
 * Remove VERSION on all but XML::XPathScript
 
 * Build.PL
+
+* Module::Signature
