@@ -19,7 +19,8 @@ sub test_file {
     my $doc;
     $xps->process( \$doc );
 
-    open my $expected, "$filename.expected" or die;
+    open my $expected, "$filename.expected" 
+        or die "can't open file $filename.expected: $!";
 
     is( $doc, <$expected>, "t/testdocs/$filename.xml" );
 }
