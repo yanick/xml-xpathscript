@@ -5,9 +5,6 @@ use warnings;
 
 use Carp;
 use Scalar::Util qw/ reftype /;
-use Perl6::Export::Attrs;
-use Data::Dumper;
-
 
 {
 
