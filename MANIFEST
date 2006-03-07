@@ -61,5 +61,4 @@ t/testdocs/shoutML.xps
 t/testdocs/tag_attributes.expected
 t/testdocs/tag_attributes.xml
 t/testdocs/tag_attributes.xps
-template_test.pl
 XPathScript.pm
