@@ -4,7 +4,6 @@ use strict;
 use warnings;
 
 use Carp;
-use List::MoreUtils qw/ none /;
 use Scalar::Util qw/ reftype /;
 use Data::Dumper;
 use XML::XPathScript::Template::Tag;

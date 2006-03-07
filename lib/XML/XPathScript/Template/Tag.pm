@@ -4,7 +4,6 @@ use strict;
 use warnings;
 
 use Carp;
-use List::MoreUtils qw/ none /;
 use Scalar::Util qw/ reftype /;
 use Perl6::Export::Attrs;
 use Data::Dumper;
@@ -36,7 +35,7 @@ sub set {
 
 	for my $key ( keys %{$attribute_ref} ) {
         croak "attribute $key not allowed" 
-            if none { $key eq $_ } @ALLOWED_ATTRIBUTES;
+            if ! grep { $key eq $_ } @ALLOWED_ATTRIBUTES;
 
         $self->{$key} = $attribute_ref->{$key};
 	}
