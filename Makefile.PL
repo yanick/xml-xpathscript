@@ -13,19 +13,19 @@ if( $XML_parser )
 	{
 		die "XML parser $XML_parser not supported\nplease choose XML::XPath or XML::LibXML\n";
 	}
-	
+
 	print "XML parser configured to be $XML_parser\n";
-	
+
 }
 else
-{	
+{
 	print "detecting XML parser...\n";
-	
-	
+
+
 	print "checking if XML::LibXML is present.. ";
 	eval "use XML::LibXML";
 	unless( $@ )
-	{ 
+	{
 		print "XML::LibXML detected, good!\nsetting XML parser to XML::LibXML\n";
 		$XML_parser = 'XML::LibXML';
 	}
@@ -69,16 +69,24 @@ unless( $@ ) {
 eval "use Apache2::TomKit";
 unless( $@ ) {
 	print "TomKit detected, adding Apache2::TomKit::Processor::XPathScript to installation\n";
-	push @pmlibdirs, 'lib_tomkit';	
+	push @pmlibdirs, 'lib_tomkit';
 }
 
 WriteMakefile(
     NAME		=> 'XML::XPathScript',
-    VERSION_FROM	=> 'XPathScript.pm', 
+    AUTHOR     => 'Yanick Champoux <yanick@babyl.dyndns.org>, Dominique Quatravaux <dom@idealx.com> and Matt Sergeant <matt@sergeant.org>',
+    VERSION_FROM	=> 'XPathScript.pm',
 	EXE_FILES => [ qw( script/xpathscript ) ],
-	PMLIBDIRS => \@pmlibdirs, 
-     ABSTRACT_FROM => 'XPathScript.pm', 
-     AUTHOR     => 'Dominique Quatravaux <dom@idealx.com> and Yanick Champoux <yanick@babyl.dyndns.org>',
+	PMLIBDIRS => \@pmlibdirs,
+    PREREQ_PM => {
+            "Carp" => 0,
+            "Symbol" => 0,
+	        "File::Basename" => 0,
+            "IO::File" => 0,
+	        "Data::Dumper" => 0,
+            "Scalar::Util" => 0,
+                 },
+     ABSTRACT_FROM => 'XPathScript.pm',
    # Quoting fest!
     PM_FILTER => "$^X dist/rewrite-default-xml-parser $XML_parser",
 );
