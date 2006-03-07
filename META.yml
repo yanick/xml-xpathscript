@@ -1,10 +1,25 @@
-# http://module-build.sourceforge.net/META-spec.html
-#XXXXXXX This is a prototype!!!  It will change in the future!!! XXXXX#
-name:         XML-XPathScript
-version:      0.16
-version_from: XPathScript.pm
-installdirs:  site
+---
+name: XML-XPathScript
+version: 1.000_001
+author:
+  - 'Yanick Champoux <yanick@babyl.dyndns.org>, Dominique Quatravaux <dom@idealx.com> and Matt Sergeant <matt@sergeant.org>'
+abstract: a Perl framework for XML stylesheets
+license: artistic
 requires:
-
-distribution_type: module
-generated_by: ExtUtils::MakeMaker version 6.17
+  Carp: 0
+  Data::Dumper: 0
+  File::Basename: 0
+  IO::File: 0
+  Scalar::Util: 0
+  Symbol: 0
+build_requires:
+  File::Find: 0
+  File::Spec: 0
+provides:
+  XML::XPathScript::Processor:
+    file: lib/XML/XPathScript/Processor.pm
+  XML::XPathScript::Template:
+    file: lib/XML/XPathScript/Template.pm
+  XML::XPathScript::Template::Tag:
+    file: lib/XML/XPathScript/Template/Tag.pm
+generated_by: Module::Build version 0.26

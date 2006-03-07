@@ -2,10 +2,8 @@
 
 use strict;
 use warnings;
+use Module::Build;
 use Getopt::Long;
-
-
-
 
 my $XML_parser;
 GetOptions( 'parser=s' => \$XML_parser );
@@ -16,24 +14,16 @@ if( $XML_parser )
 	{
 		die "XML parser $XML_parser not supported\nplease choose XML::XPath or XML::LibXML\n";
 	}
-	
 	print "XML parser configured to be $XML_parser\n";
-	
-}
-else
-{	
+} else {
 	print "detecting XML parser...\n";
-	
-	
 	print "checking if XML::LibXML is present.. ";
 	eval "use XML::LibXML";
 	unless( $@ )
-	{ 
+	{
 		print "XML::LibXML detected, good!\nsetting XML parser to XML::LibXML\n";
 		$XML_parser = 'XML::LibXML';
-	}
-	else
-	{
+	} else {
 		print "XML::LibXML not detected, drat\n";
 		print "checking if XML::XPath is present.. ";
 		eval "use XML::XPath";
@@ -41,52 +31,86 @@ else
 		{
 			print "XML::XPath detected\nsetting XML parser to XML::XPath\n";
 			$XML_parser = 'XML::XPath';
-		}
-		else
-		{
+		} else {
 			print "XML::XPath not found\n";
 			die "XML::XPathScript needs either XML::LibXML or XML::XPath to be installed\n";
 		}
 	}
 }
 
-open YPS, "XPathScript.pm" or die "can't open XPathScript.pm: $!\n";
-my $module;
-while( <YPS> )
-{
-	$module .= $_;
+my ($with_axkit, $with_tomkit) = (0, 0);
+print <<"MESSAGE" if eval "use AxKit; $with_axkit = 1";
+AxKit detected, adding Apache::Axkit::Language::YPathScript to
+installation
+MESSAGE
+print <<"MESSAGE" if eval "use Apache2::TomKit; $with_tomkit = 1";
+AxKit detected, adding Apache::Axkit::Language::YPathScript to
+installation
+MESSAGE
+
+my $class = Module::Build->subclass
+    (code => <<"PROPAGATE_VARIABLES"
+our \$XML_parser = '$XML_parser';
+our \$with_axkit = '$with_axkit';
+our \$with_tomkit = '$with_tomkit';
+PROPAGATE_VARIABLES
+     . <<'CODE');
+use strict;
+use warnings;
+
+use File::Find;
+use File::Spec ();
+
+sub find_pm_files {
+    my $self = shift;
+    my $result = $self->SUPER::find_pm_files(@_);
+    my @extra_lib_dirs;
+    push @extra_lib_dirs, "lib_axkit" if $with_axkit;
+    push @extra_lib_dirs, "lib_tomkit" if $with_tomkit;
+    return $result ;
+    find ({ no_chdir => 1,
+            wanted => sub {
+                $result->{$File::Find::name} = $File::Find::name
+                     if m/\.pm$/ },
+            }, @extra_lib_dirs) if @extra_lib_dirs;
+    return $result;
 }
-open YPS, ">XPathScript.pm" or die "can't overwrite XPathScript.pm: $!\n";
-print YPS $module;
-close YPS;
 
-my @pmlibdirs = ( 'lib', '$(BASEEXT)' );
+sub process_pm_files {
+    my $self = shift;
+    $self->SUPER::process_pm_files(@_);
 
-eval "use AxKit";
-unless( $@ ) {
-	print "AxKit detected, adding Apache::Axkit::Language::YPathScript to installation\n";
-	push @pmlibdirs, 'lib_axkit';
+    my $outfile = File::Spec->catfile(qw(blib lib XML XPathScript.pm));
+    unlink($outfile);
+    my $in = new IO::File("XPathScript.pm", "<") or die "$!";
+    my $out = new IO::File($outfile, ">") or die "$!";
+    while(<$in>) {
+          s/^(\$XML_parser = )'.*?';$/$1'$XML_parser';/;
+          $out->print($_);
+      }
 }
 
+CODE
 
-eval "use Apache2::TomKit";
-
-use Module::Build;
-
-unless( $@ ) {
-	print "TomKit detected, adding Apache2::TomKit::Processor::XPathScript to installation\n";
-	push @pmlibdirs, 'lib_tomkit';	
-}
-
-my $build = Module::Build->new
+my $build = $class->new
   (
    module_name => 'XML::XPathScript',
-   dist_author => 'Dominique Quatravaux <dom@idealx.com> and Yanick Champoux <yanick@babyl.dyndns.org>',
-   ,
+   dist_author => 'Yanick Champoux <yanick@babyl.dyndns.org>, Dominique Quatravaux <dom@idealx.com> and Matt Sergeant <matt@sergeant.org>',
    dist_version_from => 'XPathScript.pm',
-   license => 'unknown',
-   create_readme => 1,
-   create_makefile_pl => 'traditional',
+   license => 'artistic',
+   requires => {
+                "Carp" => 0,
+                "Symbol" => 0,
+                "File::Basename" => 0,
+                "IO::File" => 0,
+                "Data::Dumper" => 0,
+                "Scalar::Util" => 0,
+               },
+   build_requires => {
+                      "File::Find" => 0,
+                      "File::Spec" => 0,
+                     },
+   create_makefile_pl => 'passthrough',
   );
-  
+
 $build->create_build_script;
