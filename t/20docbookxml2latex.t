@@ -22,19 +22,30 @@ The test document is in french :-)
 
 BEGIN
 {
-	plan tests => 1, todo => [];
+	plan tests => 3, todo => [];
 }
 
 
 use XML::XPathScript;
 use IO::File;
+use File::Spec;
 
-my $doc = new IO::File("t/testdocs/docbook-testsuite.xml");
-my $style = new IO::File("examples/docbook2latex.xml");
+my $doc = new IO::File
+    (File::Spec->catfile(qw(examples sample-docbook.xml)));
+my $style = new IO::File
+     (File::Spec->catfile(qw(examples docbook2latex.xps)));
+ok(defined $doc);
+ok(defined $style);
+
 my $xps = new XML::XPathScript( xml => $doc, stylesheet => $style );
 
 my $buf="";
-$xps->process(sub {$buf .= shift});
-ok(1);
+do {
+    ## Comment the following two lines to debug:
+#    local *STDERR;
+#    open(STDERR, ">", "/dev/null");
+    $xps->process(sub {$buf .= shift});
+};
+ok($buf =~ m/\\begin\{document\}/);
 
 

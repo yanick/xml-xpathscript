@@ -407,7 +407,14 @@ sub utf8totex {
 
 } # End of scope for %uniwarned
 
-$t->{"comment()"}->{pre}=$t->{"comment()"}->{post}="";
+$t->{"comment()"}->{testcode} = sub {
+    my ($self, $t) = @_;
+	$t->{post}="";
+
+	my $value=utf8totex($self);
+    $value =~ s/^/%/gm;
+    $t->{pre} = $value;
+};
 
 
 $t->{"text()"}->{testcode}=sub {
