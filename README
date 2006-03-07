@@ -8,8 +8,8 @@ project at http://axkit.org/.
 
 XPathScript is a stylesheet language similar in many ways to XSLT (in
 concept, not in appearance), for transforming XML from one format to
-another (possibly HTML, but XPathScript also shines for non-XML-like
-output).
+another - possibly HTML, but XPathScript also shines for non-XML-like
+output.
 
 Like XSLT, XPathScript offers a dialect to mix verbatim portions of
 documents and code. Also like XSLT, it leverages the powerful
@@ -24,7 +24,10 @@ uses Perl which is terse and highly extendable.
 The result of the merge is an extremely powerful tool for rendering
 complex XML documents into other formats. Stylesheets written in
 XPathScript are very easy to create, extend and reuse, even if they
-manage hundreds of different XML tags.
+manage hundreds of different XML tags.  As a testimony to these
+qualities, XML::XPathScript comes bundled with a fairly comprehensive
+stylesheet for converting Docbook XML into LaTeX (in the examples/
+directory).
 
 ===== INSTALLATION
 
@@ -44,7 +47,10 @@ one or the other, do
 	or
 	perl Makefile.PL -parser=XML::XPath
 	
-	
+===== COMMAND-LINE USE
+
+This module provides an xpathscript(1) shell command that comes with
+its own manpage.
 
 ===== SUPPORT FOR AXKIT
 
