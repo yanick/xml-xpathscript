@@ -1,23 +1,22 @@
-#!/usr/bin/perl
-
 =head1 NAME
 
 XML::XPathScript::Processor - the XML transformation engine in XML::XPathScript
 
 =head1 SYNOPSIS
 
-In a stylesheet C<< ->{testcode} >> sub for e.g. Docbook's C<< <ulink>
->> tag:
+In a stylesheet C<< ->{testcode} >> sub for e.g. Docbook's 
+C<< <ulink> >> tag:
 
       my $url = findvalue('@url',$self);
       if (findnodes("node()", $self)) {
          # ...
-		$t->{pre}=qq'<a href="$url">';
-		$t->{post}=qq'</a>';
+		$t->set({ pre  => "<a href='$url'>", 
+                  post => '</a>'             });
 		return DO_SELF_AND_KIDS;
-      } else {
-		$t->{pre}=qq'<a href="$url">$url</a>';
-		$t->{post}=qq'';
+      } 
+      else {
+        $t->set({  pre  => "<a href='$url'>$url</a>",
+                   post => ''                          });
 		return DO_SELF_ONLY;
       };
 
@@ -30,7 +29,7 @@ At the stylesheet's top-level one often finds:
 The I<XML::XPathScript> distribution offers an XML parser glue, an
 embedded stylesheet language, and a way of processing an XML document
 into a text output. This package implements the latter part: it takes
-an already filled out C<< $t >> template hash and an already parsed
+an already filled out C<< $template >> template object and an already parsed
 XML document (which come from L<XML::XPathScript> behind the scenes),
 and provides a simple API to implement stylesheets. In particular, the
 L</apply_templates> function triggers the recursive expansion of
@@ -51,6 +50,7 @@ package XML::XPathScript::Processor;
 
 use strict;
 use warnings;
+use Carp;
 
 use Exporter;
 use vars '@ISA', '@EXPORT';
@@ -78,62 +78,14 @@ use vars '@ISA', '@EXPORT';
 		DO_TEXT_AS_CHILD
         );
 
-my $VERSION = 0.1;
-
-=pod "
-
-=over 4
-
-=item I<DO_SELF_AND_KIDS>, I<DO_SELF_ONLY>, I<DO_NOT_PROCESS>,
-I<DO_TEXT_AS_CHILD>
-
-Symbolic constants evaluating respectively to 1, -1, 0 and 2, to be
-used as mnemotechnic return values in C<< ->{testcode} >> routines
-instead of the numeric values which are harder to
-remember. Specifically:
-
-=item I<DO_SELF_AND_KIDS>
-
-tells I<XML::XPathScript::Processor> to render the current node as C<<
-$t->{pre} >>, followed by the result of the call to
-L</apply_templates> on the subnodes, followed by C<< $t->{post} >>.
-
-=item I<DO_SELF_ONLY>
-
-tells I<XML::XPathScript::Processor> to render the current node simply
-as C<< $t->{pre} >>, followed by C<< $t->{post} >>.
-
-=item I<DO_NOT_PROCESS>
-
-tells I<XML::XPathScript::Processor> to render the current node as the
-empty string.
-
-=item I<DO_TEXT_AS_CHILD>
-
-only meaningful for text nodes. When this value is returned, I<XML::XPathScript::Processor> 
-pretends that the text is a child of the node, which basically means that 
-C<< $t->{pre} >> and C<< $t->{post} >> will frame the text instead of
-replacing it.
-
-E.g.
-
-	$t->{pre} = '<text/>';
-	#  will do <foo>bar</foo>  =>  <foo><text/></foo>
-
-
-	$t->{pre} = '<t>';
-	$t->{post} =  '</t>';
-	$t->{testcode} = sub{ DO_TEXT_AS_CHILD };
-	#  will do <foo>bar</foo>  =>  <foo><t>bar</t></foo>
-
-=cut "
-
 use constant DO_TEXT_AS_CHILD =>  2;
 use constant DO_SELF_AND_KIDS =>  1;
 use constant DO_SELF_ONLY     => -1;
 use constant DO_NOT_PROCESS   =>  0;
 
 =pod "
+
+=over
 
 =item I<findnodes($path)>
 
@@ -441,13 +393,30 @@ function to prevent that from happening.
 
 =cut "
 
-# This implementation is vulnerable to the "é" (e acute) getting
-# crushed when source code gets converted e.g. to EBCDIC. Oh well.
 sub is_utf8_tainted {
-	my ($string)=@_;
-	my $maybe_autopromoted = do { no bytes; no utf8; "é"  . $string};
-	use bytes;
-	return ( length($string) + 1 < length($maybe_autopromoted) );
+    my ($string) = @_;
+
+    my $ghost = ($string x 0) .
+        "ab"; # Very quick and conserves UTF-8 flag (and taintedness)
+
+    $ghost .= do { use bytes; "\xc3" };
+    $ghost .= do { use bytes; "\xa9" };
+    my $charlength = do { no bytes; length($ghost) };
+    my $bytelength = do { use bytes; length($ghost) };
+
+    if ($charlength == 3) {
+        # The two bytes we added got lumped in core into a single
+        # UTF-8 char. This is a Perl bug (arising e.g. because $string
+        # is tainted, see t/04unicode.t) but we recover gracefully.
+        return 1;
+    } elsif ($charlength == 4 && $bytelength == 4) {
+        return 0;
+    } elsif ($charlength == 4 && $bytelength == 6) {
+        return 1; # The bytes were upgraded
+    } else {
+        die "is_utf8_tainted assertion check failed".
+            " (charlength = $charlength, bytelength=$bytelength)";
+    }
 }
 
 =pod "
@@ -568,24 +537,24 @@ sub translate_text_node {
 	return $node->toString unless $trans;
 
 	my $middle = '';
-	my $retval;
 
+    my $action = $trans->{action};
+
+    my $t = new XML::XPathScript::Template::Tag;
+    $t->{$_} = $trans->{$_} for keys %{$trans};
 	if (my $code = $trans->{testcode}) 
 	{
-		my $t = {};
-		$retval = $code->($node, $t);
-		return if $retval == DO_NOT_PROCESS;
 
-		if ($retval and %$t) 
-		{
-			$trans->{$_} = $t->{$_} for keys %$t;
-		}
+		$action = $code->($node, $t);
+    }
 		
-		$middle = $node->toString if $retval == DO_TEXT_AS_CHILD;
-	}
-
 	no warnings 'uninitialized';
-	return $trans->{pre} . $middle . $trans->{post};
+    return if defined($action) and $action == DO_NOT_PROCESS;
+
+    $middle = $node->toString if defined($action) 
+                                    and $action == DO_TEXT_AS_CHILD;
+
+	return $t->{pre} . $middle . $t->{post};
 }
 
 sub translate_element_node {
@@ -593,108 +562,94 @@ sub translate_element_node {
 	my $node = shift;
     my $translations = $XML::XPathScript::trans;
 
-    my $node_name = $node->getName;
-    my $trans;
-	$trans = $translations->{$node_name} if defined $node_name;
+    my $node_name = 
+        $XML::XPathScript::XML_parser eq 'XML::LibXML' ? $node->localname
+      : $XML::XPathScript::XML_parser eq 'XML::XPath'  ? $node->getLocalName 
+      :           croak "unsupported parser:  $XML::XPathScript::XML_parser"
+      ;
 
-	# no specific transformation? use the generic '*'
-    unless( $trans ) 
-	{
-        $node_name = '*';
-        
-		unless( $trans = $translations->{$node_name} )
-		{
-			# no specific and no generic? Okay, okay, return as is...
-			no warnings qw/ uninitialized /;
-			return start_tag($node) . 
-                	_apply_templates( ( $XML::XPathScript::XML_parser eq 'XML::LibXML' ) ? 
-										$node->childNodes : $node->getChildNodes) .
-                	end_tag($node);	
-		}
+    my $namespace;
+    if( $XML::XPathScript::XML_parser eq 'XML::LibXML' ) {
+        my $ns = $node->getNamespaces();
+        $namespace = $ns ? $ns->getData() : undef ;
+    }
+    elsif( $XML::XPathScript::XML_parser eq 'XML::XPath' ) {
+        if( my $prefix = $node->getPrefix ) {
+            $namespace = $node->getNamespace( $prefix )->getExpanded();
+        }
+    }
+    else {
+        croak "unsupported parser:  $XML::XPathScript::XML_parser"
+    }
+
+    my $trans = XML::XPathScript::Template::resolve( $translations, 
+                                                $namespace, $node_name );
+
+    unless( $trans ) {
+        # no specific and no generic? Okay, okay, return as is...
+        no warnings qw/ uninitialized /;
+        return start_tag($node) . 
+                _apply_templates( ( $XML::XPathScript::XML_parser eq 'XML::LibXML' ) ? 
+                                    $node->childNodes : $node->getChildNodes) .
+                end_tag($node);	
+		
     }
 
     my $dokids = 1;  # by default we do the kids
     my $search;
-    my $t = {};
-    
-	if ($trans->{testcode}) 
-	{
-        my $result = $trans->{testcode}->($node, $t);
+    my $t = new XML::XPathScript::Template::Tag;
+    $t->{$_} = $trans->{$_} for keys %{$trans};
 
-		if( $result !~ /^-?\d+/ ) {
-			# ah, an xpath expression
-            $dokids = 0;
-            $search = $result;
-		}
-		elsif ($result == DO_NOT_PROCESS ) {
-			return;
-		}
-        elsif ($result == DO_SELF_ONLY ) {
-            $dokids = 0;
-        }
-        # any number beside 0 and -1 will do the kids
+    my $action = $trans->{action};
+    
+	if ($trans->{testcode}) {
+        $action = $trans->{testcode}->($node, $t);
     }
 
-    local $translations->{$node_name};
-    # copy old values in
-    %{$translations->{$node_name}} = %$trans;
-
-    if (%$t) 
-	{
-        $translations->{$node_name}{$_} = $t->{$_} for keys %$t;
-        $trans = $translations->{$node_name};
+	no warnings 'uninitialized';
+    if( defined( $action) and $action !~ /^-?\d+/ ) {
+        # ah, an xpath expression
+        $dokids = 0;
+        $search = $action;
+    }
+    elsif ( defined($action) and $action == DO_NOT_PROCESS ) {
+        return;
+    }
+    elsif ($action == DO_SELF_ONLY ) {
+        $dokids = 0;
     }
 
     # default: process children too.
 	my $has_kids = $XML::XPathScript::XML_parser eq 'XML::LibXML' ? 
 						$node->hasChildNodes() : $node->getFirstChild();
 	
-	no warnings 'uninitialized';
-    my $pre = interpolate($node, $trans->{pre});
-	$pre .= start_tag( $node ) if $trans->{showtag};
-	$pre .= $trans->{intro};
-	$pre .= interpolate($node, $trans->{prechildren}) if $has_kids;
+    my $pre = interpolate($node, $t->{pre});
+	$pre .= start_tag( $node ) if $t->{showtag};
+	$pre .= $t->{intro};
+	$pre .= interpolate($node, $t->{prechildren}) if $has_kids;
 	
 	my $post;
-	$post .= interpolate($node, $trans->{postchildren}) if $has_kids;
-	$post .= $trans->{extro};
-	$post .= end_tag( $node ) if  $trans->{showtag};
-	$post .= interpolate($node, $trans->{post});
+	$post .= interpolate($node, $t->{postchildren}) if $has_kids;
+	$post .= $t->{extro};
+	$post .= end_tag( $node ) if  $t->{showtag};
+	$post .= interpolate($node, $t->{post});
 
-    if ($dokids) 
+	my $middle;
+	my @kids = $dokids ? $node->getChildNodes()
+			 : $search ? $node->findnodes($search)
+			 : ();
+	for my $kid ( @kids ) 
 	{
-        my $middle;
-        for my $kid ($node->getChildNodes()) 
-		{
-			$middle .= interpolate($node, $trans->{prechild})
-				if is_element_node( $kid );
+		$middle .= interpolate($node, $trans->{prechild}) 
+			if is_element_node( $kid );
 
-			$middle .= _apply_templates($kid);
+		$middle .= _apply_templates($kid);
 
-			$middle .= interpolate($node, $trans->{postchild})
-				if is_element_node( $kid );
-        }
+		$middle .= interpolate($node, $trans->{postchild})
+			if is_element_node( $kid );
+	}
         
-		no warnings 'uninitialized';
-		return $pre . $middle . $post;
-    }
-	
-    if($search) 
-	{
-        my $middle = '';
-        for my $kid ( $node->findnodes($search)) {
-
-			$middle .= interpolate($node, $trans->{prechild}) if is_element_node( $kid );
-			$middle .= _apply_templates($kid);
-			$middle .= interpolate($node, $trans->{postchild}) if is_element_node( $kid );
-
-        }
-        return $pre . $middle . $post;
-    }
-    
-	
-	return $pre . $post;
-
+	return $pre . $middle . $post
 }
 
 sub translate_comment_node {
@@ -753,7 +708,12 @@ sub start_tag {
 	   	{
 			#my $att = $attr->toString( 0, 1 );
 		    	#$att =~ s/'/&quot;/g;
-			$string .= $attr->toString( 0, 1 );
+            if( $attr->isa( 'XML::LibXML::Namespace' ) ) {
+                $string .= ' xmlns:'.$attr->getName().'="'.$attr->value().'" ';
+            } 
+            else {
+                $string .= $attr->toString( 0, 1 );
+            }
 		}
     }
 
@@ -763,7 +723,7 @@ sub start_tag {
 }
 
 sub end_tag {
-    if (my $name = shift->getName) {
+    if (my $name = $_[0]->getName) {
         return "</$name>";
     }
 	return '';
@@ -796,6 +756,11 @@ to L<XML::XPathScript> which should not be called directly: in other
 words, XPathScript's XML processing engine is not (yet) properly
 decoupled from the stylesheet language parser, and thus cannot stand
 alone.
+
+=head1 AUTHORS
+
+Yanick Champoux <yanick@cpan.org> 
+and Dominique Quatravaux <dom@idealx.com>
 
 =cut
 

@@ -11,7 +11,21 @@ use File::Basename;
 my $VERSION = 0.2;
 
 my ( $query, $interpolate );
-GetOptions( 'query=s' => \$query, 'interpolate' => \$interpolate );
+GetOptions( 'query=s' => \$query, 
+            'interpolate' => \$interpolate,
+            'version'   => \&die_version,
+          );
+
+sub die_version {
+    my( $date ) = q$Date: 2006-02-18 18:05:18 -0500 (Sat, 18 Feb 2006) $ 
+                    =~ /\((.*?)\)/;
+    my( $revision ) = q$Revision: 141 $ =~ /(\d+)/;
+
+    die <<"END_VERSION";
+$0 : revision $revision ($date)
+using XML::XPathScript version $XML::XPathScript::VERSION
+END_VERSION
+}
 
 # trick so that xps story  => xps story.xml story.xps
 @ARGV = ( $ARGV[0].'.xml', $ARGV[0].'.xps'  ) if @ARGV == 1;
@@ -133,10 +147,6 @@ XML::XPathScript
 =head1 AUTHOR
 
 Yanick Champoux, <yanick@babyl.dyndns.org>
-
-=head1 VERSION
-
-Version 0.2
 
 =cut
 
