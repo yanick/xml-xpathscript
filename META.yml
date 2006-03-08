@@ -1,6 +1,6 @@
 ---
 name: XML-XPathScript
-version: 1.00
+version: 1.01
 author:
   - 'Yanick Champoux <yanick@cpan.org>, Dominique Quatravaux <dom@idealx.com> and Matt Sergeant <matt@sergeant.org>'
 abstract: a Perl framework for XML stylesheets

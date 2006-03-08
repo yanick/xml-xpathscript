@@ -63,3 +63,5 @@ t/testdocs/tag_attributes.expected
 t/testdocs/tag_attributes.xml
 t/testdocs/tag_attributes.xps
 XPathScript.pm
+examples/docbook2latex.xps  
+examples/sample-docbook.xml
