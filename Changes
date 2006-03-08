@@ -1,12 +1,15 @@
-Revision history for Perl module XML::XPathScript.pm
+Revision history for Perl module XML::XPathScript
 
-1.00
-    - API to stylesheet template re-worked (see pod of
-      XML::XPathScript::Template).
+1.00 Mar 7 2006
+    - Massive documentation make-over. 
+    - API of stylesheet template re-worked (see pod of
+      XML::XPathScript::Template and XML::XPathScript::Template::Tag).
     - UTF8 support improved.
+    - Added namespace support.
+    - Installation infrastructure switched to Module::Build
     
 
-0.16 Jan 2 2005
+0.16 Jan 2 2006
 	- Added alpha support for TomKit.
 	- Makefile.PL now only install AxKit and TomKit processors if they are
 	   detected.
