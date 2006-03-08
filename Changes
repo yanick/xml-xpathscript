@@ -1,9 +1,15 @@
 Revision history for Perl module XML::XPathScript
 
+1.01 Mar 8 2006
+    - Added Dominique's excellent Docbook-into-LaTeX converting
+        stylesheet in an examples/ directory.
+
 1.00 Mar 7 2006
     - Massive documentation make-over. 
+    - Extension of the stylesheet syntax (addition of 
+        <%~ %>, <%# %>, and <%- -%>).
     - API of stylesheet template re-worked (see pod of
-      XML::XPathScript::Template and XML::XPathScript::Template::Tag).
+        XML::XPathScript::Template and XML::XPathScript::Template::Tag).
     - UTF8 support improved.
     - Added namespace support.
     - Installation infrastructure switched to Module::Build
