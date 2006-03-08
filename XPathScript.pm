@@ -129,6 +129,11 @@ Interpolation is on by default.
 
 =cut 
 
+sub interpolation {
+    my $self = shift;
+    $self->interpolating( @_ );
+}
+
 sub interpolating {
     my $self=shift;
 
@@ -233,7 +238,7 @@ use File::Basename;
 use XML::XPathScript::Processor;
 use XML::XPathScript::Template;
 
-$VERSION = '1.000_001';
+$VERSION = '1.00';
 
 $XML_parser = 'XML::LibXML';
 
