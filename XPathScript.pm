@@ -922,22 +922,17 @@ Perl itself.
 
 =head1 SEE ALSO
 
+L<XML::XPathScript::Stylesheet>, L<XML::XPathScript::Processor>, 
+L<XML::XPathScript::Template>, L<XML::XPathScript::Template::Tag>
+
 Guide of the original Axkit XPathScript: 
-    http://axkit.org/wiki/view/AxKit/XPathScriptGuide
+http://axkit.org/wiki/view/AxKit/XPathScriptGuide
 
 XPath documentation from W3C:
-  http://www.w3.org/TR/xpath
+http://www.w3.org/TR/xpath
 
 Unicode character table:
-  http://www.unicode.org/charts/charindex.html
-
-L<XML::XPathScript::Stylesheet> - XPS Stylesheet Writing Guide
-
-L<XML::XPathScript::Processor> - XPS Transformation Engine
-
-L<XML::XPathScript::Template> - XPS Stylesheet Template
-
-L<XML::XPathScript::Template::Tag> - XPS Template Tag
+http://www.unicode.org/charts/charindex.html
 
 =cut
 
