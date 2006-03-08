@@ -1,6 +1,6 @@
 =head1 NAME
 
-XPathScript's Stylesheet Writer Guide
+XML::XPathScript::Stylesheet - XPathScript's Stylesheet Writer Guide
 
 =head1 STYLESHEET SYNTAX
 
