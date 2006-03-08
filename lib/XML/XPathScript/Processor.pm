@@ -85,6 +85,8 @@ use constant DO_NOT_PROCESS   =>  0;
 
 =pod "
 
+=over
+
 =item I<findnodes($path)>
 
 =item I<findnodes($path, $context)>
@@ -744,6 +746,8 @@ sub interpolate {
 }
 
 =pod
+
+=back
 
 =head1 BUGS
 
