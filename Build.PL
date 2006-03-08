@@ -12,16 +12,18 @@ if( $XML_parser )
 {
 	unless( grep $XML_parser eq $_, qw/ XML::XPath XML::LibXML / )
 	{
-		die "XML parser $XML_parser not supported\nplease choose XML::XPath or XML::LibXML\n";
+		die "XML parser $XML_parser not supported\n",
+            "please choose XML::XPath or XML::LibXML\n";
 	}
 	print "XML parser configured to be $XML_parser\n";
 } else {
-	print "detecting XML parser...\n";
-	print "checking if XML::LibXML is present.. ";
+	print "detecting XML parser...\n",
+	      "checking if XML::LibXML is present.. ";
 	eval "use XML::LibXML";
 	unless( $@ )
 	{
-		print "XML::LibXML detected, good!\nsetting XML parser to XML::LibXML\n";
+		print "XML::LibXML detected, good!\n",
+              "setting XML parser to XML::LibXML\n";
 		$XML_parser = 'XML::LibXML';
 	} else {
 		print "XML::LibXML not detected, drat\n";
@@ -33,7 +35,8 @@ if( $XML_parser )
 			$XML_parser = 'XML::XPath';
 		} else {
 			print "XML::XPath not found\n";
-			die "XML::XPathScript needs either XML::LibXML or XML::XPath to be installed\n";
+			die "XML::XPathScript needs either XML::LibXML or ",
+                "XML::XPath to be installed\n";
 		}
 	}
 }
@@ -44,7 +47,7 @@ AxKit detected, adding Apache::Axkit::Language::YPathScript to
 installation
 MESSAGE
 print <<"MESSAGE" if eval "use Apache2::TomKit; $with_tomkit = 1";
-AxKit detected, adding Apache::Axkit::Language::YPathScript to
+TomKit detected, adding Apache2::Tomkit::Processor::XPathScript to
 installation
 MESSAGE
 
@@ -95,7 +98,9 @@ CODE
 my $build = $class->new
   (
    module_name => 'XML::XPathScript',
-   dist_author => 'Yanick Champoux <yanick@babyl.dyndns.org>, Dominique Quatravaux <dom@idealx.com> and Matt Sergeant <matt@sergeant.org>',
+   dist_author => 'Yanick Champoux <yanick@cpan.org>, '
+                    .'Dominique Quatravaux <dom@idealx.com> '
+                    .'and Matt Sergeant <matt@sergeant.org>',
    dist_version_from => 'XPathScript.pm',
    license => 'artistic',
    requires => {
