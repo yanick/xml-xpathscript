@@ -8,48 +8,17 @@ use Getopt::Long;
 my $XML_parser;
 GetOptions( 'parser=s' => \$XML_parser );
 
-if( $XML_parser )
-{
-	unless( grep $XML_parser eq $_, qw/ XML::XPath XML::LibXML / )
-	{
-		die "XML parser $XML_parser not supported\n",
-            "please choose XML::XPath or XML::LibXML\n";
-	}
-	print "XML parser configured to be $XML_parser\n";
-} else {
-	print "detecting XML parser...\n",
-	      "checking if XML::LibXML is present.. ";
-	eval "use XML::LibXML";
-	unless( $@ )
-	{
-		print "XML::LibXML detected, good!\n",
-              "setting XML parser to XML::LibXML\n";
-		$XML_parser = 'XML::LibXML';
-	} else {
-		print "XML::LibXML not detected, drat\n";
-		print "checking if XML::XPath is present.. ";
-		eval "use XML::XPath";
-		unless( $@ )
-		{
-			print "XML::XPath detected\nsetting XML parser to XML::XPath\n";
-			$XML_parser = 'XML::XPath';
-		} else {
-			print "XML::XPath not found\n";
-			die "XML::XPathScript needs either XML::LibXML or ",
-                "XML::XPath to be installed\n";
-		}
-	}
-}
+$XML_parser = choose_parser( $XML_parser );
 
-my ($with_axkit, $with_tomkit) = (0, 0);
-print <<"MESSAGE" if eval "use AxKit; $with_axkit = 1";
-AxKit detected, adding Apache::Axkit::Language::YPathScript to
-installation
-MESSAGE
-print <<"MESSAGE" if eval "use Apache2::TomKit; $with_tomkit = 1";
-TomKit detected, adding Apache2::Tomkit::Processor::XPathScript to
-installation
-MESSAGE
+my $with_axkit = eval 'use AxKit; 1' || 0;
+print 'AxKit ', 'not 'x!$with_axkit, "detected\n";
+print "\tadding Apache::Axkit::Language::YPathScript to installation\n"
+	if $with_axkit;
+
+my $with_tomkit = eval 'use Apache2::TomKit; 1' || 0;
+print 'TomKit ', 'not 'x!$with_tomkit, "detected\n";
+print "\tadding Apache2::Tomkit::Processor::XPathScript to installation\n"
+	if $with_tomkit;
 
 my $class = Module::Build->subclass
     (code => <<"PROPAGATE_VARIABLES"
@@ -104,12 +73,13 @@ my $build = $class->new
    dist_version_from => 'XPathScript.pm',
    license => 'artistic',
    requires => {
-                "Carp" => 0,
-                "Symbol" => 0,
-                "File::Basename" => 0,
-                "IO::File" => 0,
-                "Data::Dumper" => 0,
-                "Scalar::Util" => 0,
+                $XML_parser 	 => 0,
+                'Carp' 			 => 0,
+                'Symbol' 		 => 0,
+                'File::Basename' => 0,
+                'IO::File' 	 	 => 0,
+                'Data::Dumper'   => 0,
+                'Scalar::Util'   => 0,
                },
    build_requires => {
                       "File::Find" => 0,
@@ -119,3 +89,39 @@ my $build = $class->new
   );
 
 $build->create_build_script;
+
+sub choose_parser {
+	my( $XML_parser ) = @_;
+
+	if( $XML_parser ) {
+		unless( grep $XML_parser eq $_, qw/ XML::XPath XML::LibXML / ) {
+			die "XML parser $XML_parser not supported\n",
+				"please choose XML::XPath or XML::LibXML\n";
+		}
+	
+		print "XML parser configured to be $XML_parser\n";
+
+		return $XML_parser;
+	}
+
+	print "detecting XML parser...\n";
+
+	print "checking if XML::LibXML is present.. ";
+	if ( $XML_parser = eval "use XML::LibXML; 'XML::LibXML'" ) { 
+		print "XML::LibXML detected, good!\n",
+              "setting XML parser to XML::LibXML\n";
+		return $XML_parser;
+	}
+	print "XML::LibXML not detected, drat\n";
+
+	print "checking if XML::XPath is present.. ";
+	if ( $XML_parser = eval "use XML::XPath; 'XML::XPath'" ) {
+		print "XML::XPath detected\nsetting XML parser to XML::XPath\n";
+
+		return $XML_parser;
+	}
+	print "XML::XPath not found\n";
+
+	die "XML::XPathScript needs either XML::LibXML or ",
+		"XML::XPath to be installed\n";
+}
