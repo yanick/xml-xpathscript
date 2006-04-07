@@ -4,9 +4,12 @@ use strict;
 use warnings;
 use Module::Build;
 use Getopt::Long;
+use File::Find;
 
 my $XML_parser;
 my( $with_axkit, $with_tomkit );
+my @pm_dirs = ( qw/ lib / );
+
 GetOptions( 'parser=s' => \$XML_parser,
              'axkit!'  => \$with_axkit,
              'tomkit!' => \$with_tomkit );
@@ -17,15 +20,20 @@ unless ( $with_axkit ) {
     $with_axkit ||= eval 'use AxKit; 1';
     print 'AxKit ', 'not 'x!$with_axkit, "detected\n";
 }
-print "adding Apache::Axkit::Language::YPathScript to installation\n"
-	if $with_axkit;
+if ( $with_axkit ) {
+    print "adding Apache::Axkit::Language::YPathScript to installation\n";
+    push @pm_dirs, 'lib_axkit';
+}
 
 unless ( $with_tomkit ) {
     $with_tomkit ||= eval 'use Apache2::TomKit; 1';
     print 'TomKit ', 'not 'x!$with_tomkit, "detected\n";
 }
-print "adding Apache2::Tomkit::Processor::XPathScript to installation\n"
-	if $with_tomkit;
+if ( $with_tomkit ) {
+    print "adding Apache2::Tomkit::Processor::XPathScript to installation\n"
+        if $with_tomkit;
+    push @pm_dirs, 'lib_tomkit';
+}
 
 my $class = Module::Build->subclass
     (code => <<"PROPAGATE_VARIABLES"
@@ -37,23 +45,7 @@ PROPAGATE_VARIABLES
 use strict;
 use warnings;
 
-use File::Find;
 use File::Spec ();
-
-sub find_pm_files {
-    my $self = shift;
-    my $result = $self->SUPER::find_pm_files(@_);
-    my @extra_lib_dirs;
-    push @extra_lib_dirs, "lib_axkit" if $with_axkit;
-    push @extra_lib_dirs, "lib_tomkit" if $with_tomkit;
-    return $result ;
-    find ({ no_chdir => 1,
-            wanted => sub {
-                $result->{$File::Find::name} = $File::Find::name
-                     if m/\.pm$/ },
-            }, @extra_lib_dirs) if @extra_lib_dirs;
-    return $result;
-}
 
 sub process_pm_files {
     my $self = shift;
@@ -70,6 +62,9 @@ sub process_pm_files {
 }
 
 CODE
+
+my %pm_files;
+find(\&find_module, @pm_dirs);
 
 my $build = $class->new
   (
@@ -92,6 +87,7 @@ my $build = $class->new
                       "File::Find" => 0,
                       "File::Spec" => 0,
                      },
+   pm_files => \%pm_files,
    create_makefile_pl => 'passthrough',
   );
 
@@ -131,4 +127,13 @@ sub choose_parser {
 
 	die "XML::XPathScript needs either XML::LibXML or ",
 		"XML::XPath to be installed\n";
+}
+
+
+
+sub find_module {
+    return unless /\.pm$/;
+    my $dest = $File::Find::name;
+    $dest =~ s/lib_(axkit|tomkit)/lib/;
+    $pm_files{$File::Find::name } = $dest;
 }
