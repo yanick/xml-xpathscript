@@ -6,18 +6,25 @@ use Module::Build;
 use Getopt::Long;
 
 my $XML_parser;
-GetOptions( 'parser=s' => \$XML_parser );
+my( $with_axkit, $with_tomkit );
+GetOptions( 'parser=s' => \$XML_parser,
+             'axkit!'  => \$with_axkit,
+             'tomkit!' => \$with_tomkit );
 
 $XML_parser = choose_parser( $XML_parser );
 
-my $with_axkit = eval 'use AxKit; 1' || 0;
-print 'AxKit ', 'not 'x!$with_axkit, "detected\n";
-print "\tadding Apache::Axkit::Language::YPathScript to installation\n"
+unless ( $with_axkit ) {
+    $with_axkit ||= eval 'use AxKit; 1';
+    print 'AxKit ', 'not 'x!$with_axkit, "detected\n";
+}
+print "adding Apache::Axkit::Language::YPathScript to installation\n"
 	if $with_axkit;
 
-my $with_tomkit = eval 'use Apache2::TomKit; 1' || 0;
-print 'TomKit ', 'not 'x!$with_tomkit, "detected\n";
-print "\tadding Apache2::Tomkit::Processor::XPathScript to installation\n"
+unless ( $with_tomkit ) {
+    $with_tomkit ||= eval 'use Apache2::TomKit; 1';
+    print 'TomKit ', 'not 'x!$with_tomkit, "detected\n";
+}
+print "adding Apache2::Tomkit::Processor::XPathScript to installation\n"
 	if $with_tomkit;
 
 my $class = Module::Build->subclass
