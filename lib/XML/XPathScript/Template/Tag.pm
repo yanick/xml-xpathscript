@@ -168,13 +168,11 @@ access methods.
         };
     %>
 
-=head1 BUGS AND LIMITATIONS
+=head1 BUGS 
 
-There are no known bugs in this module.
-
-Please report problems to Yanick Champoux <yanick@cpan.org>
-
-Patches are welcome.
+Please send bug reports to <bug-xml-xpathscript@rt.cpan.org>,
+or via the web interface at 
+http://rt.cpan.org/Public/Dist/Display.html?Name=XML-XPathScript .
 
 =head1 AUTHOR
 

@@ -238,7 +238,7 @@ use File::Basename;
 use XML::XPathScript::Processor;
 use XML::XPathScript::Template;
 
-$VERSION = '1.00';
+$VERSION = '1.01';
 
 $XML_parser = 'XML::LibXML';
 
@@ -905,6 +905,11 @@ __END__
 
 =back
 
+=head1 BUGS
+
+Please send bug reports to <bug-xml-xpathscript@rt.cpan.org>,
+or via the web interface at 
+http://rt.cpan.org/Public/Dist/Display.html?Name=XML-XPathScript .
 
 
 =head1 AUTHORS

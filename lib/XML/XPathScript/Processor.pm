@@ -757,6 +757,10 @@ words, XPathScript's XML processing engine is not (yet) properly
 decoupled from the stylesheet language parser, and thus cannot stand
 alone.
 
+Please send bug reports to <bug-xml-xpathscript@rt.cpan.org>,
+or via the web interface at 
+http://rt.cpan.org/Public/Dist/Display.html?Name=XML-XPathScript .
+
 =head1 AUTHORS
 
 Yanick Champoux <yanick@cpan.org> 

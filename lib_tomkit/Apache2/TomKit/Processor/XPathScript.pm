@@ -112,3 +112,20 @@ sub getProcessorDefinition {
 
 
 1;
+
+__END__
+
+=head1 BUGS
+
+Please send bug reports to <bug-xml-xpathscript@rt.cpan.org>,
+or via the web interface at 
+http://rt.cpan.org/Public/Dist/Display.html?Name=XML-XPathScript .
+
+=head1 AUTHOR 
+
+Yanick Champoux <yanick@cpan.org>
+
+Original Axkit::Apache::AxKit::Language module 
+by Matt Sergeant <matt@sergeant.org>
+
+
