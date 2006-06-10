@@ -19,3 +19,4 @@ svn-commit
 ^99pod-coverage.t$
 tags
 TODO
+^html/
