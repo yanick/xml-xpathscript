@@ -6,7 +6,7 @@ use warnings;
 use Carp;
 use Scalar::Util qw/ reftype /;
 
-our $VERSION = '1.41';
+{
 
 our @ALLOWED_ATTRIBUTES =  qw/ pre post testcode showtag
                                intro extro prechildren postchildren
@@ -24,7 +24,7 @@ sub new {
 sub get {
     my( $self, @attributes ) = @_;
 
-    return map { $self->{$_} } @attributes;
+    return map { $self->{$_} || '' } @attributes;
 }
 
 sub set {
@@ -41,6 +41,7 @@ sub set {
 }
 
 'end of XML::XPathScript::Template::Tag';
+}
 
 __END__
 
