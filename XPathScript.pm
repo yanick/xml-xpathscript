@@ -2,7 +2,7 @@ package XML::XPathScript;
 
 use strict;
 use warnings;
-
+use Carp;
 
 
 # $Revision$ - $Date$
@@ -91,10 +91,9 @@ level is unwise.
 =cut
 
 sub current {
-    unless (defined $XML::XPathScript::current) {
-	use Carp;
-	Carp::croak "Wrong context for calling current()";
-    };
+    croak 'Wrong context for calling current()'
+        unless defined $XML::XPathScript::current;
+
     return $XML::XPathScript::current;
 }
 
@@ -131,7 +130,7 @@ Interpolation is on by default.
 
 sub interpolation {
     my $self = shift;
-    $self->interpolating( @_ );
+    return $self->interpolating( @_ );
 }
 
 sub interpolating {
@@ -188,6 +187,7 @@ sub binmode {
     my ($self)=@_;
     $self->{binmode}=1;
     binmode ORIGINAL_STDOUT if (! defined $self->{printer});
+    return;
 }
 
 =pod "
@@ -231,14 +231,14 @@ preprocess time.
 
 =cut "
 
-use vars qw( $VERSION $XML_parser $DoNotInterpolate $debug_level );
+use vars qw( $XML_parser $DoNotInterpolate $debug_level );
 
 use Symbol;
 use File::Basename;
 use XML::XPathScript::Processor;
 use XML::XPathScript::Template;
 
-$VERSION = '1.01';
+our $VERSION = '1.01';
 
 $XML_parser = 'XML::LibXML';
 
@@ -253,19 +253,20 @@ sub import
 {
     my $self = shift @_;
 
-    if ( grep $_ eq 'XML::XPath', @_ ) {
+    if ( grep { $_ eq 'XML::XPath' } @_ ) {
         $XML::XPathScript::XML_parser = 'XML::XPath';
     }
-    elsif ( grep $_ eq 'XML::LibXML', @_ ) {
+    elsif ( grep { $_ eq 'XML::LibXML' } @_ ) {
         $XML::XPathScript::XML_parser = 'XML::LibXML';
     }
+    return;
 }
 
 INIT
 {
 	if( $XML_parser eq 'XML::XPath' )
 	{
-		eval <<EOT;
+		eval <<'EOT';
 			use XML::XPath 1.0;
 			use XML::XPath::XMLParser;
 			use XML::XPath::Node;
@@ -342,7 +343,8 @@ sub new {
     my %params = @_;
     my $self = \%params;
 	$self->{interpolation_regex} ||= qr/{(.*?)}/;
-    bless $self, $class;
+    
+    return bless $self, $class;
 }
 
 
@@ -644,19 +646,18 @@ alternate namespaces (e.g. ``axkit://'' URIs).
 sub include_file {
     my ($self, $filename, @includestack) = @_;
 
-    if ($filename !~ m|^\.?/|) {
-	my $reldir;
-	# We guarantee that all values we insert into @includestack begin
-	# either with "/" or "./". This allows us to do the relative
-	# directory thing, and at the same time we get to safely ignore
-	# bizarre URIs inserted by inheriting classes.
+    if ( $filename !~ m#^\.?/# ) {
+        # We guarantee that all values we insert into @includestack begin
+        # either with "/" or "./". This allows us to do the relative
+        # directory thing, and at the same time we get to safely ignore
+        # bizarre URIs inserted by inheriting classes.
 
-	if ($includestack[0] && $includestack[0] =~ m|^\.?/|) {
-	    $reldir=dirname($includestack[0]);
-	} else {
-	    $reldir=".";
-	};
-	$filename = "$reldir/$filename";
+        my $reldir = $includestack[0] && $includestack[0] =~ m#^\.?/#
+                   ? dirname($includestack[0]) 
+                   : '.'
+                   ;
+
+        $filename = "$reldir/$filename";
     }
 	
 	# are we going recursive?
@@ -664,8 +665,7 @@ sub include_file {
 
     my $sym = gensym;
     open($sym, $filename) || do {
-	use Carp;
-	Carp::croak "Can't read include file '$filename': $!";
+        Carp::croak "Can't read include file '$filename': $!";
     };
     return $self->extract($sym, $filename, @includestack);
 }
@@ -775,16 +775,19 @@ method in a subclass provides yet another method to redirect output.
 sub print {
     my ($self, @text)=@_;
     my $printer=$self->{printer};
+
     if (!defined $printer) {
-	print ORIGINAL_STDOUT @text;
-    } elsif (ref($printer) eq "CODE") {
-	$printer->(@text);
-    } elsif (UNIVERSAL::isa($printer, "SCALAR")) {
-	$$printer.= join '', @text;
+	    print ORIGINAL_STDOUT @text;
+    } elsif (ref($printer) eq 'CODE') {
+	    $printer->(@text);
+    } elsif (UNIVERSAL::isa($printer, 'SCALAR')) {
+	    $$printer.= join '', @text;
     } else {
-	local $\=undef;
-	print $printer @text;
+	    local $\=undef;
+	    print $printer @text;
     };
+
+    return;
 }
 
 
@@ -828,7 +831,7 @@ sub document {
     # warn "Document function called\n";
     my( $self, $uri ) = @_;
 	  
-	my( $results, $parser );	
+    my( $results, $parser );	
 	if( $XML_parser eq 'XML::XPath' ) {
 		my $xml_parser = XML::Parser->new(
 				ErrorContext => 2,
@@ -893,10 +896,10 @@ package XML::XPathScript::StdoutSnatcher;
 sub TIEHANDLE { my $self = ''; bless \$self, $_[0] }
 sub PRINT {
 	my $self = shift;
-	XML::XPathScript::current()->print( @_ );
+	return XML::XPathScript::current()->print( @_ );
 }
 sub BINMODE {
-    XML::XPathScript::current()->binmode( @_ );
+    return XML::XPathScript::current()->binmode( @_ );
 }
 
 'end of XML::XPathScript::StdoutSnatcher' ;

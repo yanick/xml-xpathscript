@@ -1,3 +1,5 @@
+Sync with the local repository 
+
 pod coverage
 pod syntax
 tests w/ plan? 
@@ -9,3 +11,13 @@ signature
 profiling via ???
 
 check all uses are in required fields
+
+Kwalitee
+
+Check MANIFEST
+
+Update Changes
+
+Module Module::Checkstyle
+
+Module Perl::Critic

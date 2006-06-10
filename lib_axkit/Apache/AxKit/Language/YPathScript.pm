@@ -1,9 +1,7 @@
 package Apache::AxKit::Language::YPathScript;
 
 use strict;
-use vars qw( @ISA $VERSION $stash );
 
-@ISA = qw/ Apache::AxKit::Language XML::XPathScript /;
 
 =head1 NAME
 
@@ -63,7 +61,10 @@ use Apache::AxKit::Exception;
 use Apache::AxKit::CharsetConv;
 use XML::XPathScript; 
 
-$VERSION = 1.4;
+use vars qw( @ISA $VERSION $stash );
+@ISA = qw/ Apache::AxKit::Language XML::XPathScript /;
+
+$VERSION = '1.4';
 
 =head2 Functions
 
@@ -294,7 +295,7 @@ sub document {
     my( $self, $uri ) = @_;
 
 	my( $results, $parser );	
-	if( $XML_parser eq 'XML::XPath' ) {
+	if( $XML::XPathScript::XML_parser eq 'XML::XPath' ) {
 		my $xml_parser = XML::Parser->new(
 				ErrorContext => 2,
 				Namespaces => $XML::XPath::VERSION < 1.07 ? 1 : 0,
@@ -303,11 +304,11 @@ sub document {
 	
 		$parser = XML::XPath::XMLParser->new(parser => $xml_parser);
 		$results = XML::XPath::NodeSet->new();
-	} elsif {
-		$parser = new XML::LibXML;
-		$result = new XML::LibXML::Node;
+	} else {
+		$parser = XML::LibXML->new();
+		$results = XML::LibXML::Node->new();
 	}
-	
+
     my $newdoc;
     if ($uri =~ /^axkit:/) {
         $newdoc = $parser->parse( AxKit::get_axkit_uri($uri) );
@@ -351,6 +352,8 @@ sub document {
 'Apache::AxKit::Language::YPathScript';
 
 __END__
+
+=back
 
 =head1 BUGS
 

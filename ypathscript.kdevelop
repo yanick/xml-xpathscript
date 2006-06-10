@@ -8,8 +8,8 @@
     <primarylanguage>Perl</primarylanguage>
     <projectdirectory>.</projectdirectory>
     <absoluteprojectpath>false</absoluteprojectpath>
-    <versioncontrol>KDevsubversion</versioncontrol>
-    <description/>
+    <versioncontrol>kdevsubversion</versioncontrol>
+    <description></description>
     <ignoreparts/>
   </general>
   <kdevscriptproject>

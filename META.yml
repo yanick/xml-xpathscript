@@ -1,8 +1,8 @@
 ---
 name: XML-XPathScript
-version: 1.000_001
+version: 1.01
 author:
-  - 'Yanick Champoux <yanick@babyl.dyndns.org>, Dominique Quatravaux <dom@idealx.com> and Matt Sergeant <matt@sergeant.org>'
+  - 'Yanick Champoux <yanick@cpan.org>, Dominique Quatravaux <dom@idealx.com> and Matt Sergeant <matt@sergeant.org>'
 abstract: a Perl framework for XML stylesheets
 license: artistic
 requires:
@@ -12,14 +12,18 @@ requires:
   IO::File: 0
   Scalar::Util: 0
   Symbol: 0
+  XML::LibXML: 0
 build_requires:
   File::Find: 0
   File::Spec: 0
 provides:
+  Apache::AxKit::Language::YPathScript:
+    file: lib_axkit/Apache/AxKit/Language/YPathScript.pm
+    version: 1.4
   XML::XPathScript::Processor:
     file: lib/XML/XPathScript/Processor.pm
   XML::XPathScript::Template:
     file: lib/XML/XPathScript/Template.pm
   XML::XPathScript::Template::Tag:
     file: lib/XML/XPathScript/Template/Tag.pm
-generated_by: Module::Build version 0.26
+generated_by: Module::Build version 0.2612

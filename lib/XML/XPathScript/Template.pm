@@ -8,8 +8,7 @@ use Scalar::Util qw/ reftype /;
 use Data::Dumper;
 use XML::XPathScript::Template::Tag;
 
-
-{
+our $VERSION = '1.41';
 
 sub new {
    my( $class ) = @_;
@@ -21,10 +20,10 @@ sub new {
 }
 
 
-sub set {
+sub set {       ##no critic
     croak "method set called with more than two arguments" if @_ > 3;
 
-	my( $self, $tag, $attribute_ref ) = @_;
+    my( $self, $tag, $attribute_ref ) = @_;
 
     my $type = reftype $tag;
     my @templates =         # templates to change
@@ -38,7 +37,7 @@ sub set {
 
     $_->set( $attribute_ref ) for @templates;
 
-	return;
+    return;
 }
 
 sub copy { 
@@ -65,7 +64,7 @@ sub alias {
 }
 
 
-sub dump {
+sub dump {                      ##no critic
     my( $self, @tags ) = @_;
     
     my %template = %{$self};
@@ -80,7 +79,10 @@ sub dump {
 sub clear {
     my( $self, $tags ) = @_;
 
-    delete $self->{ $_ } for $tags ? @$tags : grep { !/^:/ } keys %$self;
+    delete $self->{ $_ } for $tags 
+                                ? @$tags 
+                                : grep { !/^:/ } keys %$self; ##no critic
+    return;
 }
 
 
@@ -119,16 +121,15 @@ sub resolve {
     no warnings qw/ uninitialized /;
     $namespace = ':'.$namespace;
 
-    return ( ( $template->{$namespace} && 			# selection order
-                (  $template->{$namespace}{$tag} 	# foo:bar
+    return ( ( $template->{$namespace} &&           # selection order
+                (  $template->{$namespace}{$tag}    # foo:bar
                 || $template->{$namespace}{'*'} ) ) # foo:*
                 || $template->{$tag}                # bar
                 || $template->{'*'} );              # *  
                                                     # (and undef if nothing)
 }
 
-'end of XML::XPathScript::Template';
-}
+1;
 
 __END__
 

@@ -1,4 +1,6 @@
-* Add link to Bug report 
+* Investigate ties to Toolkit::Template and Embperl
+
+* Add requires
 
 * Add license in pods
 
@@ -11,8 +13,6 @@
 		prefixed with SS_DIR
 
 * documentation everywhere
-
-* Add <%# comments %>
 
 * XML::XPath::..:Document -- must revisit; Add back document() to A::A::L::XPS
 
