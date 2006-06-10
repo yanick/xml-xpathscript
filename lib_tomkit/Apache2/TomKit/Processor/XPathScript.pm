@@ -11,8 +11,6 @@ use XML::LibXML;
 
 our $VERSION = '1.41';
 
-# $Id$
-
 sub new {
     my $class  = shift;
     my $logger = shift;
@@ -116,6 +114,20 @@ sub getProcessorDefinition {
 1;
 
 __END__
+
+=head1 NAME
+
+Apache2::TomKit::Processor::XPathScript - XPathScript Processor for TomKit
+
+=head1 SYNOPSIS
+
+ # in the relevant .htaccess
+ PerlSetVar AxAddProcessorMap "text/xps=>Apache2::TomKit::Processor::XPathScript"
+
+ <Files *\.xml>
+     PerlFixupHandler Apache2::TomKit
+     PerlSetVar AxAddProcessorDef "text/xps=>stylesheet.xps"
+ </Files>
 
 =head1 BUGS
 
