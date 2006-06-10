@@ -8,7 +8,7 @@ use Getopt::Long;
 use Symbol;
 use File::Basename;
 
-my $VERSION = 0.2;
+my $VERSION = '1.41';
 
 my ( $query, $interpolate );
 GetOptions( 'query=s' => \$query, 
@@ -17,9 +17,9 @@ GetOptions( 'query=s' => \$query,
           );
 
 sub die_version {
-    my( $date ) = q$Date: 2006-02-18 18:05:18 -0500 (Sat, 18 Feb 2006) $ 
+    my( $date ) = q$Date: 2006-06-10 15:28:07 -0400 (Sat, 10 Jun 2006) $ 
                     =~ /\((.*?)\)/;
-    my( $revision ) = q$Revision: 141 $ =~ /(\d+)/;
+    my( $revision ) = q$Revision: 179 $ =~ /(\d+)/;
 
     die <<"END_VERSION";
 $0 : revision $revision ($date)
@@ -143,6 +143,12 @@ will act as if the document was requested from the web server with the url
 =head1 SEE ALSO
 
 XML::XPathScript
+
+=head1 BUGS
+
+Please send bug reports to <bug-xml-xpathscript@rt.cpan.org>,
+or via the web interface at 
+http://rt.cpan.org/Public/Dist/Display.html?Name=XML-XPathScript .
 
 =head1 AUTHOR
 

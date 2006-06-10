@@ -9,7 +9,7 @@ use base qw( Apache2::TomKit::Processor::AbstractProcessor XML::XPathScript );
 use Apache2::TomKit::Processor::DefinitionProvider::FileSystemProvider;
 use XML::LibXML;
 
-# $Id$
+our $VERSION = '1.41';
 
 sub new {
     my $class  = shift;
@@ -112,3 +112,34 @@ sub getProcessorDefinition {
 
 
 1;
+
+__END__
+
+=head1 NAME
+
+Apache2::TomKit::Processor::XPathScript - XPathScript Processor for TomKit
+
+=head1 SYNOPSIS
+
+ # in the relevant .htaccess
+ PerlSetVar AxAddProcessorMap "text/xps=>Apache2::TomKit::Processor::XPathScript"
+
+ <Files *\.xml>
+     PerlFixupHandler Apache2::TomKit
+     PerlSetVar AxAddProcessorDef "text/xps=>stylesheet.xps"
+ </Files>
+
+=head1 BUGS
+
+Please send bug reports to <bug-xml-xpathscript@rt.cpan.org>,
+or via the web interface at 
+http://rt.cpan.org/Public/Dist/Display.html?Name=XML-XPathScript .
+
+=head1 AUTHOR 
+
+Yanick Champoux <yanick@cpan.org>
+
+Original Axkit::Apache::AxKit::Language module 
+by Matt Sergeant <matt@sergeant.org>
+
+

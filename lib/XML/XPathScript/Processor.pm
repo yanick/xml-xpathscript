@@ -54,6 +54,9 @@ use Carp;
 
 use Exporter;
 use vars '@ISA', '@EXPORT';
+
+our $VERSION = '1.41';
+
 @ISA = ('Exporter');
 
 @EXPORT = qw(
@@ -756,6 +759,10 @@ to L<XML::XPathScript> which should not be called directly: in other
 words, XPathScript's XML processing engine is not (yet) properly
 decoupled from the stylesheet language parser, and thus cannot stand
 alone.
+
+Please send bug reports to <bug-xml-xpathscript@rt.cpan.org>,
+or via the web interface at 
+http://rt.cpan.org/Public/Dist/Display.html?Name=XML-XPathScript .
 
 =head1 AUTHORS
 

@@ -33,19 +33,32 @@ directory).
 
 To install this module type the following:
 
+   perl ./Build.PL
+   ./Build
+   ./Build test
+   ./Build install
+
+   or, if you are old-school,
+
    perl Makefile.PL
    make
    make test
    make install
 
    
-During installation, Makefile.PL will check if it should use XML::LibXML 
+During installation, Build.PL will check if it should use XML::LibXML 
 or XML::XPath as the default xml parser. if you want to force XPathScript to use 
 one or the other, do
 
-	perl Makefile.PL -parser=XML::LibXML
+	perl Build.PL -parser=XML::LibXML
 	or
-	perl Makefile.PL -parser=XML::XPath
+	perl Build.PL -parser=XML::XPath
+
+If AxKit or TomKit are present, their respective XPathScript processors will
+be automatically added to the installation. To force their installation
+without the presence of AxKit/TomKit, do
+
+    perl Build.PL -axkit -tomkit
 	
 ===== COMMAND-LINE USE
 

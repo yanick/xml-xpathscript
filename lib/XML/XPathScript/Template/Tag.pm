@@ -6,7 +6,7 @@ use warnings;
 use Carp;
 use Scalar::Util qw/ reftype /;
 
-{
+our $VERSION = '1.41';
 
 our @ALLOWED_ATTRIBUTES =  qw/ pre post testcode showtag
                                intro extro prechildren postchildren
@@ -24,7 +24,7 @@ sub new {
 sub get {
     my( $self, @attributes ) = @_;
 
-    return map { $self->{$_} || '' } @attributes;
+    return map { $self->{$_} } @attributes;
 }
 
 sub set {
@@ -41,7 +41,6 @@ sub set {
 }
 
 'end of XML::XPathScript::Template::Tag';
-}
 
 __END__
 
@@ -168,13 +167,11 @@ access methods.
         };
     %>
 
-=head1 BUGS AND LIMITATIONS
+=head1 BUGS 
 
-There are no known bugs in this module.
-
-Please report problems to Yanick Champoux <yanick@cpan.org>
-
-Patches are welcome.
+Please send bug reports to <bug-xml-xpathscript@rt.cpan.org>,
+or via the web interface at 
+http://rt.cpan.org/Public/Dist/Display.html?Name=XML-XPathScript .
 
 =head1 AUTHOR
 

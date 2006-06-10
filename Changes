@@ -1,5 +1,12 @@
 Revision history for Perl module XML::XPathScript
 
+1.41
+    - Added flags -axkit and -tomkit to Build.PL to force installation of 
+        Axkit/TomKit support 
+    - Big version jump to keep all modules' versions in sync
+    - Added synopsis to TomKit processor
+    - Misc. distribution clean-ups
+
 1.01 Mar 8 2006
     - Added Dominique's excellent Docbook-into-LaTeX converting
         stylesheet in an examples/ directory.
