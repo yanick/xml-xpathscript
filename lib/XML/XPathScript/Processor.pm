@@ -567,7 +567,10 @@ sub translate_element_node {
 
     my $node_name = 
         $XML::XPathScript::XML_parser eq 'XML::LibXML' ? $node->localname
-      : $XML::XPathScript::XML_parser eq 'XML::XPath'  ? $node->getLocalName 
+      : $XML::XPathScript::XML_parser eq 'XML::XPath'  ? 
+                                 # nasty hack to get around that 
+                                 # the root has no name 
+                                 ( $node->getName && $node->getLocalName )
       :           croak "unsupported parser:  $XML::XPathScript::XML_parser"
       ;
 
