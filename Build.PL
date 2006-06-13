@@ -88,6 +88,7 @@ my $build = $class->new
                      },
    pm_files => \%pm_files,
    create_makefile_pl => 'passthrough',
+   sign => 1,
   );
 
 $build->create_build_script;

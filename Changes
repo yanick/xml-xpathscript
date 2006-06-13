@@ -1,6 +1,10 @@
 Revision history for Perl module XML::XPathScript
 
-1.41
+1.42 Jun 12 2006
+    - Added support for signatures.
+    - Fixed a XML::XPath-related bug in the testcases.
+
+1.41 Jun 10 2006
     - Added flags -axkit and -tomkit to Build.PL to force installation of 
         Axkit/TomKit support 
     - Big version jump to keep all modules' versions in sync

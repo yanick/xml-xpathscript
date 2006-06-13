@@ -65,3 +65,4 @@ t/testdocs/tag_attributes.xps
 XPathScript.pm
 examples/docbook2latex.xps  
 examples/sample-docbook.xml
+SIGNATURE    Added here by Module::Build
