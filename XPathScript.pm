@@ -347,20 +347,79 @@ sub new {
     return bless $self, $class;
 }
 
-# transform( $xml, $stylesheet, \@args );
+=item I<transform( $xml, $stylesheet, \@args )>
+
+Transforms the document $xml with the $stylesheet (optionally passing to
+the stylesheet the argument array @args) and returns the result.
+
+If the passed $xml or $stylesheet is undef, the previously loaded xml 
+document or stylesheet is used.
+
+E.g.,
+
+    # vanilla-flavored transformation
+    my $xml = '<doc>...</doc>';
+    my $stylesheet = '<% ... %>';
+    my $transformed = $xps->transform( $xml, $stylesheet );
+
+    # transform many documents
+    $xps->set_stylesheet( $stylesheet );
+    for my $xml ( @xml_documents ) {
+        my $transformed = $xps->transform( $xml );
+        # do stuff with $transformed ...
+    }
+    
+    # do many transformation of a document
+    $xps->set_xml( $xml );
+    for my $stylesheet ( @stylesheets ) {
+        my $transformed = $xps->transform( undef, $stylesheet );
+        # do stuff with $transformed ...
+    }
+
+=cut
 
 sub transform {
-    my $self = shift;
+    my( $self, $xml, $stylesheet, $args ) = @_;
     my $output;
 
-    $self->{xml} = shift || die;
-    $self->{stylesheet} = shift || die;
+    $self->{xml} = $xml if $xml;
 
-    $self->process( \$output );
+    if ( $stylesheet ) {
+        $self->{compiledstylesheet} = undef;
+        $self->{stylesheet} = $stylesheet;
+    }
+
+    $self->process( \$output, $args ? @$args : () );
 
     return $output;
 }
 
+=item I<set_xml( $xml )>
+
+Sets the xml document to $xml.
+
+=cut 
+
+sub set_xml {
+    my( $self, $xml ) = @_;
+
+    $self->{xml} = $xml;
+}
+
+=item I<set_stylesheet( $stylesheet )>
+
+Sets the processor's stylesheet to $stylesheet.
+
+=cut
+
+sub set_stylesheet {
+    my ( $self, $stylesheet ) = @_;
+
+    $self->{compiledstylesheet} = undef;
+    $self->{stylesheet} = $stylesheet;
+
+    $self->compile if $self->{stylesheet};
+}
 
 =pod "
 

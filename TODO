@@ -1,3 +1,19 @@
+- set_xml and set_stylesheet
+
+- my $transformed = $xps->transform( [ $xml, [ $stylesheet, [ \@args ] 
+]  ] )
+
+- be able to do xml => XML::LibXML object
+
+- set_stylesheet_args( qw/ $foo $bar  / )
+
+- Documentation of XML::XPS -> put at the end
+
+
+- have the stylesheet assigns its arguments to @_ by default.
+
+* tranform()
+
 * Investigate ties to Toolkit::Template and Embperl
 
 * Add requires
