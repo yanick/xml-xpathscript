@@ -347,6 +347,20 @@ sub new {
     return bless $self, $class;
 }
 
+# transform( $xml, $stylesheet, \@args );
+
+sub transform {
+    my $self = shift;
+    my $output;
+
+    $self->{xml} = shift || die;
+    $self->{stylesheet} = shift || die;
+
+    $self->process( \$output );
+
+    return $output;
+}
+
 
 =pod "
 
@@ -528,7 +542,7 @@ dialect.
 sub extract {
     my ($self,$stylesheet,@includestack) = @_;
 
-    my $filename=$includestack[0] || "stylesheet";
+    my $filename = $self->{stylesheet_dependencies}[0] || "stylesheet";
 
     my $contents = $self->read_stylesheet( $stylesheet );
 
@@ -661,14 +675,23 @@ sub include_file {
     }
 	
 	# are we going recursive?
-	return '' if grep $_ eq $filename, @includestack;
+    if ( grep { $_ eq $filename } @includestack ) {
+        warn 'loop detected in stylesheet include chain: ',
+                join( ' => ', reverse(@includestack), $filename ), "\n";
+        return undef;
+    }
 
-    my $sym = gensym;
-    open($sym, $filename) || do {
-        Carp::croak "Can't read include file '$filename': $!";
-    };
-    return $self->extract($sym, $filename, @includestack);
+    my $stylesheet;
+    unless ( $stylesheet = $self->{stylesheet_cache}{$filename} ) {
+        open my $fh, '<', $filename 
+            or Carp::croak "Can't read include file '$filename': $!";
+        $stylesheet = $self->{stylesheet_cache}{$filename} 
+                    = $self->read_stylesheet( $fh );
+    }
+
+    return $self->extract($stylesheet, $filename, @includestack);
 }
+
 
 =pod "
 
@@ -710,6 +733,7 @@ sub compile {
 		if defined $self->{compiledstylesheet};
 
     my $stylesheet;
+    $self->{stylesheet_cache} = {};
 
     if (exists $self->{stylesheet}) {
 		$stylesheet=$self->{stylesheet};
@@ -796,6 +820,20 @@ sub print {
 
 sub debug {
 	warn $_[2] if $_[1] <= $debug_level;
+}
+
+=item I<get_stylesheet_dependencies()>
+
+Returns the files the loaded stylesheet depends on (i.e., has been
+included by the stylesheet or one of its includes). The order in which
+files are returned by the function has no special signification.
+
+=cut
+
+sub get_stylesheet_dependencies {
+    my $self = shift;
+    $self->compile unless $self->{compiledstylesheet};
+    return sort keys %{$self->{stylesheet_cache}};
 }
 
 =pod "
