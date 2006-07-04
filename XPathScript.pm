@@ -4,7 +4,6 @@ use strict;
 use warnings;
 use Carp;
 
-
 # $Revision$ - $Date$
 
 =pod 
@@ -16,32 +15,31 @@ XML::XPathScript - a Perl framework for XML stylesheets
 =head1 SYNOPSIS
 
   use XML::XPathScript;
-  my $xps = XML::XPathScript->new(xml => $xml, stylesheet => $stylesheet);
 
-  # The short way:
+  # the short way
+  my $xps = XML::XPathScript->new;
+  my $transformed = $xps->transform( $xml, $stylesheet );
 
-  $xps->process();
+  # having the output piped to STDOUT directly
+  my $xps = XML::XPathScript->new( xml => $xml, stylesheet => $stylesheet );
+  $xps->process;
 
-  # The long way (caching the compiled stylesheet for reuse and
-  # outputting to multiple files):
-
-  my $compiled = XML::XPathScript->new(stylesheetfile => $filename)
-         ->compile('$r');
-
+  # caching the compiled stylesheet for reuse and
+  # outputting to multiple files
+  my $xps = XML::XPathScript->new( stylesheetfile => $filename )
   foreach my $xml (@xmlfiles) {
-     use IO::File;
+    my $transformed = $xps->transform( $xml );
 
-     my $currentIO=new IO::File(shift @outputfiles);
-
-     XML::XPathScript->new(xml => $xml, compiledstylesheet=>$compiled)
-         ->process(sub {$currentIO->print(shift)});
+    # do stuff with $transformed ...
   };
 
   # Making extra variables available to the stylesheet dialect:
+  my $xps = XML::XPathScript->new;
+  $xps->compile( qw/ $foo $bar / );
 
-  my $handler=$xps->compile('$r');
-
-  &$handler($xmltree,&Apache::print,Apache->request());
+                                    # in stylesheet, $foo is 'a'
+                                    # and $bar is 'b'
+  $xps->transform( $xml, $stylesheet, [ 'a', 'b' ] ); 
 
 =head1 DESCRIPTION
 
@@ -556,7 +554,8 @@ EOT
    		*STDOUT = *ORIGINAL_STDOUT if $^V lt v5.7.0; 
 
 	   	tie *STDOUT, 'XML::XPathScript::StdoutSnatcher';
-	   	my $retval = $self->compile()->( $self, @extravars );
+        $self->compile unless $self->{compiledstylesheet};
+	   	my $retval = $self->{compiledstylesheet}->( $self, @extravars );
 	   	untie *STDOUT;
 	   	return $retval;
 	}
@@ -788,8 +787,7 @@ said argument.
 sub compile {
     my ($self,@extravars) = @_;
 
-	return $self->{compiledstylesheet}
-		if defined $self->{compiledstylesheet};
+    $self->{compiledstylesheet} = undef;
 
     my $stylesheet;
     $self->{stylesheet_cache} = {};

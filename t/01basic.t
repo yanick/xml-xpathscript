@@ -90,7 +90,7 @@ EOT
 
 };
 
-# sets
+# set_xml and set_stylesheet
 my $xps = XML::XPathScript->new;
 $xps->set_xml( '<doc><t>sets rule</t></doc>' );
 $xps->set_stylesheet( '<%~ //t %>' );

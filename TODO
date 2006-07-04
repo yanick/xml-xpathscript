@@ -9,10 +9,7 @@
 
 - Documentation of XML::XPS -> put at the end
 
-
-- have the stylesheet assigns its arguments to @_ by default.
-
-* tranform()
+- Mention the stylesheet arguments ( @_ or named )
 
 * Investigate ties to Toolkit::Template and Embperl
 
