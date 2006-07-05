@@ -1,10 +1,3 @@
-- set_xml and set_stylesheet
-
-- my $transformed = $xps->transform( [ $xml, [ $stylesheet, [ \@args ] 
-]  ] )
-
-- be able to do xml => XML::LibXML object
-
 - set_stylesheet_args( qw/ $foo $bar  / )
 
 - Documentation of XML::XPS -> put at the end

@@ -340,9 +340,26 @@ sub new {
     die "Invalid hash call to new" if @_ % 2;
     my %params = @_;
     my $self = \%params;
+    bless $self, $class;
+    $self->set_xml( $params{xml} ) if $params{xml};
 	$self->{interpolation_regex} ||= qr/{(.*?)}/;
+
+    if (  $XML::XPathScript::XML_parser eq 'XML::XPath' ) {
+        eval <<END_EVAL;
+			use XML::XPath 1.0;
+			use XML::XPath::XMLParser;
+			use XML::XPath::Node;
+			use XML::XPath::NodeSet;
+			use XML::Parser;
+END_EVAL
+    } 
+    else {
+        eval 'use XML::LibXML';
+    }
+
+    croak $@ if $@;
     
-    return bless $self, $class;
+    return $self;
 }
 
 =item I<transform( $xml, $stylesheet, \@args )>
@@ -379,8 +396,8 @@ E.g.,
 sub transform {
     my( $self, $xml, $stylesheet, $args ) = @_;
     my $output;
-
-    $self->{xml} = $xml if $xml;
+    
+    $self->set_xml( $xml ) if $xml;
 
     if ( $stylesheet ) {
         $self->{compiledstylesheet} = undef;
@@ -394,7 +411,8 @@ sub transform {
 
 =item I<set_xml( $xml )>
 
-Sets the xml document to $xml.
+Sets the xml document to $xml. $xml can be a file, a file handler 
+reference, a string, or a XML::LibXML or XML::XPath node.
 
 =cut 
 
@@ -402,6 +420,130 @@ sub set_xml {
     my( $self, $xml ) = @_;
 
     $self->{xml} = $xml;
+
+    return ref $xml ? $self->_set_xml_ref() : $self->_set_xml_scalar();
+
+my $xpath;
+
+
+	# a third option should be auto, for which we
+	# would use the already-defined object
+	if( $XML_parser eq 'auto' )
+	{
+		if (UNIVERSAL::isa($self->{xml},"XML::XPath")) 
+		{
+			$xpath=$self->{xml};
+			$XML_parser = 'XML::XPath';
+		}
+		elsif(UNIVERSAL::isa($self->{xml},"XML::LibXML" ))
+		{
+			$xpath=$self->{xml};
+			$XML_parser = 'XML::LibXML';
+		}
+	}
+
+    if (UNIVERSAL::isa($self->{xml},"XML::XPath")) 
+	{
+		if( $XML_parser eq 'XML::XPath' or $XML_parser eq 'auto' )
+		{
+			$xpath=$self->{xml};
+			$XML_parser = 'XML::XPath';
+		}
+		else 		# parser if XML::LibXML
+		{
+			$xpath = XML::LibXML->parse_string( $self->{xml}->toString )->documentElement;
+		}
+    } 
+	elsif (UNIVERSAL::isa($self->{xml},"XML::libXML")) 
+	{
+		if( $XML_parser eq 'XML::LibXML' or $XML_parser eq 'auto' )
+		{
+			$xpath=$self->{xml};
+			$XML_parser = 'XML::LibXML';
+		}
+		else 		# parser if xpath
+		{
+			$xpath = new XML::XPath( xml => $self->{xml}->toString );
+		}
+    } 
+	else
+	{
+		$XML_parser = 'XML::LibXML' if $XML_parser eq 'auto';
+
+		if (ref($self->{xml})) 
+		{
+			$xpath= ( $XML_parser eq 'XML::LibXML' ) ? 
+			    XML::LibXML->new->parse_fh( $self->{xml} )->documentElement :
+				XML::XPath->new(ioref => $self->{xml})
+		} 
+	}
+
+	$self->{dom} = $xpath;
+}
+
+sub _set_xml_ref {
+    my $self = shift;
+    my $xml = $self->{xml};
+
+    if ( $XML_parser eq 'XML::LibXML' ) {
+        if ( $xml->isa( 'XML::LibXML::Document' ) ) {
+            $self->{dom} = $xml;
+            return;
+        }
+
+        if ( $xml->isa( 'XML::LibXML::Node' ) ) {
+            my $dom = XML::LibXML::Document->new;
+            $dom->setDocumentElement( $xml );
+            $self->{dom} = $dom;
+            return;
+        }
+    }
+    else {  # XML::XPath
+        if ( $xml->isa( 'XML::XPath' ) ) {
+            $self->{dom} = $xml;
+            return;
+        }
+
+        if( $xml->isa( 'XML::XPath::Node' ) ) {
+            # evil hack
+            my $dom = XML::XPath->new( xml => $xml->toString );
+            $self->{dom} = $dom;
+            return;
+        }
+    }
+
+    # try to read it as an io
+    $self->{dom} = $XML_parser eq 'XML::LibXML' 
+                 ? XML::LibXML->new->parse_fh( $xml )->documentElement 
+                 : XML::XPath->new(ioref => $xml)
+                 ;
+
+    return;
+}
+
+sub _set_xml_scalar {
+    my $self = shift;
+    my $xml = $self->{xml};
+
+    # is it a file? 
+    if( -f $xml ) {
+        open my $fh, '<', $xml or croak "couldn't open xml file $xml: $!";
+
+        $self->{dom} = $XML_parser eq 'XML::LibXML' 
+                     ? XML::LibXML->new->parse_file( $xml )->documentElement
+                     : XML::XPath->new( filename => $xml )
+                     ;
+
+        return;
+    }
+
+    # then it must be a string
+
+    $self->{dom} = $XML_parser eq 'XML::LibXML' 
+                 ? XML::LibXML->new->parse_string( $xml )->documentElement 
+                 : XML::XPath->new( xml => $xml );
+
+    return;
 }
 
 =item I<set_stylesheet( $stylesheet )>
@@ -457,92 +599,9 @@ sub process {
     do { $$printer="" } if (UNIVERSAL::isa($printer, "SCALAR"));
     $self->{printer}=$printer if $printer;
 
+    croak "xml document not defined" unless $self->{dom};
 
-    my $xpath;
-
-	#warn "Entering process...";
-
-	if( $XML_parser eq 'XML::XPath' )
-	{
-		eval <<EOT;
-			use XML::XPath 1.0;
-			use XML::XPath::XMLParser;
-			use XML::XPath::Node;
-			use XML::XPath::NodeSet;
-			use XML::Parser;
-EOT
-		die $@ if $@;
-	}
-	else
-	{
-		eval 'use XML::LibXML';
-		die $@ if $@;
-	}
-
-	#warn "Eval'uation done...";
-
-
-	# a third option should be auto, for which we
-	# would use the already-defined object
-	if( $XML_parser eq 'auto' )
-	{
-		if (UNIVERSAL::isa($self->{xml},"XML::XPath")) 
-		{
-			$xpath=$self->{xml};
-			$XML_parser = 'XML::XPath';
-		}
-		elsif(UNIVERSAL::isa($self->{xml},"XML::LibXML" ))
-		{
-			$xpath=$self->{xml};
-			$XML_parser = 'XML::LibXML';
-		}
-	}
-
-    if (UNIVERSAL::isa($self->{xml},"XML::XPath")) 
-	{
-		if( $XML_parser eq 'XML::XPath' or $XML_parser eq 'auto' )
-		{
-			$xpath=$self->{xml};
-			$XML_parser = 'XML::XPath';
-		}
-		else 		# parser if XML::LibXML
-		{
-			$xpath = XML::LibXML->parse_string( $self->{xml}->toString )->documentElement;
-		}
-    } 
-	elsif (UNIVERSAL::isa($self->{xml},"XML::libXML")) 
-	{
-		if( $XML_parser eq 'XML::LibXML' or $XML_parser eq 'auto' )
-		{
-			$xpath=$self->{xml};
-			$XML_parser = 'XML::LibXML';
-		}
-		else 		# parser if xpath
-		{
-			$xpath = new XML::XPath( xml => $self->{xml}->toString );
-		}
-    } 
-	else
-	{
-		$XML_parser = 'XML::LibXML' if $XML_parser eq 'auto';
-
-		if (ref($self->{xml})) 
-		{
-			$xpath= ( $XML_parser eq 'XML::LibXML' ) ? 
-			    XML::LibXML->new->parse_fh( $self->{xml} )->documentElement :
-				XML::XPath->new(ioref => $self->{xml})
-		} 
-		else 
-		{
-			$xpath= ( $XML_parser eq 'XML::LibXML' ) ? 
-			    XML::LibXML->new->parse_string( $self->{xml} )->documentElement :
-				XML::XPath->new( xml => $self->{xml});
-		};
-	}
-
-	$self->{dom} = $xpath;
-
-	$xpath->ownerDocument->setEncoding( "UTF-8" ) 
+	$self->{dom}->ownerDocument->setEncoding( "UTF-8" ) 
 		if $XML_parser eq 'XML::LibXML';
 
 	{

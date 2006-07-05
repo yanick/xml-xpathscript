@@ -26,6 +26,7 @@ t/10comments.t
 t/11new_interface.t
 t/12template.t
 t/13samples.t
+t/17xml_loading.t
 t/document_file.txt
 t/include.xps
 t/include2.xps
