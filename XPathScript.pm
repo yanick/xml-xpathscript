@@ -4,8 +4,7 @@ use strict;
 use warnings;
 use Carp;
 
-
-# $Revision: 189 $ - $Date: 2006-06-12 20:54:15 -0400 (Mon, 12 Jun 2006) $
+# $Revision: 196 $ - $Date: 2006-07-06 12:01:32 -0400 (Thu, 06 Jul 2006) $
 
 =pod 
 
@@ -16,32 +15,31 @@ XML::XPathScript - a Perl framework for XML stylesheets
 =head1 SYNOPSIS
 
   use XML::XPathScript;
-  my $xps = XML::XPathScript->new(xml => $xml, stylesheet => $stylesheet);
 
-  # The short way:
+  # the short way
+  my $xps = XML::XPathScript->new;
+  my $transformed = $xps->transform( $xml, $stylesheet );
 
-  $xps->process();
+  # having the output piped to STDOUT directly
+  my $xps = XML::XPathScript->new( xml => $xml, stylesheet => $stylesheet );
+  $xps->process;
 
-  # The long way (caching the compiled stylesheet for reuse and
-  # outputting to multiple files):
-
-  my $compiled = XML::XPathScript->new(stylesheetfile => $filename)
-         ->compile('$r');
-
+  # caching the compiled stylesheet for reuse and
+  # outputting to multiple files
+  my $xps = XML::XPathScript->new( stylesheetfile => $filename )
   foreach my $xml (@xmlfiles) {
-     use IO::File;
+    my $transformed = $xps->transform( $xml );
 
-     my $currentIO=new IO::File(shift @outputfiles);
-
-     XML::XPathScript->new(xml => $xml, compiledstylesheet=>$compiled)
-         ->process(sub {$currentIO->print(shift)});
+    # do stuff with $transformed ...
   };
 
   # Making extra variables available to the stylesheet dialect:
+  my $xps = XML::XPathScript->new;
+  $xps->compile( qw/ $foo $bar / );
 
-  my $handler=$xps->compile('$r');
-
-  &$handler($xmltree,&Apache::print,Apache->request());
+                                    # in stylesheet, $foo is 'a'
+                                    # and $bar is 'b'
+  $xps->transform( $xml, $stylesheet, [ 'a', 'b' ] ); 
 
 =head1 DESCRIPTION
 
@@ -238,7 +236,7 @@ use File::Basename;
 use XML::XPathScript::Processor;
 use XML::XPathScript::Template;
 
-our $VERSION = '1.42';
+our $VERSION = '1.43';
 
 $XML_parser = 'XML::LibXML';
 
@@ -342,73 +340,90 @@ sub new {
     die "Invalid hash call to new" if @_ % 2;
     my %params = @_;
     my $self = \%params;
+    bless $self, $class;
+    $self->set_xml( $params{xml} ) if $params{xml};
 	$self->{interpolation_regex} ||= qr/{(.*?)}/;
-    
-    return bless $self, $class;
-}
 
-
-=pod "
-
-=item I<process()>
-
-=item I<process($printer)>
-
-=item I<process($printer,@varvalues)>
-
-Processes the document and stylesheet set at construction time, and
-prints the result to STDOUT by default. If $printer is set, it must be
-either a reference to a filehandle open for output, or a reference to
-a string, or a reference to a subroutine which does the output, as in
-
-   my $buffer="";
-   $xps->process(sub {$buffer.=shift;});
-
-or
-
-   $xps->process(sub {print ANOTHERFD (shift);});
-
-(not that the latter would be any good, since 
-C< $xps->process(\*ANOTHERFD) > would do exactly the same, only faster)
-
-If the stylesheet was I<compile()>d with extra I<varname>s, then the
-calling code should call I<process()> with a corresponding number of
-@varvalues. The corresponding lexical variables will be set
-accordingly, so that the stylesheet code can get at them (looking at
-L</SYNOPSIS>) is the easiest way of getting the meaning of this
-sentence).
-
-=cut "
-
-sub process {
-    my ($self, $printer, @extravars) = @_;
-
-    do { $$printer="" } if (UNIVERSAL::isa($printer, "SCALAR"));
-    $self->{printer}=$printer if $printer;
-
-
-    my $xpath;
-
-	#warn "Entering process...";
-
-	if( $XML_parser eq 'XML::XPath' )
-	{
-		eval <<EOT;
+    if (  $XML::XPathScript::XML_parser eq 'XML::XPath' ) {
+        eval <<END_EVAL;
 			use XML::XPath 1.0;
 			use XML::XPath::XMLParser;
 			use XML::XPath::Node;
 			use XML::XPath::NodeSet;
 			use XML::Parser;
-EOT
-		die $@ if $@;
-	}
-	else
-	{
-		eval 'use XML::LibXML';
-		die $@ if $@;
-	}
+END_EVAL
+    } 
+    else {
+        eval 'use XML::LibXML';
+    }
 
-	#warn "Eval'uation done...";
+    croak $@ if $@;
+    
+    return $self;
+}
+
+=item I<transform( $xml, $stylesheet, \@args )>
+
+Transforms the document $xml with the $stylesheet (optionally passing to
+the stylesheet the argument array @args) and returns the result.
+
+If the passed $xml or $stylesheet is undef, the previously loaded xml 
+document or stylesheet is used.
+
+E.g.,
+
+    # vanilla-flavored transformation
+    my $xml = '<doc>...</doc>';
+    my $stylesheet = '<% ... %>';
+    my $transformed = $xps->transform( $xml, $stylesheet );
+
+    # transform many documents
+    $xps->set_stylesheet( $stylesheet );
+    for my $xml ( @xml_documents ) {
+        my $transformed = $xps->transform( $xml );
+        # do stuff with $transformed ...
+    }
+    
+    # do many transformation of a document
+    $xps->set_xml( $xml );
+    for my $stylesheet ( @stylesheets ) {
+        my $transformed = $xps->transform( undef, $stylesheet );
+        # do stuff with $transformed ...
+    }
+
+=cut
+
+sub transform {
+    my( $self, $xml, $stylesheet, $args ) = @_;
+    my $output;
+    
+    $self->set_xml( $xml ) if $xml;
+
+    if ( $stylesheet ) {
+        $self->{compiledstylesheet} = undef;
+        $self->{stylesheet} = $stylesheet;
+    }
+
+    $self->process( \$output, $args ? @$args : () );
+
+    return $output;
+}
+
+=item I<set_xml( $xml )>
+
+Sets the xml document to $xml. $xml can be a file, a file handler 
+reference, a string, or a XML::LibXML or XML::XPath node.
+
+=cut 
+
+sub set_xml {
+    my( $self, $xml ) = @_;
+
+    $self->{xml} = $xml;
+
+    return ref $xml ? $self->_set_xml_ref() : $self->_set_xml_scalar();
+
+my $xpath;
 
 
 	# a third option should be auto, for which we
@@ -461,17 +476,132 @@ EOT
 			    XML::LibXML->new->parse_fh( $self->{xml} )->documentElement :
 				XML::XPath->new(ioref => $self->{xml})
 		} 
-		else 
-		{
-			$xpath= ( $XML_parser eq 'XML::LibXML' ) ? 
-			    XML::LibXML->new->parse_string( $self->{xml} )->documentElement :
-				XML::XPath->new( xml => $self->{xml});
-		};
 	}
 
 	$self->{dom} = $xpath;
+}
 
-	$xpath->ownerDocument->setEncoding( "UTF-8" ) 
+sub _set_xml_ref {
+    my $self = shift;
+    my $xml = $self->{xml};
+
+    if ( $XML_parser eq 'XML::LibXML' ) {
+        if ( $xml->isa( 'XML::LibXML::Document' ) ) {
+            $self->{dom} = $xml;
+            return;
+        }
+
+        if ( $xml->isa( 'XML::LibXML::Node' ) ) {
+            my $dom = XML::LibXML::Document->new;
+            $dom->setDocumentElement( $xml );
+            $self->{dom} = $dom;
+            return;
+        }
+    }
+    else {  # XML::XPath
+        if ( $xml->isa( 'XML::XPath' ) ) {
+            $self->{dom} = $xml;
+            return;
+        }
+
+        if( $xml->isa( 'XML::XPath::Node' ) ) {
+            # evil hack
+            my $dom = XML::XPath->new( xml => $xml->toString );
+            $self->{dom} = $dom;
+            return;
+        }
+    }
+
+    # try to read it as an io
+    $self->{dom} = $XML_parser eq 'XML::LibXML' 
+                 ? XML::LibXML->new->parse_fh( $xml )->documentElement 
+                 : XML::XPath->new(ioref => $xml)
+                 ;
+
+    return;
+}
+
+sub _set_xml_scalar {
+    my $self = shift;
+    my $xml = $self->{xml};
+
+    # is it a file? 
+    if( -f $xml ) {
+        open my $fh, '<', $xml or croak "couldn't open xml file $xml: $!";
+
+        $self->{dom} = $XML_parser eq 'XML::LibXML' 
+                     ? XML::LibXML->new->parse_file( $xml )->documentElement
+                     : XML::XPath->new( filename => $xml )
+                     ;
+
+        return;
+    }
+
+    # then it must be a string
+
+    $self->{dom} = $XML_parser eq 'XML::LibXML' 
+                 ? XML::LibXML->new->parse_string( $xml )->documentElement 
+                 : XML::XPath->new( xml => $xml );
+
+    return;
+}
+
+=item I<set_stylesheet( $stylesheet )>
+
+Sets the processor's stylesheet to $stylesheet.
+
+=cut
+
+sub set_stylesheet {
+    my ( $self, $stylesheet ) = @_;
+
+    $self->{compiledstylesheet} = undef;
+    $self->{stylesheet} = $stylesheet;
+
+    $self->compile if $self->{stylesheet};
+}
+
+=pod "
+
+=item I<process()>
+
+=item I<process($printer)>
+
+=item I<process($printer,@varvalues)>
+
+Processes the document and stylesheet set at construction time, and
+prints the result to STDOUT by default. If $printer is set, it must be
+either a reference to a filehandle open for output, or a reference to
+a string, or a reference to a subroutine which does the output, as in
+
+   my $buffer="";
+   $xps->process(sub {$buffer.=shift;});
+
+or
+
+   $xps->process(sub {print ANOTHERFD (shift);});
+
+(not that the latter would be any good, since 
+C< $xps->process(\*ANOTHERFD) > would do exactly the same, only faster)
+
+If the stylesheet was I<compile()>d with extra I<varname>s, then the
+calling code should call I<process()> with a corresponding number of
+@varvalues. The corresponding lexical variables will be set
+accordingly, so that the stylesheet code can get at them (looking at
+L</SYNOPSIS>) is the easiest way of getting the meaning of this
+sentence).
+
+=cut "
+
+sub process {
+    my ($self, $printer, @extravars) = @_;
+
+    do { $$printer="" } if (UNIVERSAL::isa($printer, "SCALAR"));
+    $self->{printer}=$printer if $printer;
+
+    croak "xml document not defined" unless $self->{dom};
+
+	$self->{dom}->ownerDocument->setEncoding( "UTF-8" ) 
 		if $XML_parser eq 'XML::LibXML';
 
 	{
@@ -483,7 +613,8 @@ EOT
    		*STDOUT = *ORIGINAL_STDOUT if $^V lt v5.7.0; 
 
 	   	tie *STDOUT, 'XML::XPathScript::StdoutSnatcher';
-	   	my $retval = $self->compile()->( $self, @extravars );
+        $self->compile unless $self->{compiledstylesheet};
+	   	my $retval = $self->{compiledstylesheet}->( $self, @extravars );
 	   	untie *STDOUT;
 	   	return $retval;
 	}
@@ -528,7 +659,7 @@ dialect.
 sub extract {
     my ($self,$stylesheet,@includestack) = @_;
 
-    my $filename=$includestack[0] || "stylesheet";
+    my $filename = $self->{stylesheet_dependencies}[0] || "stylesheet";
 
     my $contents = $self->read_stylesheet( $stylesheet );
 
@@ -661,14 +792,23 @@ sub include_file {
     }
 	
 	# are we going recursive?
-	return '' if grep $_ eq $filename, @includestack;
+    if ( grep { $_ eq $filename } @includestack ) {
+        warn 'loop detected in stylesheet include chain: ',
+                join( ' => ', reverse(@includestack), $filename ), "\n";
+        return undef;
+    }
 
-    my $sym = gensym;
-    open($sym, $filename) || do {
-        Carp::croak "Can't read include file '$filename': $!";
-    };
-    return $self->extract($sym, $filename, @includestack);
+    my $stylesheet;
+    unless ( $stylesheet = $self->{stylesheet_cache}{$filename} ) {
+        open my $fh, '<', $filename 
+            or Carp::croak "Can't read include file '$filename': $!";
+        $stylesheet = $self->{stylesheet_cache}{$filename} 
+                    = $self->read_stylesheet( $fh );
+    }
+
+    return $self->extract($stylesheet, $filename, @includestack);
 }
+
 
 =pod "
 
@@ -706,10 +846,10 @@ said argument.
 sub compile {
     my ($self,@extravars) = @_;
 
-	return $self->{compiledstylesheet}
-		if defined $self->{compiledstylesheet};
+    $self->{compiledstylesheet} = undef;
 
     my $stylesheet;
+    $self->{stylesheet_cache} = {};
 
     if (exists $self->{stylesheet}) {
 		$stylesheet=$self->{stylesheet};
@@ -796,6 +936,20 @@ sub print {
 
 sub debug {
 	warn $_[2] if $_[1] <= $debug_level;
+}
+
+=item I<get_stylesheet_dependencies()>
+
+Returns the files the loaded stylesheet depends on (i.e., has been
+included by the stylesheet or one of its includes). The order in which
+files are returned by the function has no special signification.
+
+=cut
+
+sub get_stylesheet_dependencies {
+    my $self = shift;
+    $self->compile unless $self->{compiledstylesheet};
+    return sort keys %{$self->{stylesheet_cache}};
 }
 
 =pod "

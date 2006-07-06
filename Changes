@@ -1,5 +1,15 @@
 Revision history for Perl module XML::XPathScript
 
+1.43 Jul 6, 2006
+    - Added method transform() to XML::XPathScript
+    - Added methods set_xml() and set_stylesheet() to XML::XPathScript
+    - set_xml now accepts strings, files, filehandlers and
+      XML::LibXML/XML::XPath objects
+    - Added method get_stylesheet_dependencies() to XML::XPathScript
+    - Reworked XML::XPathScript synopsis
+    - Added a few tests
+
+
 1.42 Jun 12 2006
     - Added support for signatures.
     - Fixed a XML::XPath-related bug in the testcases.

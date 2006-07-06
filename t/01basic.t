@@ -5,7 +5,7 @@ use Test;
 
 BEGIN
 {
-	plan tests => 5, todo => [];
+	plan tests => 6, todo => [];
 }
 
 use XML::XPathScript;
@@ -90,4 +90,10 @@ EOT
 
 };
 
+# set_xml and set_stylesheet
+my $xps = XML::XPathScript->new;
+$xps->set_xml( '<doc><t>sets rule</t></doc>' );
+$xps->set_stylesheet( '<%~ //t %>' );
+
+ok $xps->transform => '<t>sets rule</t>';
 
