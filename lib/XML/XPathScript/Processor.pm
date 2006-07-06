@@ -55,7 +55,7 @@ use Carp;
 use Exporter;
 use vars '@ISA', '@EXPORT';
 
-our $VERSION = '1.42';
+our $VERSION = '1.43';
 
 @ISA = ('Exporter');
 
