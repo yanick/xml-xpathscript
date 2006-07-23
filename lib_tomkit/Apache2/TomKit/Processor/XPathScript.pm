@@ -9,7 +9,7 @@ use base qw( Apache2::TomKit::Processor::AbstractProcessor XML::XPathScript );
 use Apache2::TomKit::Processor::DefinitionProvider::FileSystemProvider;
 use XML::LibXML;
 
-our $VERSION = '1.43';
+our $VERSION = '1.44';
 
 sub new {
     my $class  = shift;
@@ -38,9 +38,9 @@ sub setUp {
     if( $this->{processordef}->isFile() ) {
         open my $STYLESHEET, $this->{processordef}->getInstructions();
         local $/ = undef;
-        $this->{stylesheet} = <$STYLESHEET>;
+        $this->set_stylesheet( <$STYLESHEET> );
     } else {
-    	$this->{stylesheet} = $this->{processordef}->getInstructions();
+        $this->set_stylesheet( $this->{processordef}->getInstructions() );
     }
     
     $this->{logger}->debug( 9, "XPathScript: stylesheet is $this->{stylesheet}" );
@@ -54,12 +54,11 @@ sub process {
     $this->{logger}->debug( 9,
         "XPathScript: Is processing the source with stylesheet: " . $this->{processordef} );
 
-	$this->{xml} = $input;
+    $this->set_xml( $input );
 	$this->{logger}->debug( 9, "XPathScript: source is $input" );
 	
 	my $output;
 	$this->{printer} = \$output;
-	$this->{dom} = $this->{xml};
 
 	{
 		local *ORIGINAL_STDOUT;
