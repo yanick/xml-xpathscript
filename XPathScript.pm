@@ -526,7 +526,9 @@ sub _set_xml_scalar {
     my $xml = $self->{xml};
 
     # is it a file? 
-    if( -f $xml ) {
+    if( index( $xml, "\n" ) == -1 and        # quick'n'dirty checks
+        index( $xml, '<' )  == -1 and        # for non-filename characters
+        index( $xml, '>' ) == -1 and -f $xml ) {
         open my $fh, '<', $xml or croak "couldn't open xml file $xml: $!";
 
         $self->{dom} = $XML_parser eq 'XML::LibXML' 
@@ -695,6 +697,7 @@ sub extract {
 			die "No matching file attribute in #include at line $line"
 				unless $params{file};
 
+            no warnings qw/ uninitialized /;
             $script .= $self->include_file($params{file},@includestack);
         }
         else {
