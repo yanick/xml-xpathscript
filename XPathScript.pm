@@ -236,7 +236,7 @@ use File::Basename;
 use XML::XPathScript::Processor;
 use XML::XPathScript::Template;
 
-our $VERSION = '1.43';
+our $VERSION = '1.44';
 
 $XML_parser = 'XML::LibXML';
 
