@@ -28,12 +28,12 @@ sub check_file {
     my $version;
     for ( @lines ) {
         if ( $c ) {
-            s#(?<=\$VERSION = ')\d+\.\d+#$c#
+            s#(?<=\$VERSION = ')\d+\.\d+([._]\d+)*#$c#
             and
             print ;
         } 
 
-        $version = $1 if m#\$VERSION = '(\d+\.\d+)';#;
+        $version = $1 if m#\$VERSION = '(\d+\.\d+([._]\d+)*)';#;
     }
 
     if( $c ) {
