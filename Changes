@@ -1,5 +1,10 @@
 Revision history for Perl module XML::XPathScript
 
+1.44 Jul 23, 2006
+    - Fixed Axkit and Tomkit interface modules to use the new 
+        set_xml() method
+    - Quiet warning about funny filenames in set_xml.
+
 1.43 Jul 6, 2006
     - Added method transform() to XML::XPathScript
     - Added methods set_xml() and set_stylesheet() to XML::XPathScript

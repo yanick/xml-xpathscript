@@ -15,22 +15,22 @@ not run its Makefile.PL or Build.PL.
 Hash: SHA1
 
 SHA1 b6f81ae07c6f2377632125543e023eb9b6c1f2b1 Build.PL
-SHA1 3fc527d922d5e8b1d56ae216eeb2780253117935 Changes
+SHA1 5f9d7fd1397439588adaa4aa87eb9345891a0a8f Changes
 SHA1 3ae87f014e7214753abb7693ab6ae58701083395 MANIFEST
-SHA1 fb722d84d9aabc10fb671cf3eb4d1b5815169d2f META.yml
+SHA1 41eff542daa350f377f959e793ee8031e041b4fa META.yml
 SHA1 937988dec2b580451bf071d2ac85dec3900a7c66 Makefile.PL
 SHA1 c2e34b4811270ed95284adb577460fdc93be8685 README
-SHA1 207e78024cd6c4b7598571149854f3cb861acad6 XPathScript.pm
+SHA1 414a4b0e7ab072f86d1b0db8cd3968c05887eaf0 XPathScript.pm
 SHA1 585dbee14359e90630096c4c39d944c3ed5fd0df dist/rewrite-default-xml-parser
 SHA1 bcc13774c51a3d8df2134bf2f4f310f3f8731dab examples/docbook2latex.xps
 SHA1 9d2a7135e2c90978d177b3c84f98650c03f014fa examples/sample-docbook.xml
-SHA1 02e280392d1782833e6186a750f8a7a1cfe392ad lib/XML/XPathScript/Processor.pm
+SHA1 12a7fcb97c35421709faf995848f1c998322586e lib/XML/XPathScript/Processor.pm
 SHA1 22fea4df7fe5f04beeeb7d92eef1c12d4841f46a lib/XML/XPathScript/Stylesheet.pod
-SHA1 60b7d05430f365ef77afdc14a3ba58773466ba30 lib/XML/XPathScript/Template.pm
-SHA1 3fd35b94c397b02313914028f6689dbbcf952642 lib/XML/XPathScript/Template/Tag.pm
-SHA1 0c7094babaf85d529d825c88b09b1b27c1d439b7 lib_axkit/Apache/AxKit/Language/YPathScript.pm
-SHA1 748e8ea19de368c1a394ce8af0ae4b49e2366280 lib_tomkit/Apache2/TomKit/Processor/XPathScript.pm
-SHA1 704a50a2406c86a4e79faa27b2bf6b89b8ae2175 script/xpathscript
+SHA1 60f16943f0cb398060d09d8919ff646f75ab1dc6 lib/XML/XPathScript/Template.pm
+SHA1 8b1f91f792efe813352fc42707e496180cf2b9c4 lib/XML/XPathScript/Template/Tag.pm
+SHA1 9de4b455b47c79d02f6ee3bfa78d8bc0b4aa8a9e lib_axkit/Apache/AxKit/Language/YPathScript.pm
+SHA1 b701e6a772d223df023b2e78f5f3a2a317fcf81c lib_tomkit/Apache2/TomKit/Processor/XPathScript.pm
+SHA1 9bc4c66b1fb002427ec984a1423df63b66373d7b script/xpathscript
 SHA1 e8be0b2fa9aa577d64fa807d88f421b63968202d t/00build.t
 SHA1 9d8a3166da409cfa69237aaf8228e17f6e75cf9a t/01basic.t
 SHA1 f79d608e418d8da2e2a7cb7faa2367a7a4fbb9b2 t/02interpolate.t
@@ -88,7 +88,7 @@ SHA1 d36ad2b5860e4ca564b845e0e7bb5d5134624d6e t/testdocs/tag_attributes.xps
 -----BEGIN PGP SIGNATURE-----
 Version: GnuPG v1.4.3 (GNU/Linux)
 
-iD8DBQFErTFW34Hwf+GwC4wRAmirAJ41I0Bk5RQBep/KlkJW+psw6iImUACgm38W
-EzcjHog1HqZ9t6U4IDZw0qA=
-=SWtp
+iD8DBQFExB5y34Hwf+GwC4wRAllbAJ90fIstMPnYShy2WxMAdwoLcwTGPwCgjARl
+MZ8YdaAP1eA/yg6H8+SToi0=
+=EiHz
 -----END PGP SIGNATURE-----

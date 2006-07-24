@@ -64,7 +64,7 @@ use XML::XPathScript;
 use vars qw( @ISA $VERSION $stash );
 @ISA = qw/ Apache::AxKit::Language XML::XPathScript /;
 
-$VERSION = '1.43';
+$VERSION = '1.44';
 
 =head2 Functions
 
@@ -107,16 +107,18 @@ sub handler
     AxKit::Debug(6, "YPathScript: Getting XML Source");
   
 	# try to find the XML document
-	$xps->{xml} = $r->pnotes('dom_tree')                       # dom_tree is an XML::LibXML DOM
+    my $xml = $r->pnotes('dom_tree')                       # dom_tree is an XML::LibXML DOM
 	   	     	|| $r->pnotes('xml_string')
 		     	|| get_source_tree($xml_provider);
    
-    AxKit::Debug(7, "XML retrieved: $xps->{xml}\n");
+    AxKit::Debug(7, "XML retrieved: $xml\n");
+
+    $xps->set_xml( $xml );
 
 	# $xpath->set_context($source_tree);   what does this do?
 
 	AxKit::Debug( 6, "Recompiling stylesheet\n" );
-	$xps->{stylesheet} = get_source_tree($style_provider);
+	$xps->set_stylesheet( get_source_tree($style_provider) );
 	
 	#$xps->get_stylesheet( $style_provider );
 

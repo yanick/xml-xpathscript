@@ -4,7 +4,7 @@ use strict;
 use warnings;
 use Carp;
 
-# $Revision: 196 $ - $Date: 2006-07-06 12:01:32 -0400 (Thu, 06 Jul 2006) $
+# $Revision: 202 $ - $Date: 2006-07-23 20:29:33 -0400 (Sun, 23 Jul 2006) $
 
 =pod 
 
@@ -236,7 +236,7 @@ use File::Basename;
 use XML::XPathScript::Processor;
 use XML::XPathScript::Template;
 
-our $VERSION = '1.43';
+our $VERSION = '1.44';
 
 $XML_parser = 'XML::LibXML';
 
@@ -526,7 +526,9 @@ sub _set_xml_scalar {
     my $xml = $self->{xml};
 
     # is it a file? 
-    if( -f $xml ) {
+    if( index( $xml, "\n" ) == -1 and        # quick'n'dirty checks
+        index( $xml, '<' )  == -1 and        # for non-filename characters
+        index( $xml, '>' ) == -1 and -f $xml ) {
         open my $fh, '<', $xml or croak "couldn't open xml file $xml: $!";
 
         $self->{dom} = $XML_parser eq 'XML::LibXML' 
@@ -695,6 +697,7 @@ sub extract {
 			die "No matching file attribute in #include at line $line"
 				unless $params{file};
 
+            no warnings qw/ uninitialized /;
             $script .= $self->include_file($params{file},@includestack);
         }
         else {
