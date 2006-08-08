@@ -1,6 +1,7 @@
 Changes
 Build.PL
 dist/rewrite-default-xml-parser
+lib/XML/XPathScript.pm
 lib/XML/XPathScript/Processor.pm
 lib/XML/XPathScript/Stylesheet.pod
 lib/XML/XPathScript/Template.pm
@@ -30,6 +31,7 @@ t/14transform.t
 t/15stylesheet_dependencies.t
 t/16stylesheet_arguments.t
 t/17xml_loading.t
+t/18tag.t
 t/document_file.txt
 t/include.xps
 t/include2.xps
@@ -66,7 +68,6 @@ t/testdocs/shoutML.xps
 t/testdocs/tag_attributes.expected
 t/testdocs/tag_attributes.xml
 t/testdocs/tag_attributes.xps
-XPathScript.pm
 examples/docbook2latex.xps  
 examples/sample-docbook.xml
 

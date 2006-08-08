@@ -6,11 +6,11 @@ use warnings;
 use Carp;
 use Scalar::Util qw/ reftype /;
 
-our $VERSION = '1.44';
+our $VERSION = '1.45';
 
 our @ALLOWED_ATTRIBUTES =  qw/ pre post testcode showtag
                                intro extro prechildren postchildren
-                               prechild postchild action /;
+                               prechild postchild action rename /;
 
 sub new {
    my( $class ) = @_;
@@ -35,6 +35,9 @@ sub set {
             if ! grep { $key eq $_ } @ALLOWED_ATTRIBUTES;
 
         $self->{$key} = $attribute_ref->{$key};
+
+        # renaming implies showing the tag
+        $self->{showtag} = 1 if $key eq 'rename';
 	}
 
 	return;

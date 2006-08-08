@@ -52,7 +52,7 @@ sub process_pm_files {
 
     my $outfile = File::Spec->catfile(qw(blib lib XML XPathScript.pm));
     unlink($outfile);
-    my $in = new IO::File("XPathScript.pm", "<") or die "$!";
+    my $in = new IO::File("lib/XML/XPathScript.pm", "<") or die "$!";
     my $out = new IO::File($outfile, ">") or die "$!";
     while(<$in>) {
           s/^(\$XML_parser = )'.*?';$/$1'$XML_parser';/;
@@ -71,7 +71,7 @@ my $build = $class->new
    dist_author => 'Yanick Champoux <yanick@cpan.org>, '
                     .'Dominique Quatravaux <dom@idealx.com> '
                     .'and Matt Sergeant <matt@sergeant.org>',
-   dist_version_from => 'XPathScript.pm',
+   dist_version_from => 'lib/XML/XPathScript.pm',
    license => 'artistic',
    requires => {
                 $XML_parser 	 => 0,

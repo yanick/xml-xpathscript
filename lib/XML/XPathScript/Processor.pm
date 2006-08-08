@@ -55,7 +55,7 @@ use Carp;
 use Exporter;
 use vars '@ISA', '@EXPORT';
 
-our $VERSION = '1.44';
+our $VERSION = '1.45';
 
 @ISA = ('Exporter');
 
@@ -630,14 +630,14 @@ sub translate_element_node {
 						$node->hasChildNodes() : $node->getFirstChild();
 	
     my $pre = interpolate($node, $t->{pre});
-	$pre .= start_tag( $node ) if $t->{showtag};
+	$pre .= start_tag( $node , $t->{rename}) if $t->{showtag};
 	$pre .= $t->{intro};
 	$pre .= interpolate($node, $t->{prechildren}) if $has_kids;
 	
 	my $post;
 	$post .= interpolate($node, $t->{postchildren}) if $has_kids;
 	$post .= $t->{extro};
-	$post .= end_tag( $node ) if  $t->{showtag};
+	$post .= end_tag( $node, $t->{rename} ) if  $t->{showtag};
 	$post .= interpolate($node, $t->{post});
 
 	my $middle;
@@ -689,9 +689,9 @@ sub translate_comment_node {
 }
 
 sub start_tag {
-    my $node = shift;
+    my( $node, $name ) = @_;
 
-    my $name = $node->getName or return '';
+    $name ||= $node->getName or return '';
 
     my $string = '<'.$name;
 
@@ -729,7 +729,7 @@ sub start_tag {
 }
 
 sub end_tag {
-    if (my $name = $_[0]->getName) {
+    if (my $name = $_[1] || $_[0]->getName) {
         return "</$name>";
     }
 	return '';

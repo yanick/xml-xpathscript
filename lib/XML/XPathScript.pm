@@ -4,7 +4,7 @@ use strict;
 use warnings;
 use Carp;
 
-# $Revision: 202 $ - $Date: 2006-07-23 20:29:33 -0400 (Sun, 23 Jul 2006) $
+# $Revision: 452 $ - $Date: 2006-08-08T01:37:17.051641Z $
 
 =pod 
 
@@ -236,7 +236,7 @@ use File::Basename;
 use XML::XPathScript::Processor;
 use XML::XPathScript::Template;
 
-our $VERSION = '1.44';
+our $VERSION = '1.45';
 
 $XML_parser = 'XML::LibXML';
 
