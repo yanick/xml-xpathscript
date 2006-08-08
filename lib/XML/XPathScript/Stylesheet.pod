@@ -247,6 +247,17 @@ Example:
         }
     %>
 
+=item rename
+
+Rename the tag to the given value. Implicitly set 'showtag' to 
+true.
+
+Example:
+
+    # change <foo abc="def">..</foo> to 
+    # <bar abc="def">...</bar>
+    <% $t->set( foo => { rename => 'bar' } ); %>
+
 =back
 
 =head1 STYLESHEET WRITING GUIDELINES
