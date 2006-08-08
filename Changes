@@ -1,5 +1,8 @@
 Revision history for Perl module XML::XPathScript
 
+1.45 
+    - Added new 'rename' tag attribute
+
 1.44 Jul 23, 2006
     - Fixed Axkit and Tomkit interface modules to use the new 
         set_xml() method

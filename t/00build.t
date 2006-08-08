@@ -18,7 +18,7 @@ use Test;
 
 plan tests => 1;
 
-open(ORIGFILE, "<", "XPathScript.pm");
+open(ORIGFILE, "<", "lib/XML/XPathScript.pm");
 open(COPY, "<", "blib/lib/XML/XPathScript.pm");
 my $difflines = 0;
 while(<ORIGFILE>) {
