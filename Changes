@@ -1,6 +1,6 @@
 Revision history for Perl module XML::XPathScript
 
-1.45 
+1.45 Aug 7, 2006
     - Added new 'rename' tag attribute
 
 1.44 Jul 23, 2006
