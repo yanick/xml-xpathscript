@@ -68,9 +68,9 @@ find(\&find_module, @pm_dirs);
 my $build = $class->new
   (
    module_name => 'XML::XPathScript',
-   dist_author => 'Yanick Champoux <yanick@cpan.org>, '
-                    .'Dominique Quatravaux <dom@idealx.com> '
-                    .'and Matt Sergeant <matt@sergeant.org>',
+   dist_author => [ 'Yanick Champoux <yanick@cpan.org>',
+                    'Dominique Quatravaux <dom@idealx.com> ',
+                    'Matt Sergeant <matt@sergeant.org>' ],
    dist_version_from => 'lib/XML/XPathScript.pm',
    license => 'artistic',
    requires => {
