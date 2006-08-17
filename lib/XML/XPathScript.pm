@@ -240,6 +240,21 @@ our $VERSION = '1.45';
 
 $XML_parser = 'XML::LibXML';
 
+my %use_parser = (
+    'XML::LibXML' => 'use XML::LibXML',
+    'XML::XPath' => <<'END_USE',
+			use XML::XPath 1.0;
+			use XML::XPath::XMLParser;
+			use XML::XPath::Node;
+			use XML::XPath::NodeSet;
+			use XML::Parser;
+END_USE
+);
+
+die "parser $XML_parser unknown\n" unless $use_parser{$XML_parser};
+eval $use_parser{$XML_parser}.";1" 
+    or die "couldn't import $XML_parser";
+
 # By default, we interpolate
 $DoNotInterpolate = 0;
 
