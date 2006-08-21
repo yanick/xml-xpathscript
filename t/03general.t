@@ -1,16 +1,19 @@
 use strict;
-use Test;
+use Test::More;
 
 BEGIN { 
 	plan tests => 24, todo => [];
 }
 
-use XML::XPathScript;
-
-# not used for now
-#use Apache::AxKit::Language::YPathScript;
-
-ok(1); 
+no warnings;   # SAVERRR used only once
+open SAVEERR, ">&STDERR" or die "can't dup stderr";
+use warnings;
+my $errors;
+close STDERR;
+open STDERR, '>', \$errors or die "can't stderr: $!";
+eval 'use XML::XPathScript';
+open STDERR, ">&SAVEERR";    # return to normal
+is $errors => undef, 'late inclusion of XML::XPathScript';
 
 sub test_xml {
 	my( $xml, $style, $result, $comment ) = @_;
@@ -18,7 +21,7 @@ sub test_xml {
 	my $buffer;
 	$xps->process( \$buffer );
 
-	ok( $buffer, $result, $comment );
+	is $buffer => $result, $comment ;
 }
 
 
@@ -124,16 +127,19 @@ test_xml( '<doc>empty</doc>', '<!--#include file="t/include.xps" -->', "#include
 
 test_xml( '<doc>empty</doc>', '<!--#include file="t/include2.xps" -->', "#include works!\n\n", '2 levels of <!--#include -->' );
 
+close STDERR;
+open STDERR, '>', \{ my $x };
 test_xml( '<doc>empty</doc>', '<!--#include file="t/recursive.xps" -->', "Ooops.\n", 'recursive <!--#include -->' );
 
 test_xml( '<doc>empty</doc>', '<!--#include file="t/include3.xps" -->', "Ooops.\n\n", '2 levels of <!--#include --> + recursion' );
+open STDERR, ">&SAVEERR";    # return to normal
 
 # override of printform
 $xps = new XML::XPathScript( xml => '<doc/>', stylesheet => 'how about a shout-o-matic?' );
 my $buffer;
 $xps->process( sub{ $buffer .= uc shift } );
 
-ok( $buffer, 'HOW ABOUT A SHOUT-O-MATIC?', 'override of printform' );
+is $buffer => 'HOW ABOUT A SHOUT-O-MATIC?', 'override of printform';
 
 
 test_xml( '<doc><a/><b/><c/></doc>', <<'EOXPS', "only b: <b></b>\n", 'xpath testcode return statement' );
@@ -157,7 +163,7 @@ EOXPS
 	$xps->process;
 	close STDOUT;
 	open FILE, $output_file or die "$!";
-	ok( <FILE>, '<blah>hello</blah>', 'STDOUT management');
+	is <FILE> => '<blah>hello</blah>', 'STDOUT management';
 	close FILE;
 	unlink $output_file or die $!;
 }

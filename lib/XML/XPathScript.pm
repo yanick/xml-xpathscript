@@ -275,27 +275,6 @@ sub import
     return;
 }
 
-INIT
-{
-	if( $XML_parser eq 'XML::XPath' )
-	{
-		eval <<'EOT';
-			use XML::XPath 1.0;
-			use XML::XPath::XMLParser;
-			use XML::XPath::Node;
-			use XML::XPath::NodeSet;
-			use XML::Parser;
-EOT
-		die $@ if $@;
-	}
-	else
-	{
-		eval 'use XML::LibXML';
-		die $@ if $@;
-	}
-
-}
-
 =pod "
 
 =head1 METHODS
