@@ -108,17 +108,15 @@ Example:
 
 =head1 METHODS
 
-=over
+=head2 new
 
-=item new
+    $tag = XML::XPathScript::Template::Tag->new
 
-    $tag = new XML::XPathScript::Template::Tag;
+Creates a new, empty tag.
 
-Create a new, empty tag.
+=head2 set
 
-=item set
-
-    $t->set( \%attributes );
+    $t->set( \%attributes )
 
 Updates the tag's attributes with the values given in \%attributes
 
@@ -126,17 +124,15 @@ Example:
 
     $t->set({ pre => '<a>', post => '</a>' });
 
-=item get
+=head2 get
 
-    my @values = $tag->get( @attributes );
+    @values = $tag->get( @attributes )
 
 Returns the values of @attributes.
 
 Example:
 
     @values = $tag->get( 'pre', 'post' );
-
-=back
 
 =head1 BACKWARD COMPATIBILITY
 

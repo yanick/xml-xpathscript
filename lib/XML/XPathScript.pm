@@ -75,9 +75,9 @@ via the command line.
 
 Those methods are meants to be used from within a stylesheet.
 
-=over
+head2 current
 
-=item I<current()>
+    $xps = XML::XPathScript->current
 
 This class method (e.g. C<< XML::XPathScript->current() >>) returns
 the stylesheet object currently being applied. This can be called from
@@ -95,10 +95,10 @@ sub current {
     return $XML::XPathScript::current;
 }
 
-=item interpolation 
+=head2 interpolation 
 
-        $XML::XPathScript::current->interpolation()
-        $XML::XPathScript::current->interpolation( $boolean )
+    $interpolate = $XML::XPathScript::current->interpolation
+    $interpolate = $XML::XPathScript::current->interpolation( $boolean )
 
 Gets (first call form) or sets (second form) the XPath interpolation
 boolean flag. If true, values set in C< pre > and C< post >
@@ -141,9 +141,9 @@ sub interpolating {
 		    !$XML::XPathScript::DoNotInterpolate; # Obsolete, for compatibility:
 }
 
-=item interpolation_regex
+=head2 interpolation_regex
 
-    $regex = $XML::XPathScript::curent->interpolation_regex()
+    $regex = $XML::XPathScript::curent->interpolation_regex
     $XML::XPathScript::curent->interpolation_regex( $regex )
 
 Gets or sets the regex to use for interpolation. The value to be 
@@ -168,9 +168,7 @@ sub interpolation_regex {
 }
 
 
-=pod "
-
-=item I<binmode()>
+=head2 binmode
 
 Declares that the stylesheet output is B<not> in UTF-8, but instead in
 an (unspecified) character encoding embedded in the stylesheet source
@@ -189,8 +187,6 @@ sub binmode {
 }
 
 =pod "
-
-=back
 
 =head1 TECHNICAL DOCUMENTATION
 
@@ -279,9 +275,9 @@ sub import
 
 =head1 METHODS
 
-=over
+=head2 new
 
-=item I<< new(key1=>value1,key2=>value2,...) >>
+    $xps = XML::XPathScript->new( %arguments )
 
 Creates a new XPathScript translator. The recognized named arguments are
 
@@ -356,12 +352,14 @@ END_EVAL
     return $self;
 }
 
-=item I<transform( $xml, $stylesheet, \@args )>
+=head2 transform
+
+    $xps->transform( $xml, $stylesheet, \@args )
 
 Transforms the document $xml with the $stylesheet (optionally passing to
 the stylesheet the argument array @args) and returns the result.
 
-If the passed $xml or $stylesheet is undef, the previously loaded xml 
+If the passed $xml or $stylesheet is undefined, the previously loaded xml 
 document or stylesheet is used.
 
 E.g.,
@@ -403,7 +401,9 @@ sub transform {
     return $output;
 }
 
-=item I<set_xml( $xml )>
+=head2 set_xml
+
+    $xps->set_xml( $xml )
 
 Sets the xml document to $xml. $xml can be a file, a file handler 
 reference, a string, or a XML::LibXML or XML::XPath node.
@@ -542,7 +542,9 @@ sub _set_xml_scalar {
     return;
 }
 
-=item I<set_stylesheet( $stylesheet )>
+=head2 set_stylesheet
+
+    $xps->set_stylesheet( $stylesheet )
 
 Sets the processor's stylesheet to $stylesheet.
 
@@ -559,11 +561,11 @@ sub set_stylesheet {
 
 =pod "
 
-=item I<process()>
+=head2 process
 
-=item I<process($printer)>
-
-=item I<process($printer,@varvalues)>
+    $xps->process
+    $xps->process( $printer )
+    $xps->process( $printer, @varvalues )
 
 Processes the document and stylesheet set at construction time, and
 prints the result to STDOUT by default. If $printer is set, it must be
@@ -616,13 +618,11 @@ sub process {
 	}
 }
 
-=pod "
+=head2 extract
 
-=item I<extract($stylesheet)>
-
-=item I<extract($stylesheet,$filename)>
-
-=item I<extract($stylesheet,@includestack)> # from include_file() only
+    $xps->extract( $stylesheet )
+    $xps->extract( $stylesheet, $filename )
+    $xps->extract( $stylesheet, @includestack ) # from include_file() only
 
 The embedded dialect parser. Given $stylesheet, which is either a
 filehandle reference or a string, returns a string that holds all the
@@ -714,9 +714,9 @@ sub extract {
     return $script;
 }
 
-=pod "
+=head2 read_stylesheet
 
-=item $string = I<read_stylesheet( $stylesheet )>
+    $string = $xps->read_stylesheet( $stylesheet )
 
 Read the $stylesheet (which can be a filehandler or a string). 
 Used by I<extract> and exists such that it can be overloaded in
@@ -740,11 +740,10 @@ sub read_stylesheet
 	
 }
 
-=pod "
+=head2 include_file
 
-=item I<include_file($filename)>
-
-=item I<include_file($filename,@includestack)>
+    $xps->include_file( $filename )
+    $xps->include_file( $filename, @includestack )
 
 Resolves a C<< <!--#include file="foo" --> >> directive on behalf of
 I<extract()>, that is, returns the script contents of
@@ -898,9 +897,9 @@ EOT
 }
 
 
+=head2 print
 
-
-=item I<print($text)>
+    $xps->print($text)
 
 Outputs a chunk of text on behalf of the stylesheet. The default
 implementation is to use the second argument to L</process>. 
@@ -935,7 +934,9 @@ sub debug {
 	warn $_[2] if $_[1] <= $debug_level;
 }
 
-=item I<get_stylesheet_dependencies()>
+=head2 get_stylesheet_dependencies
+
+    @files = $xps->get_stylesheet_dependencies
 
 Returns the files the loaded stylesheet depends on (i.e., has been
 included by the stylesheet or one of its includes). The order in which
@@ -949,15 +950,10 @@ sub get_stylesheet_dependencies {
     return sort keys %{$self->{stylesheet_cache}};
 }
 
-=pod "
-
-=back
 
 =head1 FUNCTIONS
 
-=over
-
-=item I<gen_package_name()>
+=head2 gen_package_name
 
 Generates a fresh package name in which we would compile a new
 stylesheet. Never returns twice the same name.
@@ -972,7 +968,9 @@ sub gen_package_name {
 }
 };
 
-=item  $nodeset = $xps->document( $uri )
+=head2 document
+
+    $nodeset = $xps->document( $uri )
 
 Reads XML given in $uri, parses it and returns it in a nodeset.
 
@@ -1056,8 +1054,6 @@ sub BINMODE {
 'end of XML::XPathScript::StdoutSnatcher' ;
 
 __END__
-
-=back
 
 =head1 BUGS
 
