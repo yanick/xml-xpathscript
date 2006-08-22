@@ -37,8 +37,8 @@ XML::XPathScript - a Perl framework for XML stylesheets
   my $xps = XML::XPathScript->new;
   $xps->compile( qw/ $foo $bar / );
 
-                                    # in stylesheet, $foo is 'a'
-                                    # and $bar is 'b'
+           # in stylesheet, $foo will be set to 'a'
+           # and $bar to 'b'
   $xps->transform( $xml, $stylesheet, [ 'a', 'b' ] ); 
 
 =head1 DESCRIPTION
@@ -75,11 +75,11 @@ via the command line.
 
 Those methods are meants to be used from within a stylesheet.
 
-head2 current
+=head2 current
 
     $xps = XML::XPathScript->current
 
-This class method (e.g. C<< XML::XPathScript->current() >>) returns
+This class method returns
 the stylesheet object currently being applied. This can be called from
 anywhere within the stylesheet, except a BEGIN or END block or
 similar. B<Beware though> that using the return value for altering (as
@@ -115,8 +115,8 @@ The interpolation-less version is slightly more complex as it requires a
 C<testcode>:
 
    sub link_testcode  {
-      my ($currentnode, $t) = @_;
-      my $url = findvalue('@url', $currentnode);
+      my ($node, $t) = @_;
+      my $url = $node->findvalue('@url');
       $t->set({ pre  => "<a href='$url'>",
                 post => "</a>"             });
 	  return DO_SELF_AND_KIDS();
@@ -317,7 +317,7 @@ documents in a row.
 
 =item interpolation_regex => $regex
 
-Sets the interpolation regex to be $regex. Whatever is
+Sets the interpolation regex. Whatever is
 captured in $1 will be used as the xpath expression. 
 Defaults to qr/{(.*?)}/.
 
@@ -572,15 +572,18 @@ prints the result to STDOUT by default. If $printer is set, it must be
 either a reference to a filehandle open for output, or a reference to
 a string, or a reference to a subroutine which does the output, as in
 
-   my $buffer="";
-   $xps->process(sub {$buffer.=shift;});
+    open my $fh, '>', 'transformed.txt' 
+        or die "can't open file transformed.txt: $!";
+    $xps->process( $fh );
 
-or
+    my $transformed;
+    $xps->process( \$transformed );
 
-   $xps->process(sub {print ANOTHERFD (shift);});
-
-(not that the latter would be any good, since 
-C< $xps->process(\*ANOTHERFD) > would do exactly the same, only faster)
+    $xps->process( sub { 
+        my $output = shift;
+        $output =~ y/<>/%%/;
+        print $output;
+    } );
 
 If the stylesheet was I<compile()>d with extra I<varname>s, then the
 calling code should call I<process()> with a corresponding number of
@@ -817,8 +820,8 @@ CODE reference.
 
 I<varname1>, I<varname2>, etc. are extraneous arguments that will be
 made available to the stylesheet dialect as lexically scoped
-variables. L</SYNOPSIS> shows a way to use this feature to pass the
-Apache handler to AxKit XPathScript stylesheets, which explains this
+variables. L</SYNOPSIS> shows how to use this feature to pass variables
+to AxKit XPathScript stylesheets, which explains this
 feature better than a lengthy paragraph would do.
 
 The return value is an opaque token that encapsulates a compiled
@@ -953,10 +956,10 @@ sub get_stylesheet_dependencies {
 
 =head1 FUNCTIONS
 
-=head2 gen_package_name
-
-Generates a fresh package name in which we would compile a new
-stylesheet. Never returns twice the same name.
+#=head2 gen_package_name
+#
+#Generates a fresh package name in which we would compile a new
+#stylesheet. Never returns twice the same name.
 
 =cut "
 

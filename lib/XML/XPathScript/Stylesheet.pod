@@ -10,9 +10,7 @@ printed verbatim.
 
 =head2 Delimiters
 
-=over
-
-=item <% %>
+=head3 <% %>
 
 Evaluates the code enclosed without printing anything.
 
@@ -20,7 +18,7 @@ Example:
 
     <% $template->set( 'foo' => { pre => 'bar' } ); %>
 
-=item <%=  %>
+=head3 <%=  %>
 
 Evaluates the code enclosed and prints out its result. 
 
@@ -28,12 +26,12 @@ Example:
 
     Author: <%= findvalue( '/doc/author@name' ) %>
 
-=item <%#  %>
+=head3 <%#  %>
 
 Comments out the code enclosed. The code will not be executed, nor
 show in the transformed document.
 
-=item <%~ %>
+=head3 <%~ %>
 
 A shorthand for <%= apply_templates(  ) %>
 
@@ -41,7 +39,7 @@ Example:
 
     Author: <%~ /doc/author %>
 
-=item <%- -%>, <%-= -%>, <%-~ -%>, <%-#  -%>
+=head3 <%- -%>, <%-= -%>, <%-~ -%>, <%-#  -%>
 
 If a dash is added to a delimiter, all whitespaces (including carriage
 returns) predeceding or following the delimiter are removed from the 
@@ -52,15 +50,13 @@ added independently to the right and left delimiter.
 Example:
 
     <h1>
-    <%-~ /doc/title -%>
+        <%-~ /doc/title -%>
     </h1>
 
-=item <!--#include file="/path/to/file" -->
+=head3 <!--#include file="/path/to/file" -->
 
 Insert the content of the file into the stylesheet. The path is 
 relative to the stylesheet, not the processed document.
-
-=back
 
 =head1 PRE-DEFINED VARIABLES
 
@@ -101,11 +97,10 @@ In addition to regular tag names, three special tags can be
 used in the template: text() and comment(), that match the
 corresponding nodes in the document, and '*', a catch-all tag.
 
-=over
 
-=item  text(), #text
+=head3  text(), #text
 
-Match text nodes.
+Matches text nodes.
 
 Note that text nodes can be assigned a special action.
 See section L</action> of this manpage. 
@@ -117,25 +112,21 @@ Example:
                                       post => '\end{comment}',   );
     %>
 
-=item  comment()
+=head3  comment()
 
-Match comment nodes.
+Matches comment nodes.
 
-=item '*'
+=head3 '*'
 
-Will match any regular tag (that is, not comments nor text) that 
+Matches any regular tag (that is, not comments nor text) that 
 isn't explicitly matched. 
-
-=back
 
 =head2 Tag Attributes
 
 The tags' attributes define how the associated nodes
 are transformed by the template. 
 
-=over
-
-=item pre, intro, prechildren, prechild, postchild, postchildren, extro, post
+=head3 pre, intro, prechildren, prechild, postchild, postchildren, extro, post
 
 Define the text to be printed around a node. All defined attributes
 are outputed in the following order:
@@ -166,11 +157,11 @@ The expressions' delimiter can be modified
 via the XML::XPathScript object's method 
 L<interpolation_regex|XML::XPathScript/interpolation_regex>.
 
-=item showtag
+=head3 showtag
 
 If set to true, the original tag is printed out.
 
-=item action
+=head3 action
 
 Dictate how the node and its children are processed. 
 The allowed values are:
@@ -200,11 +191,13 @@ replacing it.
 Example: 
 
     $template->( 'text()' => { pre => 'replacement text' } );
-    # will transform <foo>blah</foo> into <foo>replacement text</foo>
+    # will transform <foo>blah</foo> 
+    # into <foo>replacement text</foo>
 
     $template->( 'text()' => { action => DO_TEXT_AS_CHILD,
                                pre => 'text: '   } );
-    # will transform <foo>blah</foo> into <foo>text: blah</foo>
+    # will transform <foo>blah</foo> 
+    # into <foo>text: blah</foo>
 
 =item I<xpath expression>
 
@@ -219,7 +212,7 @@ Example:
 
 =back
 
-=item testcode
+=head3 testcode
 
 A reference to a subroutine that will be executed upon visiting 
 the tag. When invoked, the subroutine is passed two parameters: the 
@@ -247,9 +240,9 @@ Example:
         }
     %>
 
-=item rename
+=head3 rename
 
-Rename the tag to the given value. Implicitly set 'showtag' to 
+Renames the tag to the given value. Implicitly sets 'showtag' to 
 true.
 
 Example:
@@ -257,8 +250,6 @@ Example:
     # change <foo abc="def">..</foo> to 
     # <bar abc="def">...</bar>
     <% $t->set( foo => { rename => 'bar' } ); %>
-
-=back
 
 =head1 STYLESHEET WRITING GUIDELINES
 

@@ -53,7 +53,7 @@ __END__
 
 =head1 NAME
 
-XML::XPathScript::Template::Tag - Tag within a XML::XPathScript::Template 
+XML::XPathScript::Template::Tag - XPathScript Template Element 
 
 =head1 SYNOPSIS
 
@@ -76,7 +76,7 @@ XML::XPathScript::Template::Tag - Tag within a XML::XPathScript::Template
 The XML::XPathScript::Tag class is used to represent tags 
 within an XPathScript template. 
 
-=head2 Called as Argument to the testcode Functions
+=head1 CALLED AS ARGUMENT TO THE TESTCODE FUNCTIONS
 
 Typically, the only time you'll be exposed to those objects is
 via the testcode functions, which receive as arguments a reference
@@ -97,10 +97,14 @@ Example:
             if( $n->findvalue( './@bar' ) eq 'whonk' ) {
                 # we've been whonk'ed! This foo must
                 # blink
-                $t->set({ 'pre' => '<blink>', 'post' => '</blink>' });
+                $t->set({ 
+                    'pre' => '<blink>', 'post' => '</blink>' 
+                });
 
                 # and the next foos will be in italic
-                $template->set( foo => { pre => '<i>', post => '</i>' } );
+                $template->set( foo => { 
+                    pre => '<i>', post => '</i>' 
+                } );
             }
             return DO_SELF_AND_CHILDREN();
         }
@@ -144,6 +148,7 @@ to the tag attributes were done by manipulating the hash directly.
     <%
         $t->{foo}{testcode} = sub {  
             my( $n, $t ) = @_;
+
             $t->{pre} = '<a>';
             $t->{post} = '</a>';
 
@@ -158,10 +163,14 @@ is deprecated. Instead, it is recommended to use the object's
 access methods.
 
     <%
-        $t->{foo}{testcode} = sub {  
+        $template->set( foo => { testcode => \&tc_foo } );
+        sub tc_foo {  
             my( $n, $t ) = @_;
-            $t->set({ pre => '<a>', post => '</a>' });
-
+           
+            $t->set({ 
+                pre => '<a>', post => '</a>' 
+            });
+            
             return DO_SELF_AND_CHILDREN;
         };
     %>

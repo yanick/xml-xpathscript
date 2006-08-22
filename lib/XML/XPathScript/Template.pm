@@ -167,20 +167,18 @@ A stylesheet's template defines the transformations and actions that
 are performed on the tags of a document as they are processed.
 
 The template of a stylesheet can be accessed via variables 
-I<$t> and I<$template>.
+I<$t>, I<$template> and I<$XML::XPathScript::trans>.
 
 
 =head1 METHODS
 
-=over
+=head2 new
 
-=item new
-
-    $template = new XML::XPathScript::Template;
+    $template = XML::XPathScript::Template->new
 
 Creates and returns a new, empty template.
 
-=item  set
+=head2  set
 
     $template->( $tag, \%attributes )
     $template->set_template( \@tags , \%attributes )
@@ -192,7 +190,7 @@ Example:
 
     $template->set( 'foo' => { pre => '<a>', post => '</a>' } );
 
-=item copy
+=head2 copy
 
     $template->copy( $original_tag, $copy_tag );
     $template->copy( $original_tag, $copy_tag, \@attributes );
@@ -213,10 +211,10 @@ Example:
     $template->copy( 'important' => [ qw/ urgent redHot / ], 
                         [ qw/ pre post / ] );
 
-=item alias
+=head2 alias
 
-    $template->alias( $original_tag => $alias_tag );
-    $template->alias( $original_tag => \@alias_tags );
+    $template->alias( $original_tag => $alias_tag )
+    $template->alias( $original_tag => \@alias_tags )
 
 Makes the target tags aliases to the original tag. Further
 modifications that will be done on any of these tags will 
@@ -225,16 +223,18 @@ be reflected on all others.
 Example:
 
     $template->alias( 'foo' => 'bar' );
-    $template->set( 'bar' => { pre => '<u>' } );  # also modify 'foo'
+                            
+    # also modifies 'foo'
+    $template->set( 'bar' => { pre => '<u>' } );  
 
 
-=item is_alias
+=head2 is_alias
 
     @aliases = $template->is_alias( $tag )
 
 Returns all tags that are aliases to $tag. 
 
-=item unalias
+=head2 unalias
 
     $template->unalias( $tag )
 
@@ -249,7 +249,7 @@ Example:
     $template->set( 'bar' => { pre => '<c>' } );    # affects only bar
     $template->set( 'baz' => { pre => '<b>' } );    # affects foo and baz
 
-=item clear
+=head2 clear
 
     $template->clear()
     $template->clear( \@tags )
@@ -260,7 +260,7 @@ Example:
 
     $template->clear([ 'foo', 'bar' ]);
 
-=item dump
+=head2 dump
 
     $template->dump()
     $template->dump( @tags )
@@ -273,16 +273,16 @@ Example:
     <%= $template->dump( 'foo' ) %>
     
     # will yield something like
-
+    #
     # $template = {
-    #                'foo' => {
-    #                            'post' => '</bar>',
-    #                            'pre' => '<bar>'
-    #                        }
-    #             };
+    #    foo => {
+    #        post => '</bar>',
+    #        pre  => '<bar>',
+    #    }
+    # };
 
 
-=item namespace
+=head2 namespace
 
     my $subtemplate = $template->namespace( $uri );
 
@@ -294,7 +294,7 @@ Example:
     my $subtemplate = $template->namespace( 'http://www.www3c.org/blah/' );
     $subtemplate->set( 'foo' => { 'pre' => "within 'blah' namespace" } );
 
-=item resolve
+=head2 resolve
 
     $tag = $template->resolve( $namespace, $tagname );
     $tag = $template->resolve( $tagname );
@@ -339,8 +339,6 @@ Example:
     $template->resolve( 'http://meeh', 'foo' )->get( 'pre' );  # returns 'a'
     $template->resolve( 'http://blah', 'foo' )->get( 'pre' );  # returns 'c'
     $template->resolve( 'http://blah', 'baz' )->get( 'pre' );  # returns 'd'
-
-=back
 
 =head1 BACKWARD COMPATIBILITY
 
