@@ -87,6 +87,7 @@ my $build = $class->new
                       "File::Spec" => 0,
                      },
    pm_files => \%pm_files,
+   script_files => [ qw#  script/xpathscript # ],
    create_makefile_pl => 'passthrough',
    sign => 1,
   );
