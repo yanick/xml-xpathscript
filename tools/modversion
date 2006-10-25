@@ -7,7 +7,6 @@ use Getopt::Long;
 my $c;
 GetOptions ("c=s" => \$c );
 
-check_file( 'XPathScript.pm' );
 check_file( 'script/xpathscript' );
 
 find(\&wanted, 'lib', 'lib_axkit', 'lib_tomkit' );
