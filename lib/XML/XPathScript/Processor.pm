@@ -328,7 +328,7 @@ sub is_text_node {
 		  ! UNIVERSAL::isa($_[0], 'XML::LibXML::Comment') );
 }
 
-=head is_comment_node
+=head2 is_comment_node
 
     $bool = is_comment_node ( $object )
 
