@@ -1,8 +1,10 @@
 ---
 name: XML-XPathScript
-version: 1.45
+version: 1.46
 author:
-  - 'Yanick Champoux <yanick@cpan.org>, Dominique Quatravaux <dom@idealx.com> and Matt Sergeant <matt@sergeant.org>'
+  - 'Yanick Champoux <yanick@cpan.org>'
+  - 'Dominique Quatravaux <dom@idealx.com> '
+  - 'Matt Sergeant <matt@sergeant.org>'
 abstract: a Perl framework for XML stylesheets
 license: artistic
 requires:
@@ -19,20 +21,20 @@ build_requires:
 provides:
   Apache::AxKit::Language::YPathScript:
     file: lib_axkit/Apache/AxKit/Language/YPathScript.pm
-    version: 1.45
+    version: 1.46
   XML::XPathScript:
     file: lib/XML/XPathScript.pm
-    version: 1.45
+    version: 1.46
   XML::XPathScript::Processor:
     file: lib/XML/XPathScript/Processor.pm
-    version: 1.45
+    version: 1.46
   XML::XPathScript::StdoutSnatcher:
     file: lib/XML/XPathScript.pm
-    version: 1.45
+    version: 1.46
   XML::XPathScript::Template:
     file: lib/XML/XPathScript/Template.pm
-    version: 1.45
+    version: 1.46
   XML::XPathScript::Template::Tag:
     file: lib/XML/XPathScript/Template/Tag.pm
-    version: 1.45
+    version: 1.46
 generated_by: Module::Build version 0.2612

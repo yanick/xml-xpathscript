@@ -6,7 +6,7 @@ use warnings;
 use Carp;
 use Scalar::Util qw/ reftype /;
 
-our $VERSION = '1.45';
+our $VERSION = '1.46';
 
 our @ALLOWED_ATTRIBUTES =  qw/ pre post testcode showtag
                                intro extro prechildren postchildren
@@ -53,7 +53,7 @@ __END__
 
 =head1 NAME
 
-XML::XPathScript::Template::Tag - Tag within a XML::XPathScript::Template 
+XML::XPathScript::Template::Tag - XPathScript Template Element 
 
 =head1 SYNOPSIS
 
@@ -76,7 +76,7 @@ XML::XPathScript::Template::Tag - Tag within a XML::XPathScript::Template
 The XML::XPathScript::Tag class is used to represent tags 
 within an XPathScript template. 
 
-=head2 Called as Argument to the testcode Functions
+=head1 CALLED AS ARGUMENT TO THE TESTCODE FUNCTIONS
 
 Typically, the only time you'll be exposed to those objects is
 via the testcode functions, which receive as arguments a reference
@@ -97,10 +97,14 @@ Example:
             if( $n->findvalue( './@bar' ) eq 'whonk' ) {
                 # we've been whonk'ed! This foo must
                 # blink
-                $t->set({ 'pre' => '<blink>', 'post' => '</blink>' });
+                $t->set({ 
+                    'pre' => '<blink>', 'post' => '</blink>' 
+                });
 
                 # and the next foos will be in italic
-                $template->set( foo => { pre => '<i>', post => '</i>' } );
+                $template->set( foo => { 
+                    pre => '<i>', post => '</i>' 
+                } );
             }
             return DO_SELF_AND_CHILDREN();
         }
@@ -108,17 +112,15 @@ Example:
 
 =head1 METHODS
 
-=over
+=head2 new
 
-=item new
+    $tag = XML::XPathScript::Template::Tag->new
 
-    $tag = new XML::XPathScript::Template::Tag;
+Creates a new, empty tag.
 
-Create a new, empty tag.
+=head2 set
 
-=item set
-
-    $t->set( \%attributes );
+    $t->set( \%attributes )
 
 Updates the tag's attributes with the values given in \%attributes
 
@@ -126,17 +128,15 @@ Example:
 
     $t->set({ pre => '<a>', post => '</a>' });
 
-=item get
+=head2 get
 
-    my @values = $tag->get( @attributes );
+    @values = $tag->get( @attributes )
 
 Returns the values of @attributes.
 
 Example:
 
     @values = $tag->get( 'pre', 'post' );
-
-=back
 
 =head1 BACKWARD COMPATIBILITY
 
@@ -148,6 +148,7 @@ to the tag attributes were done by manipulating the hash directly.
     <%
         $t->{foo}{testcode} = sub {  
             my( $n, $t ) = @_;
+
             $t->{pre} = '<a>';
             $t->{post} = '</a>';
 
@@ -162,10 +163,14 @@ is deprecated. Instead, it is recommended to use the object's
 access methods.
 
     <%
-        $t->{foo}{testcode} = sub {  
+        $template->set( foo => { testcode => \&tc_foo } );
+        sub tc_foo {  
             my( $n, $t ) = @_;
-            $t->set({ pre => '<a>', post => '</a>' });
-
+           
+            $t->set({ 
+                pre => '<a>', post => '</a>' 
+            });
+            
             return DO_SELF_AND_CHILDREN;
         };
     %>

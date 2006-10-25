@@ -32,6 +32,7 @@ t/15stylesheet_dependencies.t
 t/16stylesheet_arguments.t
 t/17xml_loading.t
 t/18tag.t
+t/99signature.t
 t/document_file.txt
 t/include.xps
 t/include2.xps

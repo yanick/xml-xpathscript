@@ -4,7 +4,7 @@ use strict;
 use warnings;
 use Carp;
 
-# $Revision: 452 $ - $Date: 2006-08-08T01:37:17.051641Z $
+# $Revision: 517 $ - $Date: 2006-08-22T17:32:37.165669Z $
 
 =pod 
 
@@ -37,8 +37,8 @@ XML::XPathScript - a Perl framework for XML stylesheets
   my $xps = XML::XPathScript->new;
   $xps->compile( qw/ $foo $bar / );
 
-                                    # in stylesheet, $foo is 'a'
-                                    # and $bar is 'b'
+           # in stylesheet, $foo will be set to 'a'
+           # and $bar to 'b'
   $xps->transform( $xml, $stylesheet, [ 'a', 'b' ] ); 
 
 =head1 DESCRIPTION
@@ -75,11 +75,11 @@ via the command line.
 
 Those methods are meants to be used from within a stylesheet.
 
-=over
+=head2 current
 
-=item I<current()>
+    $xps = XML::XPathScript->current
 
-This class method (e.g. C<< XML::XPathScript->current() >>) returns
+This class method returns
 the stylesheet object currently being applied. This can be called from
 anywhere within the stylesheet, except a BEGIN or END block or
 similar. B<Beware though> that using the return value for altering (as
@@ -95,10 +95,10 @@ sub current {
     return $XML::XPathScript::current;
 }
 
-=item interpolation 
+=head2 interpolation 
 
-        $XML::XPathScript::current->interpolation()
-        $XML::XPathScript::current->interpolation( $boolean )
+    $interpolate = $XML::XPathScript::current->interpolation
+    $interpolate = $XML::XPathScript::current->interpolation( $boolean )
 
 Gets (first call form) or sets (second form) the XPath interpolation
 boolean flag. If true, values set in C< pre > and C< post >
@@ -115,8 +115,8 @@ The interpolation-less version is slightly more complex as it requires a
 C<testcode>:
 
    sub link_testcode  {
-      my ($currentnode, $t) = @_;
-      my $url = findvalue('@url', $currentnode);
+      my ($node, $t) = @_;
+      my $url = $node->findvalue('@url');
       $t->set({ pre  => "<a href='$url'>",
                 post => "</a>"             });
 	  return DO_SELF_AND_KIDS();
@@ -141,9 +141,9 @@ sub interpolating {
 		    !$XML::XPathScript::DoNotInterpolate; # Obsolete, for compatibility:
 }
 
-=item interpolation_regex
+=head2 interpolation_regex
 
-    $regex = $XML::XPathScript::curent->interpolation_regex()
+    $regex = $XML::XPathScript::curent->interpolation_regex
     $XML::XPathScript::curent->interpolation_regex( $regex )
 
 Gets or sets the regex to use for interpolation. The value to be 
@@ -168,9 +168,7 @@ sub interpolation_regex {
 }
 
 
-=pod "
-
-=item I<binmode()>
+=head2 binmode
 
 Declares that the stylesheet output is B<not> in UTF-8, but instead in
 an (unspecified) character encoding embedded in the stylesheet source
@@ -189,8 +187,6 @@ sub binmode {
 }
 
 =pod "
-
-=back
 
 =head1 TECHNICAL DOCUMENTATION
 
@@ -236,9 +232,24 @@ use File::Basename;
 use XML::XPathScript::Processor;
 use XML::XPathScript::Template;
 
-our $VERSION = '1.45';
+our $VERSION = '1.46';
 
 $XML_parser = 'XML::LibXML';
+
+my %use_parser = (
+    'XML::LibXML' => 'use XML::LibXML',
+    'XML::XPath' => <<'END_USE',
+			use XML::XPath 1.0;
+			use XML::XPath::XMLParser;
+			use XML::XPath::Node;
+			use XML::XPath::NodeSet;
+			use XML::Parser;
+END_USE
+);
+
+die "parser $XML_parser unknown\n" unless $use_parser{$XML_parser};
+eval $use_parser{$XML_parser}.";1" 
+    or die "couldn't import $XML_parser";
 
 # By default, we interpolate
 $DoNotInterpolate = 0;
@@ -260,34 +271,13 @@ sub import
     return;
 }
 
-INIT
-{
-	if( $XML_parser eq 'XML::XPath' )
-	{
-		eval <<'EOT';
-			use XML::XPath 1.0;
-			use XML::XPath::XMLParser;
-			use XML::XPath::Node;
-			use XML::XPath::NodeSet;
-			use XML::Parser;
-EOT
-		die $@ if $@;
-	}
-	else
-	{
-		eval 'use XML::LibXML';
-		die $@ if $@;
-	}
-
-}
-
 =pod "
 
 =head1 METHODS
 
-=over
+=head2 new
 
-=item I<< new(key1=>value1,key2=>value2,...) >>
+    $xps = XML::XPathScript->new( %arguments )
 
 Creates a new XPathScript translator. The recognized named arguments are
 
@@ -327,7 +317,7 @@ documents in a row.
 
 =item interpolation_regex => $regex
 
-Sets the interpolation regex to be $regex. Whatever is
+Sets the interpolation regex. Whatever is
 captured in $1 will be used as the xpath expression. 
 Defaults to qr/{(.*?)}/.
 
@@ -362,12 +352,14 @@ END_EVAL
     return $self;
 }
 
-=item I<transform( $xml, $stylesheet, \@args )>
+=head2 transform
+
+    $xps->transform( $xml, $stylesheet, \@args )
 
 Transforms the document $xml with the $stylesheet (optionally passing to
 the stylesheet the argument array @args) and returns the result.
 
-If the passed $xml or $stylesheet is undef, the previously loaded xml 
+If the passed $xml or $stylesheet is undefined, the previously loaded xml 
 document or stylesheet is used.
 
 E.g.,
@@ -409,7 +401,9 @@ sub transform {
     return $output;
 }
 
-=item I<set_xml( $xml )>
+=head2 set_xml
+
+    $xps->set_xml( $xml )
 
 Sets the xml document to $xml. $xml can be a file, a file handler 
 reference, a string, or a XML::LibXML or XML::XPath node.
@@ -548,7 +542,9 @@ sub _set_xml_scalar {
     return;
 }
 
-=item I<set_stylesheet( $stylesheet )>
+=head2 set_stylesheet
+
+    $xps->set_stylesheet( $stylesheet )
 
 Sets the processor's stylesheet to $stylesheet.
 
@@ -565,26 +561,29 @@ sub set_stylesheet {
 
 =pod "
 
-=item I<process()>
+=head2 process
 
-=item I<process($printer)>
-
-=item I<process($printer,@varvalues)>
+    $xps->process
+    $xps->process( $printer )
+    $xps->process( $printer, @varvalues )
 
 Processes the document and stylesheet set at construction time, and
 prints the result to STDOUT by default. If $printer is set, it must be
 either a reference to a filehandle open for output, or a reference to
 a string, or a reference to a subroutine which does the output, as in
 
-   my $buffer="";
-   $xps->process(sub {$buffer.=shift;});
+    open my $fh, '>', 'transformed.txt' 
+        or die "can't open file transformed.txt: $!";
+    $xps->process( $fh );
 
-or
+    my $transformed;
+    $xps->process( \$transformed );
 
-   $xps->process(sub {print ANOTHERFD (shift);});
-
-(not that the latter would be any good, since 
-C< $xps->process(\*ANOTHERFD) > would do exactly the same, only faster)
+    $xps->process( sub { 
+        my $output = shift;
+        $output =~ y/<>/%%/;
+        print $output;
+    } );
 
 If the stylesheet was I<compile()>d with extra I<varname>s, then the
 calling code should call I<process()> with a corresponding number of
@@ -622,13 +621,11 @@ sub process {
 	}
 }
 
-=pod "
+=head2 extract
 
-=item I<extract($stylesheet)>
-
-=item I<extract($stylesheet,$filename)>
-
-=item I<extract($stylesheet,@includestack)> # from include_file() only
+    $xps->extract( $stylesheet )
+    $xps->extract( $stylesheet, $filename )
+    $xps->extract( $stylesheet, @includestack ) # from include_file() only
 
 The embedded dialect parser. Given $stylesheet, which is either a
 filehandle reference or a string, returns a string that holds all the
@@ -720,9 +717,9 @@ sub extract {
     return $script;
 }
 
-=pod "
+=head2 read_stylesheet
 
-=item $string = I<read_stylesheet( $stylesheet )>
+    $string = $xps->read_stylesheet( $stylesheet )
 
 Read the $stylesheet (which can be a filehandler or a string). 
 Used by I<extract> and exists such that it can be overloaded in
@@ -746,11 +743,10 @@ sub read_stylesheet
 	
 }
 
-=pod "
+=head2 include_file
 
-=item I<include_file($filename)>
-
-=item I<include_file($filename,@includestack)>
+    $xps->include_file( $filename )
+    $xps->include_file( $filename, @includestack )
 
 Resolves a C<< <!--#include file="foo" --> >> directive on behalf of
 I<extract()>, that is, returns the script contents of
@@ -824,8 +820,8 @@ CODE reference.
 
 I<varname1>, I<varname2>, etc. are extraneous arguments that will be
 made available to the stylesheet dialect as lexically scoped
-variables. L</SYNOPSIS> shows a way to use this feature to pass the
-Apache handler to AxKit XPathScript stylesheets, which explains this
+variables. L</SYNOPSIS> shows how to use this feature to pass variables
+to AxKit XPathScript stylesheets, which explains this
 feature better than a lengthy paragraph would do.
 
 The return value is an opaque token that encapsulates a compiled
@@ -904,9 +900,9 @@ EOT
 }
 
 
+=head2 print
 
-
-=item I<print($text)>
+    $xps->print($text)
 
 Outputs a chunk of text on behalf of the stylesheet. The default
 implementation is to use the second argument to L</process>. 
@@ -941,7 +937,9 @@ sub debug {
 	warn $_[2] if $_[1] <= $debug_level;
 }
 
-=item I<get_stylesheet_dependencies()>
+=head2 get_stylesheet_dependencies
+
+    @files = $xps->get_stylesheet_dependencies
 
 Returns the files the loaded stylesheet depends on (i.e., has been
 included by the stylesheet or one of its includes). The order in which
@@ -955,18 +953,13 @@ sub get_stylesheet_dependencies {
     return sort keys %{$self->{stylesheet_cache}};
 }
 
-=pod "
-
-=back
 
 =head1 FUNCTIONS
 
-=over
-
-=item I<gen_package_name()>
-
-Generates a fresh package name in which we would compile a new
-stylesheet. Never returns twice the same name.
+#=head2 gen_package_name
+#
+#Generates a fresh package name in which we would compile a new
+#stylesheet. Never returns twice the same name.
 
 =cut "
 
@@ -978,7 +971,9 @@ sub gen_package_name {
 }
 };
 
-=item  $nodeset = $xps->document( $uri )
+=head2 document
+
+    $nodeset = $xps->document( $uri )
 
 Reads XML given in $uri, parses it and returns it in a nodeset.
 
@@ -1062,8 +1057,6 @@ sub BINMODE {
 'end of XML::XPathScript::StdoutSnatcher' ;
 
 __END__
-
-=back
 
 =head1 BUGS
 

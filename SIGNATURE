@@ -1,5 +1,5 @@
 This file contains message digests of all files listed in MANIFEST,
-signed via the Module::Signature module, version 0.53.
+signed via the Module::Signature module, version 0.55.
 
 To verify the content in this distribution, first make sure you have
 Module::Signature installed, then type:
@@ -14,32 +14,32 @@ not run its Makefile.PL or Build.PL.
 -----BEGIN PGP SIGNED MESSAGE-----
 Hash: SHA1
 
-SHA1 aecdf6ab306967839f95df30a6a3dc76cc785a5d Build.PL
-SHA1 0884ff839bf3badbb02bcaae7e96ce6e1cc80886 Changes
-SHA1 f82f14835b625f4dc319f2ed26c72153ab381cba MANIFEST
-SHA1 5e77eb859f4aeeb789c8786469d2e82788cf41da META.yml
+SHA1 befd0db9b1c218b6056382fb154f8fc9f5b5c91c Build.PL
+SHA1 e73839f25bc6117feb51ee7fd4b5f611f6144ed1 Changes
+SHA1 2a137858c0de3e2cf9e9e8adc745e277acb9216b MANIFEST
+SHA1 580072e7c37f4fbbcfd256e1642e72ad52b4c2ff META.yml
 SHA1 937988dec2b580451bf071d2ac85dec3900a7c66 Makefile.PL
 SHA1 c2e34b4811270ed95284adb577460fdc93be8685 README
 SHA1 585dbee14359e90630096c4c39d944c3ed5fd0df dist/rewrite-default-xml-parser
 SHA1 bcc13774c51a3d8df2134bf2f4f310f3f8731dab examples/docbook2latex.xps
 SHA1 9d2a7135e2c90978d177b3c84f98650c03f014fa examples/sample-docbook.xml
-SHA1 8483ba01c19c6513e29253ad93395bd881694606 lib/XML/XPathScript.pm
-SHA1 d36d3a464a9f7c6fabfc836ad63128ef73a917cb lib/XML/XPathScript/Processor.pm
-SHA1 cc209a9cc473ead62452e81daa7bd0714cb42923 lib/XML/XPathScript/Stylesheet.pod
-SHA1 8940e95dcda636f39851b03622ede795a8be53d3 lib/XML/XPathScript/Template.pm
-SHA1 53e09f6128cdaec153e2f64d55c5cdeb938e4760 lib/XML/XPathScript/Template/Tag.pm
-SHA1 89f35f3165951a00a058f32a6cf5e5e99cebc499 lib_axkit/Apache/AxKit/Language/YPathScript.pm
-SHA1 77fc27593100f9dff258e7432141d4d2c64753c6 lib_tomkit/Apache2/TomKit/Processor/XPathScript.pm
-SHA1 1b026f66009608d2d12413b2b7d82e57a2698bac script/xpathscript
+SHA1 fd1e5b9e55ef0c19c9ece63c69c99b4a8272f187 lib/XML/XPathScript.pm
+SHA1 10f8222cf627ce193c3ba2d7c1d7ada42fa93fb5 lib/XML/XPathScript/Processor.pm
+SHA1 6b3e50c9014bfe548d71753987879ac05aa023c1 lib/XML/XPathScript/Stylesheet.pod
+SHA1 579d9b10bbda6c08efc51d6d70f262472bc67a76 lib/XML/XPathScript/Template.pm
+SHA1 3c30f4cb9d657f7ca5e5c7923ec9e777370807c6 lib/XML/XPathScript/Template/Tag.pm
+SHA1 fd6aa4495dd0b8ca6b8bf0bf147fc12b07d31c65 lib_axkit/Apache/AxKit/Language/YPathScript.pm
+SHA1 35a303dc1d1c58115f99270e3e2eed97249169b5 lib_tomkit/Apache2/TomKit/Processor/XPathScript.pm
+SHA1 27df1489add407d6c93127c6c71624f845298634 script/xpathscript
 SHA1 0fabf086f09dd536eab3e44118e71ed456a53eb1 t/00build.t
 SHA1 9d8a3166da409cfa69237aaf8228e17f6e75cf9a t/01basic.t
 SHA1 f79d608e418d8da2e2a7cb7faa2367a7a4fbb9b2 t/02interpolate.t
-SHA1 3be704554482ee0e3d4a6d0948b14e673b2f2c7f t/03general.t
+SHA1 4a62a4f4bb4e3f8ee882a1f0f4809cfc2b02edd1 t/03general.t
 SHA1 249087c6573a17826f450a6b992702a389be56f8 t/04unicode.t
 SHA1 595ec281b37e412a8ee1368e39931bd318dde100 t/05textnode.t
 SHA1 2dbdc5e8ad96687de10598f6c80df5827a51afd6 t/06testcode.t
 SHA1 d823831b458ba27743660b4659133c1b3deba496 t/07stylesheetcallbacks.t
-SHA1 3bde9b14f9e541a5e58b2f1a2416f98caed0de30 t/08document.t
+SHA1 082321586d05d5edbf3e38ef82c90fca1fc32d3d t/08document.t
 SHA1 05871e12c2e3be75f30e87906f3d82934e7b9699 t/09argencoding.t
 SHA1 c773c7fce291e7ce2c2255d7627f456fc775d3e9 t/10comments.t
 SHA1 1169e0d4a63ed43244f8a0af6d292c67ff10ea98 t/11new_interface.t
@@ -50,6 +50,7 @@ SHA1 e89e45e03354bfe11460cbc369015276d69bfabb t/15stylesheet_dependencies.t
 SHA1 aace8bd5e1ed77bfa0c14486bd9d68fbe6f90591 t/16stylesheet_arguments.t
 SHA1 14910b7d7ac2aa13f5d62540ccd2a74ea5d2f0bc t/17xml_loading.t
 SHA1 4577debaa0a4afa5b9a35d8b7ed028531c65b628 t/18tag.t
+SHA1 a690c830c1734fa32ccc47ece9f5951c5f974961 t/99signature.t
 SHA1 304e9d0886833b0f8199ec8470f308e460927ccc t/document_file.txt
 SHA1 477e5a9175b18cae2798984c6da96bbdd2d309a7 t/include.xps
 SHA1 4a80a2e8f62d37b8118a73b9274a915e05767200 t/include2.xps
@@ -89,7 +90,7 @@ SHA1 d36ad2b5860e4ca564b845e0e7bb5d5134624d6e t/testdocs/tag_attributes.xps
 -----BEGIN PGP SIGNATURE-----
 Version: GnuPG v1.4.3 (GNU/Linux)
 
-iD8DBQFE1+iK34Hwf+GwC4wRAm2mAJ0cLT/T9opFGR8Pa8kEKGf2X8iK3QCeONA7
-7ddPjt7oWQztYExdDmJ+Zpc=
-=RFYp
+iD8DBQFFP+VZ34Hwf+GwC4wRAutKAJwL6DKDgwYAubiHcvJFPTm0iETn4QCePHHf
+Ghy88lz3Y44BH99NYyE5MLw=
+=Gr/a
 -----END PGP SIGNATURE-----

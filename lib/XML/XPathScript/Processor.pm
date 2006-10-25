@@ -35,14 +35,12 @@ and provides a simple API to implement stylesheets. In particular, the
 L</apply_templates> function triggers the recursive expansion of
 the whole XML document when used as shown in L</SYNOPSIS>.
 
-=head2 XPathScript Language Functions
+=head1 XPATHSCRIPT LANGUAGE FUNCTIONS
 
 All of these functions are intended to be called solely from within
 the C<< ->{testcode} >> templates or C<< <% %> >> or C<< <%= %> >>
 blocks in XPathScript stylesheets. They are automatically exported to
 both these contexts.
-
-=over 4
 
 =cut
 
@@ -55,7 +53,7 @@ use Carp;
 use Exporter;
 use vars '@ISA', '@EXPORT';
 
-our $VERSION = '1.45';
+our $VERSION = '1.46';
 
 @ISA = ('Exporter');
 
@@ -86,13 +84,10 @@ use constant DO_SELF_AND_KIDS =>  1;
 use constant DO_SELF_ONLY     => -1;
 use constant DO_NOT_PROCESS   =>  0;
 
-=pod "
+=head2 findnodes
 
-=over
-
-=item I<findnodes($path)>
-
-=item I<findnodes($path, $context)>
+   ( @nodes ) = findnodes( $path )
+   ( @nodes ) = findnodes( $path, $context ) 
 
 Returns a list of nodes found by XPath expression $path, optionally
 using $context as the context node (default is the root node of the
@@ -112,11 +107,10 @@ sub findnodes {
 	return $context->findnodes($path);
 }
 
-=pod "
+=head2 findvalue
 
-=item  I<findvalue($path)>
-
-=item  I<findvalue($path, $context)>
+    $value = findvalue( $path )
+    $value = findvalue( $path, $context )
 
 Evaluates XPath expression $path and returns the resulting value. If
 the path returns one of the "Literal", "Numeric" or "NodeList" XPath
@@ -135,9 +129,9 @@ sub findvalue {
 	return xpath_to_string($context->findvalue($path));
 }
 
-=pod "
+=head2 xpath_to_string
 
-=item I<xpath_to_string($blob)>
+    $string = xpath_to_string( $blob )
 
 Converts any XPath data type, such as "Literal", "Numeric",
 "NodeList", text nodes, etc. into a pure Perl string (UTF-8 tainted
@@ -162,12 +156,10 @@ sub xpath_to_string {
 			$blob->string_value();
 }
 
-=pod "
+=head2 findvalues
 
-
-=item  I<findvalues($path)>
-
-=item  I<findvalues($path, $context)>
+    @values = findvalues( $path )
+    @values = findvalues( $path, $context )
 
 Evaluates XPath expression $path as a nodeset expression, just like
 L</findnodes> would, but returns a list of UTF8-encoded XML strings
@@ -180,11 +172,10 @@ sub findvalues {
     map { findvalue('.', $_) } @nodes;
 }
 
-=pod "
+=head2 findnodes_as_string
 
-=item I<findnodes_as_string($path)>
-
-=item I<findnodes_as_string($path, $context)>
+    @nodes = findnodes_as_string( $path )
+    @nodes = findnodes_as_string( $path, $context )
 
 Similar to L</findvalues> but concatenates the XML snippets.  The
 result obviously is not guaranteed to be valid XML.
@@ -195,11 +186,10 @@ sub findnodes_as_string {
 	$XML::XPathScript::xp->findnodes_as_string( @_ ) 
 }
 
-=pod "
+=head2 matches
 
-=item I<matches($node, $path)>
-
-=item I<matches($node, $path, $context)>
+    $bool = matches( $node, $path )
+    $bool = matches( $node, $path, $context )
 
 Returns true if the node matches the path (optionally in context $context)
 
@@ -215,15 +205,12 @@ sub set_namespace
 	warn "set_namespace failed: $@" if $@;
 }
 
-=pod "
+=head2 apply_templates
 
-=item I<apply_templates()>
-
-=item I<apply_templates($xpath)>
-
-=item I<apply_templates($xpath, $context)>
-
-=item I<apply_templates(@nodes)>
+    $transformed = apply_templates()
+    $transformed = apply_templates( $xpath )
+    $transformed = apply_templates( $xpath, $context )
+    $transformed = apply_templates( @nodes )
 
 This is where the whole magic in XPathScript resides: recursively
 applies the stylesheet templates to the nodes provided either
@@ -276,10 +263,10 @@ sub apply_templates {
     return $retval;
 }
 
-=pod "
+=head2 call_template
 
-=item I<call_template($node, $t, $templatename)>
-
+    call_template( $node, $t, $templatename )
+    
 B<EXPERIMENTAL> - allows C<testcode> routines to invoke a template by
 name, even if the selectors do not fit (e.g. one can apply template B
 to an element node of type A). Returns the stylesheeted string
@@ -311,7 +298,9 @@ sub _apply_templates {
 	return join '', map translate_node($_), @_;
 }
 
-=item  is_element_node ( $object )
+=head2  is_element_node 
+
+    $bool = is_element_node( $object )
 
 Returns true if $object is an element node, false otherwise.
 
@@ -322,9 +311,9 @@ sub is_element_node {
 		UNIVERSAL::isa( $_[0], 'XML::LibXML::Element' );
 }
 
-=pod "
+=head2 is_text_node
 
-=item  is_text_node ( $object )
+    $bool = is_text_node( $object )
 
 Returns true if $object is a "true" text node (B<not> a comment node),
 false otherwise.
@@ -339,9 +328,9 @@ sub is_text_node {
 		  ! UNIVERSAL::isa($_[0], 'XML::LibXML::Comment') );
 }
 
-=pod "
+=head2 is_comment_node
 
-=item  is_comment_node ( $object )
+    $bool = is_comment_node ( $object )
 
 Returns true if $object is an XML comment node, false otherwise.
 
@@ -352,9 +341,9 @@ sub is_comment_node {
 			UNIVERSAL::isa( $_[0], 'XML::XPath::Node::Comment' );
 }
 
-=pod "
+=head2 is_pi_node
 
-=item  is_pi_node ( $object )
+    $bool = is_pi_node( $object )
 
 Returns true iff $object is a processing instruction node.
 
@@ -365,9 +354,9 @@ sub is_pi_node {
 		UNIVERSAL::isa($_[0], "XML::XPath::Node::PI");
 }
 
-=pod "
+=head2 is_nodelist
 
-=item  is_nodelist ( $object )
+    $bool = is_nodelist( $object )
 
 Returns true if $node is a node list (as returned by L</findnodes> in
 scalar context), false otherwise.
@@ -379,9 +368,9 @@ sub is_nodelist {
 		UNIVERSAL::isa($_[0], 'XML::LibXML::NodeList');
 }
 
-=pod "
+=head2 is_utf_tainted
 
-=item I<is_utf8_tainted($string)>
+    $bool = is_utf8_tainted( $string )
 
 Returns true if Perl thinks that $string is a string of characters (in
 UTF-8 internal representation), and false if Perl treats $string as a
@@ -422,15 +411,13 @@ sub is_utf8_tainted {
     }
 }
 
-=pod "
+=head2 get_xpath_of_node
 
-=item I<get_xpath_of_node($node)>
+ $xpath = get_xpath_of_node( $node )
 
 Returns an XPath string that points to $node, from the root. Useful to
 create error messages that point at some location in the original XML
 document.
-
-=back
 
 =cut "
 
