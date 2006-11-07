@@ -102,7 +102,7 @@ ok_not_utf8_tainted($isostring, "real-world Latin1 text");
 
 my $style = <<'STYLE';
 <%
-XML::XPathScript->current()->binmode();
+set_binmode( 1 );
 sub utf8tolatin1 {
 	my $orig=shift;
 	$orig=$orig->string_value() if (ref($orig) =~ m/^XML::/);

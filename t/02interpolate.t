@@ -52,21 +52,21 @@ XML
 									stylesheet => <<'STYLE' );
 <%
 	# by default, we interpolate
-   die unless XML::XPathScript->current()->interpolating;
+   die unless get_interpolation();
     # set to 1 (no-op)
-   die unless XML::XPathScript->current()->interpolating(1);
+   die unless set_interpolation(1);
    	# recheck
-   die unless XML::XPathScript->current()->interpolating;
+   die unless get_interpolation();
 
 	# set to 0
-   die if XML::XPathScript->current()->interpolating(0);
+   die if set_interpolation(0);
 
 	# re-check
-   die if XML::XPathScript->current()->interpolating;
+   die if get_interpolation();
 
    	# set to 0 again
-   die if XML::XPathScript->current()->interpolating(0);
-   die if XML::XPathScript->current()->interpolating;
+   die if set_interpolation(0);
+   die if get_interpolation();
 
    $t->{'link'}{pre} = '<a href="{@url}">';
    $t->{'link'}{post} = '</a>';

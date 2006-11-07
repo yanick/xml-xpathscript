@@ -878,14 +878,17 @@ sub compile {
 		    BEGIN {XML::XPathScript::Processor->import;}
 		    sub {
 		    	my (\$self, $extravars ) = \@_;
+                my \$processor = processor();
 				local \$XML::XPathScript::current=\$self;
-		    	my \$t = \$XML::XPathScript::current->{t} 
+		    	my \$t = \$processor->{template} 
                             = XML::XPathScript::Template->new();
                 my \$template = \$t;
-				local \$XML::XPathScript::trans = \$t; # Yes,
-				# this does the sharing! Perl is a bizarre and
-				# wonderful language.
-				local \$XML::XPathScript::xp=\$self->{dom};
+                \$processor->{doc} = \$self->{dom};
+                \$processor->{parser} = '$XML_parser';
+                \$processor->{binmode} = \$self->{binmode};
+                \$processor->{is_interpolating} = \$self->interpolation;
+                \$processor->{interpolation_regex} = \$self->interpolation_regex;
+
 				$script
 		    }
 EOT
