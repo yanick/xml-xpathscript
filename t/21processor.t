@@ -1,29 +1,59 @@
-#!/usr/bin/perl
-
 use strict;
-use Test::More tests => 1;
+use warnings;
 
+use Test::More tests => 7;
 
-use XML::XPathScript::Processor qw();
+use XML::XPathScript;
+use XML::XPathScript::Processor;
 use XML::XPathScript::Template;
 
-use XML::LibXML;  # TODO make this generic
-
-my $processor = XML::XPathScript::Processor->new;
-$processor->set_parser( 'XML::LibXML' );  #FIXME
-$processor->set_doc( XML::LibXML->new->parse_string( <<'END_XML' ) );
-<doc><foo>I am the walrus!</foo></doc>
-END_XML
+my $xps = XML::XPathScript->new;
+$xps->set_xml( '<doc><foo>I am the walrus!</foo></doc>' );
 
 my $template = XML::XPathScript::Template->new;
 $template->set( 'foo' => { rename => 'bar' } );
 
+##### OO call ##############################################
+
+my $processor = $xps->processor;
 $processor->set_template( $template );
 
-my $result = $processor->apply_templates( '//foo' );
+is $processor->apply_templates( '//foo' ) => '<bar>I am the walrus!</bar>';
 
-is $result => '<bar>I am the walrus!</bar>';
+#### functional call #######################################
 
+eval {
+    package Foo;
+    apply_templates( '//foo' );
+};
+ok $@, "can't call apply_templates without import";
 
+my $result = do {
+    package Foo2;
+    $processor->import_functional;
+    apply_templates( '//foo' );
+};
 
+is $result => '<bar>I am the walrus!</bar>', 
+                'functional import of the processor';
 
+{
+    package Foo3;
+    $processor->import_functional( 'xps_' );
+}
+
+is eval { Foo3::apply_templates( '//foo' ); } => undef;
+is eval { Foo3::xps_apply_templates( '//foo' ); } 
+    => '<bar>I am the walrus!</bar>';
+
+$result = eval {
+    package Foo4;
+    XML::XPathScript::Processor->import_functional;
+    set_doc( $xps->{dom} );
+    set_template( $template );
+    apply_templates( '//foo' );  
+};
+
+is $@ => '';
+is $result => '<bar>I am the walrus!</bar>', 
+                'functional import of the processor, class-level';

@@ -51,7 +51,7 @@ my $xps = <<'EOT';
 	$t->{node}{testcode} = sub { 
 		my( $n, $t ) = @_; 
 		$t->{pre} = '{@color}'; 
-		return DO_SELF_ONLY() 
+		return DO_SELF_ONLY
 	}; 
 %>
 <%= apply_templates() %>
