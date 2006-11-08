@@ -1,9 +1,5 @@
 Revision history for Perl module XML::XPathScript
 
-1.47
-    - XML::XPathScript::Processor is now OO
-        - changed the tests to reflect the new interface
-
 1.46 Oct 25, 2006
     - XML::XPathScript can now be require'd cleanly
     - xpathscript now installed by default

@@ -2,7 +2,7 @@
 
 use strict;
 use Test;
-use XML::XPathScript::Processor qw/ is_utf8_tainted /;
+use XML::XPathScript::Processor;
 
 BEGIN
 {
@@ -102,7 +102,7 @@ ok_not_utf8_tainted($isostring, "real-world Latin1 text");
 
 my $style = <<'STYLE';
 <%
-enable_binmode();
+XML::XPathScript->current()->binmode();
 sub utf8tolatin1 {
 	my $orig=shift;
 	$orig=$orig->string_value() if (ref($orig) =~ m/^XML::/);

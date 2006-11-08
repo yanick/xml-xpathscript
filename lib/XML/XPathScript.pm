@@ -134,11 +134,7 @@ sub interpolation {
 sub interpolating {
     my $self=shift;
 
-    if ( my $inter = shift ) {
-        $self->processor->set_interpolation( 
-            $self->{interpolating} = $inter 
-        );
-    }
+    $self->{interpolating}=shift if (@_);
 
     return exists $self->{interpolating} ?
 			$self->{interpolating} :
@@ -166,11 +162,7 @@ Example:
 sub interpolation_regex {
     my $self = shift;
 
-    if ( my $regex = shift ) {
-        $self->processor->set_interpolation_regex( 
-            $self->{interpolation_regex} = $regex
-        )
-    }
+    $self->{interpolation_regex} = shift if @_;
 
     return $self->{interpolation_regex};
 }
@@ -190,7 +182,6 @@ Unicode mess>.
 sub binmode {
     my ($self)=@_;
     $self->{binmode}=1;
-    $self->{processor}->enable_binmode;
     binmode ORIGINAL_STDOUT if (! defined $self->{printer});
     return;
 }
@@ -340,26 +331,20 @@ sub new {
     my %params = @_;
     my $self = \%params;
     bless $self, $class;
-    $self->{processor} = XML::XPathScript::Processor->new;
     $self->set_xml( $params{xml} ) if $params{xml};
-
-    $self->interpolation( exists $params{interpolation} 
-                               ? $params{interpolation} : 1 );
-
-    $self->interpolation_regex( $params{interpolation_regex} 
-                                || qr/{(.*?)}/ );
-
-
+	$self->{interpolation_regex} ||= qr/{(.*?)}/;
 
     if (  $XML::XPathScript::XML_parser eq 'XML::XPath' ) {
-        require XML::XPath;
-        require XML::XPath::XMLParser;
-        require XML::XPath::Node;
-        require XML::XPath::NodeSet;
-        require XML::Parser;
+        eval <<END_EVAL;
+			use XML::XPath 1.0;
+			use XML::XPath::XMLParser;
+			use XML::XPath::Node;
+			use XML::XPath::NodeSet;
+			use XML::Parser;
+END_EVAL
     } 
     else {
-        require XML::LibXML;
+        eval 'use XML::LibXML';
     }
 
     croak $@ if $@;
@@ -430,15 +415,7 @@ sub set_xml {
 
     $self->{xml} = $xml;
 
-    my $retval = ref $xml ? $self->_set_xml_ref() 
-                          : $self->_set_xml_scalar()
-                          ;
-
-    $self->{processor}->set_doc( $self->{dom} );
-    
-    return $retval;
-
-    # FIXME
+    return ref $xml ? $self->_set_xml_ref() : $self->_set_xml_scalar();
 
 my $xpath;
 
@@ -891,12 +868,6 @@ sub compile {
     my $package=gen_package_name();
 
 	my $extravars = join ',', @extravars;
-
-    my $processor = $self->{processor};
-
-    # needs to be eval'ed first for the constants
-    # to be seen
-    eval "package $package; \$processor->import_functional();";
 	
 	my $eval = <<EOT;
 		    package $package;
@@ -904,20 +875,17 @@ sub compile {
 		    no warnings; # written stylesheets
 			
 			use $XML_parser;  
-
+		    BEGIN {XML::XPathScript::Processor->import;}
 		    sub {
 		    	my (\$self, $extravars ) = \@_;
-                my \$processor = processor();
 				local \$XML::XPathScript::current=\$self;
-		    	my \$t = \$processor->{template} 
+		    	my \$t = \$XML::XPathScript::current->{t} 
                             = XML::XPathScript::Template->new();
                 my \$template = \$t;
-                #\$processor->{doc} = \$self->{dom};
-                #\$processor->{parser} = '$XML_parser';
-                #\$processor->{binmode} = \$self->{binmode};
-                #\$processor->{is_interpolating} = \$self->interpolation;
-                #\$processor->{interpolation_regex} = \$self->interpolation_regex;
-
+				local \$XML::XPathScript::trans = \$t; # Yes,
+				# this does the sharing! Perl is a bizarre and
+				# wonderful language.
+				local \$XML::XPathScript::xp=\$self->{dom};
 				$script
 		    }
 EOT
@@ -985,9 +953,6 @@ sub get_stylesheet_dependencies {
     return sort keys %{$self->{stylesheet_cache}};
 }
 
-sub processor {
-    return $_[0]->{processor};
-}
 
 =head1 FUNCTIONS
 

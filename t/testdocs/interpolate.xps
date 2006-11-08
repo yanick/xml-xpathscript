@@ -1,5 +1,5 @@
 <%
-    set_interpolation_regex( qr#\|(.*?)\|# );
+    $XML::XPathScript::current->interpolation_regex( qr#\|(.*?)\|# );
     $template->set( bird => { pre => '|@name| |@gender| |@type|' } );
 %>
 <%= apply_templates( '//bird' ) %>
