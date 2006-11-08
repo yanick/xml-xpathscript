@@ -1,63 +1,17 @@
-=head1 NAME
-
-XML::XPathScript::Processor - the XML transformation engine in XML::XPathScript
-
-=head1 SYNOPSIS
-
-In a stylesheet C<< ->{testcode} >> sub for e.g. Docbook's 
-C<< <ulink> >> tag:
-
-      my $url = findvalue('@url',$self);
-      if (findnodes("node()", $self)) {
-         # ...
-		$t->set({ pre  => "<a href='$url'>", 
-                  post => '</a>'             });
-		return DO_SELF_AND_KIDS;
-      } 
-      else {
-        $t->set({  pre  => "<a href='$url'>$url</a>",
-                   post => ''                          });
-		return DO_SELF_ONLY;
-      };
-
-At the stylesheet's top-level one often finds:
-
-   <%= apply_templates() %>
-
-=head1 DESCRIPTION
-
-The I<XML::XPathScript> distribution offers an XML parser glue, an
-embedded stylesheet language, and a way of processing an XML document
-into a text output. This package implements the latter part: it takes
-an already filled out C<< $template >> template object and an already parsed
-XML document (which come from L<XML::XPathScript> behind the scenes),
-and provides a simple API to implement stylesheets. In particular, the
-L</apply_templates> function triggers the recursive expansion of
-the whole XML document when used as shown in L</SYNOPSIS>.
-
-=head1 XPATHSCRIPT LANGUAGE FUNCTIONS
-
-All of these functions are intended to be called solely from within
-the C<< ->{testcode} >> templates or C<< <% %> >> or C<< <%= %> >>
-blocks in XPathScript stylesheets. They are automatically exported to
-both these contexts.
-
-=cut
-
 package XML::XPathScript::Processor;
 
 use strict;
 use warnings;
 use Carp;
 
-use Exporter;
-use vars '@ISA', '@EXPORT';
+use base 'Class::Exporter';
+
+use XML::XPathScript::Template;
 
 our $VERSION = '1.46';
 
-@ISA = ('Exporter');
-
-@EXPORT = qw(
+our @EXPORT_OK = qw(
+        processor
         findnodes
         findvalue
         findvalues
@@ -96,7 +50,6 @@ use constant DO_SELF_AND_KIDS =>  1;
 use constant DO_SELF_ONLY     => -1;
 use constant DO_NOT_PROCESS   =>  0;
 
-=head2 findnodes
 
 sub new {
     my $class = shift;
@@ -111,11 +64,11 @@ sub new {
     # $XML::XPathScript::current->{interpolation_regex}  {interpolation_regex}
 }
 
-Returns a list of nodes found by XPath expression $path, optionally
-using $context as the context node (default is the root node of the
-current document).  In scalar context returns a NodeSet object (but
-you do not want to do that, see L<XML::XPathScript/XPath scalar return
-values considered harmful>).
+#### accessors #############################################
+    
+sub processor {
+    return $_[0];
+}
 
 sub set_dom { 
     my( $self, $dom ) = @_;
@@ -125,9 +78,7 @@ sub set_dom {
     ( $self->{parser} ) =  $class =~ /(?:XML::)(?:LibXML|XPath)/g 
         or croak "can't recognize to what parser $dom belongs to";
 
-	my ($path, $context) = @_;
-	$context = $XML::XPathScript::xp if (!defined $context);
-	return $context->findnodes($path);
+    return;
 }
 sub get_dom { $_[0]->{dom} }
 sub get_parser { $_[0]->{parser} }
@@ -141,17 +92,17 @@ sub get_interpolation { $_[0]->{is_interpolating} }
 sub set_interpolation_regex { $_[0]->{interpolation_regex} = $_[1] }
 sub get_interpolation_regex { $_[0]->{interpolation_regex} }
 
-=head2 findvalue
 
-    $value = findvalue( $path )
-    $value = findvalue( $path, $context )
+# $processor->import_functional( $prefix )
+# XML::XPathScript::Processor->import_functional( $prefix )
 
-Evaluates XPath expression $path and returns the resulting value. If
-the path returns one of the "Literal", "Numeric" or "NodeList" XPath
-types, the stringification is done automatically for you using
-L</xpath_to_string>.
+sub import_functional {
+    my( $self, $prefix ) = @_;
 
-=cut "
+    $self or croak "import_functional not called properly";
+    
+    # call as XML::XPathScript::Processor->import_functional
+    $self = XML::XPathScript::Processor->new unless ref $self;
 
     my($caller, $file, $line) = caller;
 
@@ -217,32 +168,25 @@ sub findvalue {
 	return $self->xpath_to_string($context->findvalue($path));
 }
 
-Converts any XPath data type, such as "Literal", "Numeric",
-"NodeList", text nodes, etc. into a pure Perl string (UTF-8 tainted
-too - see L</is_utf8_tainted>). Scalar XPath types are interpreted in
-the straightforward way, DOM nodes are stringified into conform XML,
-and NodeList's are stringified by concatenating the stringification of
-their members (in the latter case, the result obviously is not
-guaranteed to be valid XML).
-
-See L<XML::XPathScript/XPath scalar return values considered harmful>
-on why this is useful.
-
-=cut "
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 sub xpath_to_string {
+    my $self = shift;
 	my ($blob)=@_;
-	return $blob if (! ref($blob));
+	return $blob unless ref $blob ;
+
 	# Was simply C<< return "$blob" >> but Perl 5.6.1 seems to have
 	# issues with UTF8-flag used in overloaded stringification :-(
-	return $blob->can("data") ? $blob->data() :
-		$blob->can("value") ? $blob->value() :
-			$blob->string_value();
+	return $blob->can("data")    ? $blob->data() 
+         : $blob->can("value")   ? $blob->value() 
+         : $blob->string_value()
+         ;
 }
 
 sub findvalues {
-    my @nodes = findnodes(@_);
-    map { findvalue('.', $_) } @nodes;
+    my $self = shift;
+    my @nodes = $self->findnodes(@_);
+    map { $self->findvalue('.', $_) } @nodes;
 }
 
 sub findnodes_as_string {
@@ -263,28 +207,29 @@ sub set_namespace
 }
 
 sub apply_templates {
+    my $self = shift;
 	# catch the calls to apply_templates() 
-	return apply_templates( findnodes('/') ) unless @_;
+	return $self->apply_templates( $self->findnodes('/') ) unless @_;
 
     my ($arg1, @args) = @_;
 
     unless( ref($arg1) ) { # called with a path to find
 
-		my $nodes = findnodes($arg1, @args);
-		return $nodes ? apply_templates($nodes) : undef;
+		my $nodes = $self->findnodes($arg1, @args);
+		return $nodes ? $self->apply_templates($nodes) : undef;
     }
 
     my $retval = '';
-	if (is_nodelist($arg1))
+	if ( $self->is_nodelist($arg1))
 	{
         foreach my $node ($arg1->get_nodelist) {
-            $retval .= translate_node($node);
+            $retval .= $self->translate_node($node);
         }
     }
     else {
-        $retval .= translate_node($arg1);
+        $retval .= $self->translate_node($arg1);
         foreach my $node (@args) {
-            $retval .= translate_node($node);
+            $retval .= $self->translate_node($node);
         }
     }
 
@@ -292,10 +237,10 @@ sub apply_templates {
 }
 
 sub call_template {
-    my ($self,$t,$template)=@_;
+    my ($self,$node,$t,$template)=@_;
 
     if (defined(my $sub=$template->{testcode})) {
-	return &$sub($self,$t);
+	return &$sub($node,$t);
     } elsif (exists $t->{prechild} || exists $t->{prechildren} ||
 	     exists $t->{postchild} || exists $t->{postchildren}) {
 	warn "XML::XPathScript::Processor::call_template: cannot handle this sort of templates yet";
@@ -311,16 +256,19 @@ sub call_template {
 }
 
 sub _apply_templates {
+    my $self = shift;
 	no warnings 'uninitialized';
-	return join '', map translate_node($_), @_;
+	return join '', map $self->translate_node($_), @_;
 }
 
 sub is_element_node {
+    my $self = shift;
 	UNIVERSAL::isa( $_[0], 'XML::XPath::Node::Element' ) or
 		UNIVERSAL::isa( $_[0], 'XML::LibXML::Element' );
 }
 
 sub is_text_node {
+    my $self = shift;
 	UNIVERSAL::isa($_[0], 'XML::XPath::Node::Text') or
 	# little catch: XML::LibXML::Comment is a
 	# XML::LibXML::Text
@@ -329,21 +277,25 @@ sub is_text_node {
 }
 
 sub is_comment_node {
+    my $self = shift;
 		UNIVERSAL::isa( $_[0], 'XML::LibXML::Comment' ) or
 			UNIVERSAL::isa( $_[0], 'XML::XPath::Node::Comment' );
 }
 
 sub is_pi_node {
+    my $self = shift;
 	UNIVERSAL::isa($_[0], "XML::LibXML::PI") ||
 		UNIVERSAL::isa($_[0], "XML::XPath::Node::PI");
 }
 
 sub is_nodelist {
+    my $self = shift;
 	UNIVERSAL::isa($_[0], 'XML::XPath::NodeSet') or
 		UNIVERSAL::isa($_[0], 'XML::LibXML::NodeList');
 }
 
 sub is_utf8_tainted {
+    my $self = shift;
     my ($string) = @_;
 
     my $ghost = ($string x 0) .
@@ -371,31 +323,32 @@ sub is_utf8_tainted {
 
 	sub get_xpath_of_node {
 		my $self =shift;
+        my $node = shift;
 
 		# ugly hacks all over in this function, because the quirky
 		# refcount-proof aliasing (i.e. XML::XPath::Element versus
 		# XML::XPath::ElementImpl) in XML::XPath gets in the way badly
-		$self = $$self if
-			$self->isa( 'XML::XPath::Node::Element' ) and not $self->isa( 'XML::XPath::Node::ElementImpl' );
+		$node = $$node if
+			$node->isa( 'XML::XPath::Node::Element' ) and not $self->isa( 'XML::XPath::Node::ElementImpl' );
 
-		my $parent = ( $self->can("parentNode") ?
-					$self->parentNode() :
-					$self->getParentNode() );
+		my $parent = ( $node->can("parentNode") ?
+					$node->parentNode() :
+					$node->getParentNode() );
 
 		return "" unless defined $parent;
 
 		my $name;
-		if (is_element_node($self)) {
-			$name = $self->findvalue('name()');
-		} elsif (is_text_node($self)) {
+		if ($self->is_element_node($node)) {
+			$name = $node->findvalue('name()');
+		} elsif ($self->is_text_node($node)) {
 			$name = "text()";
-	    } elsif (is_comment_node($self)) {
+	    } elsif ($self->is_comment_node($node)) {
 			$name = "comment()";
-		} elsif (is_pi_node($self)) {
+		} elsif ($self->is_pi_node($node)) {
 			$name = "processing-instruction()";
 		} else {
 			# YKYBPTMNW...
-			return get_xpath_of_node($parent)."/strange-node()";
+			return $self->get_xpath_of_node($parent)."/strange-node()";
 		}
 
 		# ugly hack, part II
@@ -403,30 +356,31 @@ sub is_utf8_tainted {
 
 		# Short-cut for nodes that have an ID. FIXME: not all DTDs use
 		# attribute named "id" as the SGML ID!
-	if (is_element_node($self) && (my $id=findvalue('@id',$self))) {
-		return get_xpath_of_node($parent).sprintf('/%s[@id="%s"]', $name, $id);
+	if ($self->is_element_node($node) && (my $id=$self->findvalue('@id',$node))) {
+		return $self->get_xpath_of_node($parent).sprintf('/%s[@id="%s"]', $name, $id);
 	}
 
 	# Bug: the matches() function from XML::XPath is hosed, and only
 	# works towards ancestors. We resort to comparing references for
 	# identity. See above for details on the $$self quirk.
-	my $theself=($self =~ m/SCALAR/?$$self:$self);
+	my $theself=($node =~ m/SCALAR/?$$node:$node);
 
 	for my $i ( 0..$#brothers ) {
 		my $thebrother=($brothers[$i] =~ m/SCALAR/?
 						${$brothers[$i]}:$brothers[$i]);
 
-		return sprintf '%s/%s[%d]', get_xpath_of_node($parent), $name, $i+1 
+		return sprintf '%s/%s[%d]', $self->get_xpath_of_node($parent), $name, $i+1 
 			if $theself eq $thebrother;
 	};
 
-	return get_xpath_of_node($parent)."/$name"."[?]";
+	return $self->get_xpath_of_node($parent)."/$name"."[?]";
 }
 
 
 ########################## End of exportable stuff ####################
 
 sub translate_node {
+    my $self = shift;
     my $node = shift;
 
 	if( UNIVERSAL::isa($node,"XML::LibXML::Document") ) 
@@ -435,14 +389,14 @@ sub translate_node {
 	}
 
 	my $retval;
-	if ( is_comment_node($node) ) {
-		$retval = translate_comment_node( $node );
-	} elsif ( is_text_node($node) )
+	if ( $self->is_comment_node($node) ) {
+		$retval = $self->translate_comment_node( $node );
+	} elsif ( $self->is_text_node($node) )
 	{
-		$retval = translate_text_node( $node );
-	} elsif (is_element_node( $node )) {
-		$retval = translate_element_node( $node );
-	} elsif ( is_pi_node($node) ) {
+		$retval = $self->translate_text_node( $node );
+	} elsif ( $self->is_element_node( $node )) {
+		$retval = $self->translate_element_node( $node );
+	} elsif ( $self->is_pi_node($node) ) {
 		# don't output top-level PI's
 		$retval = eval {
 			if ($node->getParentNode->getParentNode) {
@@ -453,11 +407,11 @@ sub translate_node {
 		$retval = $node->toString;
 	};
 
-	if (XML::XPathScript->current()->{binmode} &&
-		is_utf8_tainted($retval)) {
-		use Carp qw(confess);
+	if ( $self->{binmode} &&
+		$self->is_utf8_tainted($retval)) {
+		use Carp qw(confess);  # TODO remove this
 		confess("Wrong translation by stylesheet".
-				" (result is Unicode-tainted) at ".get_xpath_of_node($node).
+				" (result is Unicode-tainted) at ".$self->get_xpath_of_node($node).
 				"\n$retval\n");
 	}
 
@@ -466,9 +420,9 @@ sub translate_node {
 
 
 sub translate_text_node {
-	
+    my $self = shift;	
 	my $node = shift;
-    my $translations = $XML::XPathScript::trans;
+    my $translations = $self->{template};
 
 	my $trans = $translations->{'#text'} || $translations->{'text()'};
 
@@ -487,40 +441,40 @@ sub translate_text_node {
     }
 		
 	no warnings 'uninitialized';
-    return if defined($action) and $action == DO_NOT_PROCESS;
+    return if defined($action) and $action == DO_NOT_PROCESS();
 
     $middle = $node->toString if defined($action) 
-                                    and $action == DO_TEXT_AS_CHILD;
+                                    and $action == DO_TEXT_AS_CHILD();
 
 	return $t->{pre} . $middle . $t->{post};
 }
 
 sub translate_element_node {
-
+    my $self = shift;
 	my $node = shift;
-    my $translations = $XML::XPathScript::trans;
+    my $translations = $self->{template};
 
     my $node_name = 
-        $XML::XPathScript::XML_parser eq 'XML::LibXML' ? $node->localname
-      : $XML::XPathScript::XML_parser eq 'XML::XPath'  ? 
+        $self->{parser} eq 'XML::LibXML' ? $node->localname
+      : $self->{parser} eq 'XML::XPath'  ? 
                                  # nasty hack to get around that 
                                  # the root has no name 
                                  ( $node->getName && $node->getLocalName )
-      :           croak "unsupported parser:  $XML::XPathScript::XML_parser"
+      :           croak "unsupported parser:  $self->{parser}"
       ;
 
     my $namespace;
-    if( $XML::XPathScript::XML_parser eq 'XML::LibXML' ) {
+    if( $self->{parser} eq 'XML::LibXML' ) {
         my $ns = $node->getNamespaces();
         $namespace = $ns ? $ns->getData() : undef ;
     }
-    elsif( $XML::XPathScript::XML_parser eq 'XML::XPath' ) {
+    elsif( $self->{parser} eq 'XML::XPath' ) {
         if( my $prefix = $node->getPrefix ) {
             $namespace = $node->getNamespace( $prefix )->getExpanded();
         }
     }
     else {
-        croak "unsupported parser:  $XML::XPathScript::XML_parser"
+        croak "unsupported parser:  $self->{parser}"
     }
 
     my $trans = XML::XPathScript::Template::resolve( $translations, 
@@ -529,10 +483,10 @@ sub translate_element_node {
     unless( $trans ) {
         # no specific and no generic? Okay, okay, return as is...
         no warnings qw/ uninitialized /;
-        return start_tag($node) . 
-                _apply_templates( ( $XML::XPathScript::XML_parser eq 'XML::LibXML' ) ? 
+        return $self->start_tag($node) . 
+                $self->_apply_templates( ( $self->{parser} eq 'XML::LibXML' ) ? 
                                     $node->childNodes : $node->getChildNodes) .
-                end_tag($node);	
+                $self->end_tag($node);	
 		
     }
 
@@ -553,27 +507,27 @@ sub translate_element_node {
         $dokids = 0;
         $search = $action;
     }
-    elsif ( defined($action) and $action == DO_NOT_PROCESS ) {
+    elsif ( defined($action) and $action == DO_NOT_PROCESS() ) {
         return;
     }
-    elsif ($action == DO_SELF_ONLY ) {
+    elsif ($action == DO_SELF_ONLY() ) {
         $dokids = 0;
     }
 
     # default: process children too.
-	my $has_kids = $XML::XPathScript::XML_parser eq 'XML::LibXML' ? 
+	my $has_kids = $self->{parser} eq 'XML::LibXML' ? 
 						$node->hasChildNodes() : $node->getFirstChild();
 	
-    my $pre = interpolate($node, $t->{pre});
-	$pre .= start_tag( $node , $t->{rename}) if $t->{showtag};
+    my $pre = $self->interpolate($node, $t->{pre});
+	$pre .= $self->start_tag( $node , $t->{rename}) if $t->{showtag};
 	$pre .= $t->{intro};
-	$pre .= interpolate($node, $t->{prechildren}) if $has_kids;
+	$pre .= $self->interpolate($node, $t->{prechildren}) if $has_kids;
 	
 	my $post;
-	$post .= interpolate($node, $t->{postchildren}) if $has_kids;
+	$post .= $self->interpolate($node, $t->{postchildren}) if $has_kids;
 	$post .= $t->{extro};
-	$post .= end_tag( $node, $t->{rename} ) if  $t->{showtag};
-	$post .= interpolate($node, $t->{post});
+	$post .= $self->end_tag( $node, $t->{rename} ) if  $t->{showtag};
+	$post .= $self->interpolate($node, $t->{post});
 
 	my $middle;
 	my @kids = $dokids ? $node->getChildNodes()
@@ -581,28 +535,28 @@ sub translate_element_node {
 			 : ();
 	for my $kid ( @kids ) 
 	{
-		$middle .= interpolate($node, $trans->{prechild}) 
-			if is_element_node( $kid );
+		$middle .= $self->interpolate($node, $trans->{prechild}) 
+			if $self->is_element_node( $kid );
 
-		$middle .= _apply_templates($kid);
+		$middle .= $self->_apply_templates($kid);
 
-		$middle .= interpolate($node, $trans->{postchild})
-			if is_element_node( $kid );
+		$middle .= $self->interpolate($node, $trans->{postchild})
+			if $self->is_element_node( $kid );
 	}
         
 	return $pre . $middle . $post
 }
 
 sub translate_comment_node {
-
+    my $self = shift;
 	my $node = shift;
-    my $translations = $XML::XPathScript::trans;
+    my $translations = $self->{template};
 
 	my $trans = $translations->{'#comment'} || $translations->{'comment()'};
 
 	return $node->toString unless $trans;
 
-	my $middle = $XML::XPathScript::XML_parser eq 'XML::LibXML' ?
+	my $middle = $self->{parser} eq 'XML::LibXML' ?
 					$node->textContent : $node->getData;
 
 	if (my $code = $trans->{testcode}) 
@@ -615,8 +569,8 @@ sub translate_comment_node {
 			}
 		}
 
-		return if $retval == DO_NOT_PROCESS;
-		$middle = '' if $retval == DO_SELF_ONLY;
+		return if $retval == DO_NOT_PROCESS();
+		$middle = '' if $retval == DO_SELF_ONLY();
 	}
 	
 	no warnings 'uninitialized';
@@ -624,24 +578,24 @@ sub translate_comment_node {
 }
 
 sub start_tag {
-    my( $node, $name ) = @_;
+    my( $self, $node, $name ) = @_;
 
     $name ||= $node->getName or return '';
 
     my $string = '<'.$name;
 
 	# do we need this for libXML?
-	if( $XML::XPathScript::XML_parser eq 'XML::XPath' )
+	if( $self->{parser} eq 'XML::XPath' )
 	{
     	$string .= $_->toString for $node->getNamespaceNodes;
 	}
 
-    for my $attr ( ( $XML::XPathScript::XML_parser eq 'XML::LibXML' ) ? 
+    for my $attr ( ( $self->{parser} eq 'XML::LibXML' ) ? 
 						$node->attributes : $node->getAttributeNodes) 
 	{
 	  
 	  	
-		if( $XML::XPathScript::XML_parser eq 'XML::XPath' )
+		if( $self->{parser} eq 'XML::XPath' )
 	   	{
 	   		$string .= $attr->toString;
 	   	}
@@ -664,6 +618,7 @@ sub start_tag {
 }
 
 sub end_tag {
+    my $self = shift;
     if (my $name = $_[1] || $_[0]->getName) {
         return "</$name>";
     }
@@ -671,22 +626,393 @@ sub end_tag {
 }
 
 sub interpolate {
-    my ($node, $string) = @_;
+    my ($self, $node, $string) = @_;
 	
 	# if string is empty or no interpolation,
 	# we return
     return( $string || '' ) unless 
 		defined( $string ) and 
-		$XML::XPathScript::current->interpolating();
+        $self->{is_interpolating};
 
-	my $regex = $XML::XPathScript::current->{interpolation_regex};
+	my $regex = $self->{interpolation_regex};
 	$string =~ s/$regex/ $node->findvalue($1) /egs;
 	
 	no warnings 'uninitialized';
     return $string;
 }
 
-=pod
+'end of module XML::XPathScript::Processor';
+
+__END__
+
+=head1 NAME
+
+XML::XPathScript::Processor - XML::XPathScript transformation engine
+
+=head1 SYNOPSIS
+
+    # OO API
+    use XML::XPathScript::Processor;
+
+    my $processor = XML::XPathScript::Processor->new;
+    $processor->set_xml( $dom );
+    $processor->set_template( $template );
+
+    my $transformed = $processor->apply_templates( '//foo' );
+
+    # functional API
+    use XML::XPathScript::Processor;
+    XML::XPathscript::Processor->import_functional;
+
+    set_xml( $dom );
+    set_template( $template );
+    my $transformed = apply_templates( '//foo' );
+
+=head1 DESCRIPTION
+
+The I<XML::XPathScript> distribution offers an XML parser glue, an
+embedded stylesheet language, and a way of processing an XML document
+into a text output. This module implements the latter part: it takes
+an already filled out C<< $template >> template object and an already parsed
+XML document (which are usually both provided by the parent
+L<XML::XPathScript> object),
+and provides a simple API to implement stylesheets. 
+
+Typically, the processor is encapsulated within a L<XML::XPathScript>
+object. In which case, all the black magick is already done for you,
+and the only part you have to worry about is the XPathScript 
+language functions that XML::XPathScript::Processor imports into
+the stylesheet (see L</XPATHSCRIPT LANGUAGE FUNCTIONS>).
+
+It is also possible to use a processor on its own, without using a
+stylesheet. This might be desirable, for example, to use XPathScript
+within a different templating system, like L<Embperl> or L<HTML::Mason>.
+For a discussion on how to use this module in such cases, see section 
+L</Embedding XML::XPathScript::Processor in a Templating System>.
+
+=head2 Embedding XML::XPathScript::Processor in a Templating System
+
+It is possible to use the XPathScript processing engine without having 
+to rely on stylesheets. This can be desirable if one wishes to use XPathScript
+within a different templating system, like Embperl or HTML::Mason. To do 
+so, one simply has to directly use XML::XPathScript::Processor. 
+
+Example, with HTML::Mason:
+
+    <%perl>
+        use XML::XPathScript::Processor;
+        use XML::XPathScript::Template;
+        use XML::LibXML;
+
+        my $processor = XML::XPathScript::Processor->new;
+
+        # load the dom
+        my $dom = XML::LibXML->new->parse_string( <<'END_XML' );
+            <orchid>
+                <genus>Miltonesia</genus>
+                <species>spectabilis</species>
+                <variety>moreliana</variety>
+            </orchid>
+    END_XML
+        $processor->set_dom( $dom );
+
+        # load the template
+        my $template = XML::XPathScript::Template->new;
+        $processor->set_template( $template );
+        $template->set( orchid => { showtag => 0 } );
+        $template->set( genus  => { rename => 'i' } );
+        $template->set( species  => { rename => 'i' } );
+        $template->set( variety  => { pre => 'var. '  } );
+    </%perl>
+
+    <p>This orchid is a <% $processor->apply_templates( '//orchid' )  %>.</p>
+
+Same example, with Embperl:
+
+    [!
+        use XML::XPathScript::Processor;
+        use XML::XPathScript::Template;
+        use XML::LibXML;
+    !]
+
+    [-
+        $processor = XML::XPathScript::Processor->new;
+
+        # load the dom
+        $dom = XML::LibXML->new->parse_string( <<'END_XML' );
+            <orchid>
+                <genus>Miltonesia</genus>
+                <species>spectabilis</species>
+                <variety>moreliana</variety>
+            </orchid>
+    END_XML
+        $processor->set_dom( $dom );
+
+        # load the template
+        $template = XML::XPathScript::Template->new;
+        $processor->set_template( $template );
+        $template->set( orchid => { showtag => 0 } );
+        $template->set( genus  => { rename => 'i' } );
+        $template->set( species  => { rename => 'i' } );
+        $template->set( variety  => { pre => 'var. '  } );
+    -]
+
+    <p>This orchid is a [+ $processor->apply_templates( '//orchid' ) +].</p>
+
+
+=head1 XPATHSCRIPT LANGUAGE FUNCTIONS
+
+This section covers the utility functions that are available 
+within a stylesheet. 
+
+=over
+
+=item processor
+
+    $processor = processor()
+
+Returns the processor object. Useful for when XML::XPathScript::Processor is
+used in functional mode.
+
+=item set_dom, get_dom
+
+    set_dom( $dom )
+    $dom = get_dom
+
+Accessors for the dom the processor is to transform. I<$dom> must be
+an XML::LibXML or XML::XPath document or element.
+
+=item get_parser
+
+    $parser = get_parser()
+
+Returns the parser associated with the loaded dom as a string ( 'XML::LibXML'
+or 'XML::XPath'), or B<undef> if no dom has been loaded yet.
+
+=item enable_binmode
+
+    enable_binmode()
+
+Enables binmode for the processor's output. See L<XML::XPathScript/binmode>.
+
+=item get_binmode
+
+    $mode = get_binmode()
+
+Returns true if binmode has been enabled, false otherwise.
+
+=item set_template, get_template
+
+    set_template( $t )
+    $t = get_template
+
+Accessors for the processor's template. The template I<$t> must be an
+L<XML::XPathScript::Template> object.
+
+=item set_interpolation, get_interpolation
+
+    set_interpolation( $bool )
+    $bool = get_interpolation()
+
+Sets / accesses the interpolation mode (on or off) of the processor.
+
+=item set_interpolation_regex, get_interpolation_regex
+
+Sets / accesses the interpolation regex used by the processor.
+
+=item findnodes
+
+   @nodes = findnodes( $path )
+   @nodes = findnodes( $path, $context ) 
+
+Returns a list of nodes found by XPath expression $path, optionally
+using $context as the context node (if not provided,
+defaults to the root node of the document).  
+In scalar context returns a NodeSet object (but
+you do not want to do that, see L<XML::XPathScript/XPath scalar return
+values considered harmful>).
+
+=item findvalue
+
+    $value = findvalue( $path )
+    $value = findvalue( $path, $context )
+
+Evaluates XPath expression $path and returns the resulting value. If
+the path returns an object, 
+stringification is done automatically for you using
+L</xpath_to_string>.
+
+=item xpath_to_string
+
+    $string = xpath_to_string( $blob )
+
+Converts any XPath data type, such as "Literal", "Numeric",
+"NodeList", text nodes, etc. into a pure Perl string (UTF-8 tainted
+too - see L</is_utf8_tainted>). Scalar XPath types are interpreted in
+the straightforward way, DOM nodes are stringified into conform XML,
+and NodeList's are stringified by concatenating the stringification of
+their members (in the latter case, the result obviously is not
+guaranteed to be valid XML).
+
+See L<XML::XPathScript/XPath scalar return values considered harmful>
+on why this is useful.
+
+=item findvalues
+
+    @values = findvalues( $path )
+    @values = findvalues( $path, $context )
+
+Evaluates XPath expression $path as a nodeset expression, just like
+L</findnodes> would, but returns a list of UTF8-encoded XML strings
+instead of node objects or node sets. See also
+L<XML::XPathScript/XPath scalar return values considered harmful>.
+
+=item findnodes_as_string
+
+    @nodes = findnodes_as_string( $path )
+    @nodes = findnodes_as_string( $path, $context )
+
+Similar to L</findvalues> but concatenates the XML snippets.  The
+result obviously is not guaranteed to be valid XML.
+
+=item matches
+
+    $bool = matches( $node, $path )
+    $bool = matches( $node, $path, $context )
+
+Returns true if the node matches the path (optionally in context $context)
+
+=item apply_templates
+
+    $transformed = apply_templates()
+    $transformed = apply_templates( $xpath )
+    $transformed = apply_templates( $xpath, $context )
+    $transformed = apply_templates( @nodes )
+
+This is where the whole magic in XPathScript resides: recursively
+applies the stylesheet templates to the nodes provided either
+literally (last invocation form) or through an XPath expression
+(second and third invocation forms), and returns a string
+concatenation of all results. If called without arguments at all,
+renders the whole document (same as C<< apply_templates("/") >>).
+
+Calls to I<apply_templates()> may occur both implicitly (at the top of
+the document, and for rendering subnodes when the templates choose to
+handle that by themselves), and explicitly (because C<testcode>
+routines require the XML::XPathScript::Processor to
+L</DO_SELF_AND_KIDS>).
+
+If appropriate care is taken in all templates (especially the
+C<testcode> routines and the I<text()> template), the string result of
+I<apply_templates> need not be UTF-8 (see
+L<XML::XPathScript/binmode>): it is thus possible to use XPathScript
+to produce output in any character set without an extra translation
+pass.
+
+=item call_template
+
+    call_template( $node, $t, $templatename )
+    
+B<EXPERIMENTAL> - allows C<testcode> routines to invoke a template by
+name, even if the selectors do not fit (e.g. one can apply template B
+to an element node of type A). Returns the stylesheeted string
+computed out of $node just like L</apply_templates> would.
+
+=item  is_element_node 
+
+    $bool = is_element_node( $object )
+
+Returns true if $object is an element node, false otherwise.
+
+=item is_text_node
+
+    $bool = is_text_node( $object )
+
+Returns true if $object is a "true" text node (B<not> a comment node),
+false otherwise.
+
+=item is_comment_node
+
+    $bool = is_comment_node ( $object )
+
+Returns true if $object is an XML comment node, false otherwise.
+
+=item is_pi_node
+
+    $bool = is_pi_node( $object )
+
+Returns true iff $object is a processing instruction node.
+
+=item is_nodelist
+
+    $bool = is_nodelist( $object )
+
+Returns true if $node is a node list (as returned by L</findnodes> in
+scalar context), false otherwise.
+
+=item is_utf_tainted
+
+    $bool = is_utf8_tainted( $string )
+
+Returns true if Perl thinks that $string is a string of characters (in
+UTF-8 internal representation), and false if Perl treats $string as a
+meaningless string of bytes.
+
+The dangerous part of the story is when concatenating a non-tainted
+string with a tainted one, as it causes the whole string to be
+re-interpreted into UTF-8, even the part that was supposedly
+meaningless character-wise, and that happens in a nonportable fashion
+(depends on locale and Perl version). So don't do that - and use this
+function to prevent that from happening.
+
+=item get_xpath_of_node
+
+ $xpath = get_xpath_of_node( $node )
+
+Returns an XPath string that points to $node, from the root. Useful to
+create error messages that point at some location in the original XML
+document.
+
+=for comment
+    =head2 Functional and OO APIs
+    If used within a stylesheet, 
+
+=back    
+
+=head1 METHODS
+
+=over
+
+=item import_functional
+
+    XML::XPathScript::Processor->import_functional( $prefix )
+    $processor->import_functional( $prefix )
+
+Imports the stylesheet utility functions into the current 
+namespace. If I<$prefix> is given, is it prepended to the
+function names (i.e., if I<$prefix> is 'B<xps_>',
+B<apply_templates> will become B<xps_apply_templates>).
+
+If the first form is used, a new processor object is secretly
+created and assigned to the namespace (it can be retrieved using 
+the function B<processor()>). The second form uses the already
+existing I<$processor> as the underlaying processor object for
+the namespace.
+
+Example:
+
+    use XML::XPathScript::Processor;
+
+    # import the goodies in the current namespace
+    XML::XPathScript::Processor->import_functional;
+
+    # set the document and template we want to use
+    set_dom( $xml_dom );
+    set_template( $template );
+
+    my @foo_nodes = findnodes( '//foo' );
+    # print the last foo, transformed
+    print apply_templates( $foo_nodes[-1] );
 
 =back
 
@@ -1063,12 +1389,6 @@ Example:
 
 =head1 BUGS
 
-Right now I<XML::XPathScript::Processor> is just an auxillary module
-to L<XML::XPathScript> which should not be called directly: in other
-words, XPathScript's XML processing engine is not (yet) properly
-decoupled from the stylesheet language parser, and thus cannot stand
-alone.
-
 Please send bug reports to <bug-xml-xpathscript@rt.cpan.org>,
 or via the web interface at 
 http://rt.cpan.org/Public/Dist/Display.html?Name=XML-XPathScript .
@@ -1078,6 +1398,3 @@ http://rt.cpan.org/Public/Dist/Display.html?Name=XML-XPathScript .
 Yanick Champoux <yanick@cpan.org> 
 and Dominique Quatravaux <dom@idealx.com>
 
-=cut
-
-1;

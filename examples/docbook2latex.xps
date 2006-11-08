@@ -14,8 +14,8 @@ use strict;
 warn 'This is $Id: docbook2latex.xps 32928 2006-02-01 17:59:52Z dom $'.
 	"\n";
 my $parser_version = do { no strict "refs";
-				   ${$XML::XPathScript::XML_parser."::VERSION"} };
-	warn "Using $XML::XPathScript::XML_parser version $parser_version, XML::XPathScript version $XML::XPathScript::VERSION\n";
+				   ${get_parser()."::VERSION"} };
+	warn "Using ".get_parser()." version $parser_version, XML::XPathScript version $XML::XPathScript::VERSION\n";
 
 # Output from this stylesheet is Latin-1, regardless of locale.
 binmode(STDOUT);
@@ -338,8 +338,8 @@ sub integrationtest {
 
 ################### NON-TEMPLATE FORMATTING INSTRUCTIONS ##############
 
-XML::XPathScript->current()->binmode();
-XML::XPathScript->current()->interpolating(0);
+set_binmode(1);
+set_interpolation(0);
 
 # Converts a Unicode string into a piece of text that means something
 # to TeX: recodes some special characters in Unicode, quotes TeX's special

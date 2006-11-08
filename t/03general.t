@@ -47,11 +47,11 @@ EOT
 my $xml = "<doc><node color='blue'>Hello</node></doc>";
 my $xps = <<'EOT';
 <% 
-	$XML::XPathScript::DoNotInterpolate = 1;
+	set_interpolation( 0 );
 	$t->{node}{testcode} = sub { 
 		my( $n, $t ) = @_; 
 		$t->{pre} = '{@color}'; 
-		return DO_SELF_ONLY() 
+		return DO_SELF_ONLY
 	}; 
 %>
 <%= apply_templates() %>
@@ -93,7 +93,7 @@ test_xml( $xml, $xps, "\n<doc>blue:blue</doc>\n", 'Double interpolation'  );
 
 test_xml( '<doc arg="stuff" />', <<'XPS' , "stuff\n", 'interpolation regex' );
 <%
-	$XML::XPathScript::current->{interpolation_regex} = qr/\[\[(.*?)\]\]/;
+	set_interpolation_regex( qr/\[\[(.*?)\]\]/ );
 	$t->{doc}{pre} = '[[@arg]]';
 %><%= apply_templates() %>
 XPS
