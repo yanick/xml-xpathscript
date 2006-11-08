@@ -417,6 +417,12 @@ sub set_xml {
 
     return ref $xml ? $self->_set_xml_ref() : $self->_set_xml_scalar();
 
+    $self->{processor}->set_dom( $self->{dom} );
+    
+    return $retval;
+
+    # FIXME
+
 my $xpath;
 
 
@@ -811,9 +817,9 @@ sub include_file {
 
 =pod "
 
-=item I<compile()>
+=head2 I<compile()>
 
-=item I<compile(varname1, varname2,...)>
+=head2 I<compile(varname1, varname2,...)>
 
 Compiles the stylesheet set at I<new()> time and returns an anonymous
 CODE reference. 
@@ -953,6 +959,17 @@ sub get_stylesheet_dependencies {
     return sort keys %{$self->{stylesheet_cache}};
 }
 
+=head2 processor
+
+    $processor = $xps->processor
+
+Returns the processor object associated with I<$xps>.
+
+=cut
+
+sub processor {
+    return $_[0]->{processor};
+}
 
 =head1 FUNCTIONS
 

@@ -77,6 +77,18 @@ our $VERSION = '1.46';
 		DO_SELF_ONLY
 		DO_NOT_PROCESS
 		DO_TEXT_AS_CHILD
+        set_dom
+        get_dom
+        get_parser
+        enable_binmode
+        set_binmode
+        get_binmode
+        set_template
+        get_template
+        set_interpolation
+        get_interpolation
+        set_interpolation_regex
+        get_interpolation_regex
         );
 
 use constant DO_TEXT_AS_CHILD =>  2;
@@ -86,8 +98,18 @@ use constant DO_NOT_PROCESS   =>  0;
 
 =head2 findnodes
 
-   ( @nodes ) = findnodes( $path )
-   ( @nodes ) = findnodes( $path, $context ) 
+sub new {
+    my $class = shift;
+    my $self = {};
+    bless $self, $class;
+    return $self;
+    # $XML::XPathScript::xp => {doc}
+    #                          {parser}
+    #                          {binmode}
+    #                          {template}
+    # $XML::XPathScript::current->interpolating() {is_interpolating}
+    # $XML::XPathScript::current->{interpolation_regex}  {interpolation_regex}
+}
 
 Returns a list of nodes found by XPath expression $path, optionally
 using $context as the context node (default is the root node of the
@@ -95,17 +117,29 @@ current document).  In scalar context returns a NodeSet object (but
 you do not want to do that, see L<XML::XPathScript/XPath scalar return
 values considered harmful>).
 
-=cut "
+sub set_dom { 
+    my( $self, $dom ) = @_;
+    my $class = ref( $self->{dom} = $dom )
+        or croak "usage: \$processor->set_dom( \$dom )";
 
-sub findnodes {
-	if ($XML::XPathScript::xp->isa("XML::XPath")) {
-		return $XML::XPathScript::xp->findnodes(@_);
-	}
+    ( $self->{parser} ) =  $class =~ /(?:XML::)(?:LibXML|XPath)/g 
+        or croak "can't recognize to what parser $dom belongs to";
 
 	my ($path, $context) = @_;
 	$context = $XML::XPathScript::xp if (!defined $context);
 	return $context->findnodes($path);
 }
+sub get_dom { $_[0]->{dom} }
+sub get_parser { $_[0]->{parser} }
+sub enable_binmode { $_[0]->{binmode} = 1 }
+sub set_binmode { $_[0]->enable_binmode; }
+sub get_binmode { $_[0]->{binmode} }
+sub set_template { $_[0]->{template} = $_[1] }
+sub get_template { $_[0]->{template} }
+sub set_interpolation { $_[0]->{is_interpolating} = $_[1] }
+sub get_interpolation { $_[0]->{is_interpolating} }
+sub set_interpolation_regex { $_[0]->{interpolation_regex} = $_[1] }
+sub get_interpolation_regex { $_[0]->{interpolation_regex} }
 
 =head2 findvalue
 
@@ -119,19 +153,69 @@ L</xpath_to_string>.
 
 =cut "
 
-sub findvalue {
-	if ($XML::XPathScript::xp->isa("XML::XPath")) {
-		return xpath_to_string(scalar $XML::XPathScript::xp->findvalue(@_));
+    my($caller, $file, $line) = caller;
+
+    $self->_export( $caller, $_, $prefix ) for @EXPORT_OK;
+
+    return;
+}
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+sub _export {
+    # heavily inspired by David James' Class::Exporter
+    # (which is a nice way to say I stole it and
+    # twisted it to my own perverted needs)
+    
+    no strict qw/ refs /;
+    no warnings qw/ uninitialized /;
+
+    my( $self, $caller, $export, $prefix ) = @_;
+
+    my $type = $export =~ s/^(\W)// ? $1 : '&';
+    my $export_sym = __PACKAGE__.'::'.$export;
+
+    #if ( $export =~ /^DO_/ ) {
+    #    #warn $caller.'::'.$prefix.$export;
+    #    eval "sub ${caller}::$prefix$export () { ". $export->() ." };";
+        #warn &{$caller.'::'.$prefix.$export};
+        #    \&XML::XPathScript::Processor::DO_SELF_AND_KIDS;
+    #    return;
+    #}
+
+    *{$caller.'::'.$prefix.$export} = $type eq '&' ? sub { $self->$export(@_) } 
+                                    : $type eq '$' ? \${$export_sym} 
+                                    : $type eq '@' ? \@{$export_sym} 
+                                    : $type eq '%' ? \%{$export_sym} 
+                                    : $type eq '*' ?  *{$export_sym} 
+                                    : croak "Can't export symbol: $type$export"
+                                    ;
+}
+
+##### stylesheet API #######################################
+
+sub findnodes {
+    my $self = shift;
+
+	if ($self->{parser} eq 'XML::XPath' ) {
+		return $self->{dom}->findnodes(@_);
 	}
 
 	my ($path, $context) = @_;
-	$context = $XML::XPathScript::xp if (!defined $context);
-	return xpath_to_string($context->findvalue($path));
+	$context = $self->{dom} if (!defined $context);
+	return $context->findnodes($path);
 }
 
-=head2 xpath_to_string
+sub findvalue {
+    my $self = shift;
+	if ( $self->{parser} eq 'XML::XPath' ) {
+		return $self->xpath_to_string(scalar $self->{dom}->findvalue(@_));
+	}
 
-    $string = xpath_to_string( $blob )
+	my ($path, $context) = @_;
+	$context = $self->{dom} if (!defined $context);
+	return $self->xpath_to_string($context->findvalue($path));
+}
 
 Converts any XPath data type, such as "Literal", "Numeric",
 "NodeList", text nodes, etc. into a pure Perl string (UTF-8 tainted
@@ -156,83 +240,27 @@ sub xpath_to_string {
 			$blob->string_value();
 }
 
-=head2 findvalues
-
-    @values = findvalues( $path )
-    @values = findvalues( $path, $context )
-
-Evaluates XPath expression $path as a nodeset expression, just like
-L</findnodes> would, but returns a list of UTF8-encoded XML strings
-instead of node objects or node sets. See also
-L<XML::XPathScript/XPath scalar return values considered harmful>.
-
-=cut "
 sub findvalues {
     my @nodes = findnodes(@_);
     map { findvalue('.', $_) } @nodes;
 }
 
-=head2 findnodes_as_string
-
-    @nodes = findnodes_as_string( $path )
-    @nodes = findnodes_as_string( $path, $context )
-
-Similar to L</findvalues> but concatenates the XML snippets.  The
-result obviously is not guaranteed to be valid XML.
-
-=cut "
-
 sub findnodes_as_string {
-	$XML::XPathScript::xp->findnodes_as_string( @_ ) 
+    my $self = shift;
+	$self->{dom}->findnodes_as_string( @_ ) 
 }
 
-=head2 matches
-
-    $bool = matches( $node, $path )
-    $bool = matches( $node, $path, $context )
-
-Returns true if the node matches the path (optionally in context $context)
-
-=cut "
-
 sub matches {
-	$XML::XPathScript::xp->matches(@_)
+    my $self = shift;
+	$self->{dom}->matches(@_)
 }
 
 sub set_namespace
 {
-	eval { $XML::XPathScript::xp->set_namespace(@_) };
+    my $self = shift;
+	eval { $self->{dom}->set_namespace(@_) };
 	warn "set_namespace failed: $@" if $@;
 }
-
-=head2 apply_templates
-
-    $transformed = apply_templates()
-    $transformed = apply_templates( $xpath )
-    $transformed = apply_templates( $xpath, $context )
-    $transformed = apply_templates( @nodes )
-
-This is where the whole magic in XPathScript resides: recursively
-applies the stylesheet templates to the nodes provided either
-literally (last invocation form) or through an XPath expression
-(second and third invocation forms), and returns a string
-concatenation of all results. If called without arguments at all,
-renders the whole document (same as C<< apply_templates("/") >>).
-
-Calls to I<apply_templates()> may occur both implicitly (at the top of
-the document, and for rendering subnodes when the templates choose to
-handle that by themselves), and explicitly (because C<testcode>
-routines require the XML::XPathScript::Processor to
-L</DO_SELF_AND_KIDS>).
-
-If appropriate care is taken in all templates (especially the
-C<testcode> routines and the I<text()> template), the string result of
-I<apply_templates> need not be UTF-8 (see
-L<XML::XPathScript/binmode>): it is thus possible to use XPathScript
-to produce output in any character set without an extra translation
-pass.
-
-=cut "
 
 sub apply_templates {
 	# catch the calls to apply_templates() 
@@ -263,17 +291,6 @@ sub apply_templates {
     return $retval;
 }
 
-=head2 call_template
-
-    call_template( $node, $t, $templatename )
-    
-B<EXPERIMENTAL> - allows C<testcode> routines to invoke a template by
-name, even if the selectors do not fit (e.g. one can apply template B
-to an element node of type A). Returns the stylesheeted string
-computed out of $node just like L</apply_templates> would.
-
-=cut "
-
 sub call_template {
     my ($self,$t,$template)=@_;
 
@@ -298,27 +315,10 @@ sub _apply_templates {
 	return join '', map translate_node($_), @_;
 }
 
-=head2  is_element_node 
-
-    $bool = is_element_node( $object )
-
-Returns true if $object is an element node, false otherwise.
-
-=cut
-
 sub is_element_node {
 	UNIVERSAL::isa( $_[0], 'XML::XPath::Node::Element' ) or
 		UNIVERSAL::isa( $_[0], 'XML::LibXML::Element' );
 }
-
-=head2 is_text_node
-
-    $bool = is_text_node( $object )
-
-Returns true if $object is a "true" text node (B<not> a comment node),
-false otherwise.
-
-=cut "
 
 sub is_text_node {
 	UNIVERSAL::isa($_[0], 'XML::XPath::Node::Text') or
@@ -328,62 +328,20 @@ sub is_text_node {
 		  ! UNIVERSAL::isa($_[0], 'XML::LibXML::Comment') );
 }
 
-=head2 is_comment_node
-
-    $bool = is_comment_node ( $object )
-
-Returns true if $object is an XML comment node, false otherwise.
-
-=cut "
-
 sub is_comment_node {
 		UNIVERSAL::isa( $_[0], 'XML::LibXML::Comment' ) or
 			UNIVERSAL::isa( $_[0], 'XML::XPath::Node::Comment' );
 }
-
-=head2 is_pi_node
-
-    $bool = is_pi_node( $object )
-
-Returns true iff $object is a processing instruction node.
-
-=cut "
 
 sub is_pi_node {
 	UNIVERSAL::isa($_[0], "XML::LibXML::PI") ||
 		UNIVERSAL::isa($_[0], "XML::XPath::Node::PI");
 }
 
-=head2 is_nodelist
-
-    $bool = is_nodelist( $object )
-
-Returns true if $node is a node list (as returned by L</findnodes> in
-scalar context), false otherwise.
-
-=cut "
-
 sub is_nodelist {
 	UNIVERSAL::isa($_[0], 'XML::XPath::NodeSet') or
 		UNIVERSAL::isa($_[0], 'XML::LibXML::NodeList');
 }
-
-=head2 is_utf_tainted
-
-    $bool = is_utf8_tainted( $string )
-
-Returns true if Perl thinks that $string is a string of characters (in
-UTF-8 internal representation), and false if Perl treats $string as a
-meaningless string of bytes.
-
-The dangerous part of the story is when concatenating a non-tainted
-string with a tainted one, as it causes the whole string to be
-re-interpreted into UTF-8, even the part that was supposedly
-meaningless character-wise, and that happens in a nonportable fashion
-(depends on locale and Perl version). So don't do that - and use this
-function to prevent that from happening.
-
-=cut "
 
 sub is_utf8_tainted {
     my ($string) = @_;
@@ -410,16 +368,6 @@ sub is_utf8_tainted {
             " (charlength = $charlength, bytelength=$bytelength)";
     }
 }
-
-=head2 get_xpath_of_node
-
- $xpath = get_xpath_of_node( $node )
-
-Returns an XPath string that points to $node, from the root. Useful to
-create error messages that point at some location in the original XML
-document.
-
-=cut "
 
 	sub get_xpath_of_node {
 		my $self =shift;
@@ -739,6 +687,377 @@ sub interpolate {
 }
 
 =pod
+
+=back
+
+=head1 NAME
+
+XML::XPathScript::Processor - XML::XPathScript transformation engine
+
+=head1 SYNOPSIS
+
+    # OO API
+    use XML::XPathScript::Processor;
+
+    my $processor = XML::XPathScript::Processor->new;
+    $processor->set_xml( $dom );
+    $processor->set_template( $template );
+
+    my $transformed = $processor->apply_templates( '//foo' );
+
+    # functional API
+    use XML::XPathScript::Processor;
+    XML::XPathscript::Processor->import_functional;
+
+    set_xml( $dom );
+    set_template( $template );
+    my $transformed = apply_templates( '//foo' );
+
+=head1 DESCRIPTION
+
+The I<XML::XPathScript> distribution offers an XML parser glue, an
+embedded stylesheet language, and a way of processing an XML document
+into a text output. This module implements the latter part: it takes
+an already filled out C<< $template >> template object and an already parsed
+XML document (which are usually both provided by the parent
+L<XML::XPathScript> object),
+and provides a simple API to implement stylesheets. 
+
+Typically, the processor is encapsulated within a L<XML::XPathScript>
+object. In which case, all the black magick is already done for you,
+and the only part you have to worry about is the XPathScript 
+language functions that XML::XPathScript::Processor imports into
+the stylesheet (see L</XPATHSCRIPT LANGUAGE FUNCTIONS>).
+
+It is also possible to use a processor on its own, without using a
+stylesheet. This might be desirable, for example, to use XPathScript
+within a different templating system, like L<Embperl> or L<HTML::Mason>.
+For a discussion on how to use this module in such cases, see section 
+L</Embedding XML::XPathScript::Processor in a Templating System>.
+
+=head2 Embedding XML::XPathScript::Processor in a Templating System
+
+It is possible to use the XPathScript processing engine without having 
+to rely on stylesheets. This can be desirable if one wishes to use XPathScript
+within a different templating system, like Embperl or HTML::Mason. To do 
+so, one simply has to directly use XML::XPathScript::Processor. 
+
+Example, with HTML::Mason:
+
+    <%perl>
+        use XML::XPathScript::Processor;
+        use XML::XPathScript::Template;
+        use XML::LibXML;
+
+        my $processor = XML::XPathScript::Processor->new;
+
+        # load the dom
+        my $dom = XML::LibXML->new->parse_string( <<'END_XML' );
+            <orchid>
+                <genus>Miltonesia</genus>
+                <species>spectabilis</species>
+                <variety>moreliana</variety>
+            </orchid>
+    END_XML
+        $processor->set_dom( $dom );
+
+        # load the template
+        my $template = XML::XPathScript::Template->new;
+        $processor->set_template( $template );
+        $template->set( orchid => { showtag => 0 } );
+        $template->set( genus  => { rename => 'i' } );
+        $template->set( species  => { rename => 'i' } );
+        $template->set( variety  => { pre => 'var. '  } );
+    </%perl>
+
+    <p>This orchid is a <% $processor->apply_templates( '//orchid' )  %>.</p>
+
+Same example, with Embperl:
+
+    [!
+        use XML::XPathScript::Processor;
+        use XML::XPathScript::Template;
+        use XML::LibXML;
+    !]
+
+    [-
+        $processor = XML::XPathScript::Processor->new;
+
+        # load the dom
+        $dom = XML::LibXML->new->parse_string( <<'END_XML' );
+            <orchid>
+                <genus>Miltonesia</genus>
+                <species>spectabilis</species>
+                <variety>moreliana</variety>
+            </orchid>
+    END_XML
+        $processor->set_dom( $dom );
+
+        # load the template
+        $template = XML::XPathScript::Template->new;
+        $processor->set_template( $template );
+        $template->set( orchid => { showtag => 0 } );
+        $template->set( genus  => { rename => 'i' } );
+        $template->set( species  => { rename => 'i' } );
+        $template->set( variety  => { pre => 'var. '  } );
+    -]
+
+    <p>This orchid is a [+ $processor->apply_templates( '//orchid' ) +].</p>
+
+
+=head1 XPATHSCRIPT LANGUAGE FUNCTIONS
+
+This section covers the utility functions that are available 
+within a stylesheet. 
+
+=over
+
+=item processor
+
+    $processor = processor()
+
+Returns the processor object. Useful for when XML::XPathScript::Processor is
+used in functional mode.
+
+=item set_dom, get_dom
+
+    set_dom( $dom )
+    $dom = get_dom
+
+Accessors for the dom the processor is to transform. I<$dom> must be
+an XML::LibXML or XML::XPath document or element.
+
+=item get_parser
+
+    $parser = get_parser()
+
+Returns the parser associated with the loaded dom as a string ( 'XML::LibXML'
+or 'XML::XPath'), or B<undef> if no dom has been loaded yet.
+
+=item enable_binmode
+
+    enable_binmode()
+
+Enables binmode for the processor's output. See L<XML::XPathScript/binmode>.
+
+=item get_binmode
+
+    $mode = get_binmode()
+
+Returns true if binmode has been enabled, false otherwise.
+
+=item set_template, get_template
+
+    set_template( $t )
+    $t = get_template
+
+Accessors for the processor's template. The template I<$t> must be an
+L<XML::XPathScript::Template> object.
+
+=item set_interpolation, get_interpolation
+
+    set_interpolation( $bool )
+    $bool = get_interpolation()
+
+Sets / accesses the interpolation mode (on or off) of the processor.
+
+=item set_interpolation_regex, get_interpolation_regex
+
+Sets / accesses the interpolation regex used by the processor.
+
+=item findnodes
+
+   @nodes = findnodes( $path )
+   @nodes = findnodes( $path, $context ) 
+
+Returns a list of nodes found by XPath expression $path, optionally
+using $context as the context node (if not provided,
+defaults to the root node of the document).  
+In scalar context returns a NodeSet object (but
+you do not want to do that, see L<XML::XPathScript/XPath scalar return
+values considered harmful>).
+
+=item findvalue
+
+    $value = findvalue( $path )
+    $value = findvalue( $path, $context )
+
+Evaluates XPath expression $path and returns the resulting value. If
+the path returns an object, 
+stringification is done automatically for you using
+L</xpath_to_string>.
+
+=item xpath_to_string
+
+    $string = xpath_to_string( $blob )
+
+Converts any XPath data type, such as "Literal", "Numeric",
+"NodeList", text nodes, etc. into a pure Perl string (UTF-8 tainted
+too - see L</is_utf8_tainted>). Scalar XPath types are interpreted in
+the straightforward way, DOM nodes are stringified into conform XML,
+and NodeList's are stringified by concatenating the stringification of
+their members (in the latter case, the result obviously is not
+guaranteed to be valid XML).
+
+See L<XML::XPathScript/XPath scalar return values considered harmful>
+on why this is useful.
+
+=item findvalues
+
+    @values = findvalues( $path )
+    @values = findvalues( $path, $context )
+
+Evaluates XPath expression $path as a nodeset expression, just like
+L</findnodes> would, but returns a list of UTF8-encoded XML strings
+instead of node objects or node sets. See also
+L<XML::XPathScript/XPath scalar return values considered harmful>.
+
+=item findnodes_as_string
+
+    @nodes = findnodes_as_string( $path )
+    @nodes = findnodes_as_string( $path, $context )
+
+Similar to L</findvalues> but concatenates the XML snippets.  The
+result obviously is not guaranteed to be valid XML.
+
+=item matches
+
+    $bool = matches( $node, $path )
+    $bool = matches( $node, $path, $context )
+
+Returns true if the node matches the path (optionally in context $context)
+
+=item apply_templates
+
+    $transformed = apply_templates()
+    $transformed = apply_templates( $xpath )
+    $transformed = apply_templates( $xpath, $context )
+    $transformed = apply_templates( @nodes )
+
+This is where the whole magic in XPathScript resides: recursively
+applies the stylesheet templates to the nodes provided either
+literally (last invocation form) or through an XPath expression
+(second and third invocation forms), and returns a string
+concatenation of all results. If called without arguments at all,
+renders the whole document (same as C<< apply_templates("/") >>).
+
+Calls to I<apply_templates()> may occur both implicitly (at the top of
+the document, and for rendering subnodes when the templates choose to
+handle that by themselves), and explicitly (because C<testcode>
+routines require the XML::XPathScript::Processor to
+L</DO_SELF_AND_KIDS>).
+
+If appropriate care is taken in all templates (especially the
+C<testcode> routines and the I<text()> template), the string result of
+I<apply_templates> need not be UTF-8 (see
+L<XML::XPathScript/binmode>): it is thus possible to use XPathScript
+to produce output in any character set without an extra translation
+pass.
+
+=item call_template
+
+    call_template( $node, $t, $templatename )
+    
+B<EXPERIMENTAL> - allows C<testcode> routines to invoke a template by
+name, even if the selectors do not fit (e.g. one can apply template B
+to an element node of type A). Returns the stylesheeted string
+computed out of $node just like L</apply_templates> would.
+
+=item  is_element_node 
+
+    $bool = is_element_node( $object )
+
+Returns true if $object is an element node, false otherwise.
+
+=item is_text_node
+
+    $bool = is_text_node( $object )
+
+Returns true if $object is a "true" text node (B<not> a comment node),
+false otherwise.
+
+=item is_comment_node
+
+    $bool = is_comment_node ( $object )
+
+Returns true if $object is an XML comment node, false otherwise.
+
+=item is_pi_node
+
+    $bool = is_pi_node( $object )
+
+Returns true iff $object is a processing instruction node.
+
+=item is_nodelist
+
+    $bool = is_nodelist( $object )
+
+Returns true if $node is a node list (as returned by L</findnodes> in
+scalar context), false otherwise.
+
+=item is_utf_tainted
+
+    $bool = is_utf8_tainted( $string )
+
+Returns true if Perl thinks that $string is a string of characters (in
+UTF-8 internal representation), and false if Perl treats $string as a
+meaningless string of bytes.
+
+The dangerous part of the story is when concatenating a non-tainted
+string with a tainted one, as it causes the whole string to be
+re-interpreted into UTF-8, even the part that was supposedly
+meaningless character-wise, and that happens in a nonportable fashion
+(depends on locale and Perl version). So don't do that - and use this
+function to prevent that from happening.
+
+=item get_xpath_of_node
+
+ $xpath = get_xpath_of_node( $node )
+
+Returns an XPath string that points to $node, from the root. Useful to
+create error messages that point at some location in the original XML
+document.
+
+=for comment
+    =head2 Functional and OO APIs
+    If used within a stylesheet, 
+
+=back    
+
+=head1 METHODS
+
+=over
+
+=item import_functional
+
+    XML::XPathScript::Processor->import_functional( $prefix )
+    $processor->import_functional( $prefix )
+
+Imports the stylesheet utility functions into the current 
+namespace. If I<$prefix> is given, is it prepended to the
+function names (i.e., if I<$prefix> is 'B<xps_>',
+B<apply_templates> will become B<xps_apply_templates>).
+
+If the first form is used, a new processor object is secretly
+created and assigned to the namespace (it can be retrieved using 
+the function B<processor()>). The second form uses the already
+existing I<$processor> as the underlaying processor object for
+the namespace.
+
+Example:
+
+    use XML::XPathScript::Processor;
+
+    # import the goodies in the current namespace
+    XML::XPathScript::Processor->import_functional;
+
+    # set the document and template we want to use
+    set_dom( $xml_dom );
+    set_template( $template );
+
+    my @foo_nodes = findnodes( '//foo' );
+    # print the last foo, transformed
+    print apply_templates( $foo_nodes[-1] );
 
 =back
 
