@@ -208,31 +208,22 @@ sub set_namespace
 
 sub apply_templates {
     my $self = shift;
+
+    my $params = ref( $_[-1] ) eq 'HASH' ? pop @_ : {} ;
+
 	# catch the calls to apply_templates() 
-	return $self->apply_templates( $self->findnodes('/') ) unless @_;
+    @_ = $self->findnodes('/') unless @_;
 
-    my ($arg1, @args) = @_;
-
-    unless( ref($arg1) ) { # called with a path to find
-
-		my $nodes = $self->findnodes($arg1, @args);
-		return $nodes ? $self->apply_templates($nodes) : undef;
+    unless( ref $_[0] ) { # called with a path to find
+		@_ = $self->findnodes( @_ );
     }
 
-    my $retval = '';
-	if ( $self->is_nodelist($arg1))
-	{
-        foreach my $node ($arg1->get_nodelist) {
-            $retval .= $self->translate_node($node);
-        }
-    }
-    else {
-        $retval .= $self->translate_node($arg1);
-        foreach my $node (@args) {
-            $retval .= $self->translate_node($node);
-        }
-    }
+    my $retval;
 
+    $retval .= $self->translate_node( $_, $params ) 
+        for $self->is_nodelist($_[0]) ? $_[0]->get_nodelist
+                                      : @_
+                                      ;
     return $retval;
 }
 
@@ -257,8 +248,9 @@ sub call_template {
 
 sub _apply_templates {
     my $self = shift;
+    my $params = pop;
 	no warnings 'uninitialized';
-	return join '', map $self->translate_node($_), @_;
+	return join '', map $self->translate_node($_,$params), @_;
 }
 
 sub is_element_node {
@@ -380,32 +372,25 @@ sub is_utf8_tainted {
 ########################## End of exportable stuff ####################
 
 sub translate_node {
-    my $self = shift;
-    my $node = shift;
+    my( $self, $node, $params ) = @_;
 
 	if( UNIVERSAL::isa($node,"XML::LibXML::Document") ) 
 	{
 		$node = $node->documentElement;
 	}
 
-	my $retval;
-	if ( $self->is_comment_node($node) ) {
-		$retval = $self->translate_comment_node( $node );
-	} elsif ( $self->is_text_node($node) )
-	{
-		$retval = $self->translate_text_node( $node );
-	} elsif ( $self->is_element_node( $node )) {
-		$retval = $self->translate_element_node( $node );
-	} elsif ( $self->is_pi_node($node) ) {
-		# don't output top-level PI's
-		$retval = eval {
-			if ($node->getParentNode->getParentNode) {
-				return $node->toString;
-			} else { '' }
-		} || '';
-	} else {
-		$retval = $node->toString;
-	};
+	my $retval = $self->is_comment_node($node) 
+                        ?  $self->translate_comment_node( $node, $params )
+               : $self->is_text_node($node)
+                        ? $self->translate_text_node( $node, $params )
+               : $self->is_element_node( $node )
+                        ? $self->translate_element_node( $node, $params )
+               : $self->is_pi_node($node)
+                        ? eval { if ($node->getParentNode->getParentNode) {
+                                    return $node->toString;
+                                 } else { '' }  }
+               : $node->toString
+               ;
 
 	if ( $self->{binmode} &&
 		$self->is_utf8_tainted($retval)) {
@@ -422,6 +407,7 @@ sub translate_node {
 sub translate_text_node {
     my $self = shift;	
 	my $node = shift;
+    my $params = shift;
     my $translations = $self->{template};
 
 	my $trans = $translations->{'#text'} || $translations->{'text()'};
@@ -437,7 +423,7 @@ sub translate_text_node {
 	if (my $code = $trans->{testcode}) 
 	{
 
-		$action = $code->($node, $t);
+		$action = $code->( $node, $t, $params );
     }
 		
 	no warnings 'uninitialized';
@@ -450,8 +436,7 @@ sub translate_text_node {
 }
 
 sub translate_element_node {
-    my $self = shift;
-	my $node = shift;
+    my( $self, $node, $params ) = @_;
     my $translations = $self->{template};
 
     my $node_name = 
@@ -483,10 +468,11 @@ sub translate_element_node {
     unless( $trans ) {
         # no specific and no generic? Okay, okay, return as is...
         no warnings qw/ uninitialized /;
-        return $self->start_tag($node) . 
-                $self->_apply_templates( ( $self->{parser} eq 'XML::LibXML' ) ? 
-                                    $node->childNodes : $node->getChildNodes) .
-                $self->end_tag($node);	
+        my @kids = $self->{parser} eq 'XML::LibXML'
+                        ? $node->childNodes : $node->getChildNodes ;
+        return $self->start_tag($node)  
+               . $self->_apply_templates( @kids, $params )
+               . $self->end_tag($node);	
 		
     }
 
@@ -498,7 +484,7 @@ sub translate_element_node {
     my $action = $trans->{action};
     
 	if ($trans->{testcode}) {
-        $action = $trans->{testcode}->($node, $t);
+        $action = $trans->{testcode}->($node, $t, $params );
     }
 
 	no warnings 'uninitialized';
@@ -538,7 +524,7 @@ sub translate_element_node {
 		$middle .= $self->interpolate($node, $trans->{prechild}) 
 			if $self->is_element_node( $kid );
 
-		$middle .= $self->_apply_templates($kid);
+		$middle .= $self->apply_templates($kid, $params );
 
 		$middle .= $self->interpolate($node, $trans->{postchild})
 			if $self->is_element_node( $kid );
@@ -550,6 +536,7 @@ sub translate_element_node {
 sub translate_comment_node {
     my $self = shift;
 	my $node = shift;
+    my $params = shift;
     my $translations = $self->{template};
 
 	my $trans = $translations->{'#comment'} || $translations->{'comment()'};
@@ -562,7 +549,7 @@ sub translate_comment_node {
 	if (my $code = $trans->{testcode}) 
 	{
 		my $t = {};
-		my $retval = $code->($node, $t);
+		my $retval = $code->( $node, $t, $params );
 		if ($retval and %$t) {
 			foreach my $tkey (keys %$t) {
 				$trans->{$tkey} = $t->{$tkey};
@@ -884,10 +871,8 @@ Returns true if the node matches the path (optionally in context $context)
 
 =item apply_templates
 
-    $transformed = apply_templates()
-    $transformed = apply_templates( $xpath )
-    $transformed = apply_templates( $xpath, $context )
-    $transformed = apply_templates( @nodes )
+    $transformed = apply_templates( $xpath, $context, \%params )
+    $transformed = apply_templates( @nodes, \$params )
 
 This is where the whole magic in XPathScript resides: recursively
 applies the stylesheet templates to the nodes provided either

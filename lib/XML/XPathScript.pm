@@ -134,15 +134,13 @@ sub interpolation {
 sub interpolating {
     my $self=shift;
 
-    if ( my $inter = shift ) {
+    if ( @_ ) {
         $self->processor->set_interpolation( 
-            $self->{interpolating} = $inter 
+            $self->{interpolating} = shift
         );
     }
 
-    return exists $self->{interpolating} ?
-			$self->{interpolating} :
-		    !$XML::XPathScript::DoNotInterpolate; # Obsolete, for compatibility:
+    return $self->{interpolating} || 0;
 }
 
 =head2 interpolation_regex
@@ -234,7 +232,7 @@ preprocess time.
 
 =cut "
 
-use vars qw( $XML_parser $DoNotInterpolate $debug_level );
+use vars qw( $XML_parser $debug_level );
 
 use Symbol;
 use File::Basename;
@@ -259,9 +257,6 @@ END_USE
 die "parser $XML_parser unknown\n" unless $use_parser{$XML_parser};
 eval $use_parser{$XML_parser}.";1" 
     or die "couldn't import $XML_parser";
-
-# By default, we interpolate
-$DoNotInterpolate = 0;
 
 # internal variable for debugging information. 
 # 0 is total silence and 10 is complete verbiage
@@ -912,6 +907,7 @@ sub compile {
 		    	my \$t = \$processor->{template} 
                             = XML::XPathScript::Template->new();
                 my \$template = \$t;
+                local \$XML::XPathScript::trans = \$t;
                 #\$processor->{doc} = \$self->{dom};
                 #\$processor->{parser} = '$XML_parser';
                 #\$processor->{binmode} = \$self->{binmode};

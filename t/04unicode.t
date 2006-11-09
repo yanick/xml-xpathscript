@@ -31,7 +31,7 @@ sub ok_utf8_tainted {
         ok(1, 0, "$comment - Oops, Convert::Scalar disagrees! (error in the test suite)");
         return;
     }
-    ok(!!is_utf8_tainted($string), 1, $comment);
+    ok(!! XML::XPathScript::Processor->is_utf8_tainted($string), 1, $comment);
 }
 
 sub ok_not_utf8_tainted {
@@ -40,7 +40,7 @@ sub ok_not_utf8_tainted {
         ok(1, 0, "$comment - Oops, Convert::Scalar disagrees! (error in the test suite)");
         return;
     }
-    ok(!!is_utf8_tainted($string), '', $comment);
+    ok(!!XML::XPathScript::Processor->is_utf8_tainted($string), '', $comment);
 }
 
 ok_not_utf8_tainted(" ", "typical plain string");
