@@ -871,15 +871,22 @@ Returns true if the node matches the path (optionally in context $context)
 
 =item apply_templates
 
+    $transformed = apply_templates( @nodes, \%params )
     $transformed = apply_templates( $xpath, $context, \%params )
-    $transformed = apply_templates( @nodes, \$params )
+    $transformed = apply_templates( $xpath, \%params )
 
 This is where the whole magic in XPathScript resides: recursively
 applies the stylesheet templates to the nodes provided either
-literally (last invocation form) or through an XPath expression
+literally (first invocation form) or through an XPath expression
 (second and third invocation forms), and returns a string
-concatenation of all results. If called without arguments at all,
-renders the whole document (same as C<< apply_templates("/") >>).
+concatenation of all results. 
+
+If called without nodes or an xpath. 
+renders the whole document (same as C<< apply_templates('/') >>).
+
+An hash of parameters, I<%params> can also be passed to 
+B<apply_templates>, which will be passed to any
+B<testcode> function called from the template. 
 
 Calls to I<apply_templates()> may occur both implicitly (at the top of
 the document, and for rendering subnodes when the templates choose to

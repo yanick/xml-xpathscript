@@ -215,9 +215,10 @@ Example:
 =head3 testcode
 
 A reference to a subroutine that will be executed upon visiting 
-the tag. When invoked, the subroutine is passed two parameters: the 
-current node's object and a tag object holding all the attributes 
-of the visited tag. Modifications to the tag object only affect 
+the tag. When invoked, the subroutine is passed three parameters: the 
+current node's object, a tag object holding all the attributes 
+of the visited tag, and the reference to a hash of parameters given
+to B<apply_templates>. Modifications to the tag object only affect 
 the transformation of the current node. To change the transformation
 of all subsequent tag of the same type, use the stylesheet $template 
 instead.
@@ -231,8 +232,11 @@ Example:
         $template->set( '*' => { testcode => \&uppercase_tag } );
 
         sub uppercase_tag {
-            my( $n, $tag ) = @_;
-            my $name = uc $n->getName;
+            my( $n, $tag, $params ) = @_;
+            my $name = $params->{case} eq 'lower' ? lc $n->getName
+                     : $params->{case} eq 'upper' ? uc $n->getName
+                     :                              $n->getName
+                     ;
             $tag->set({ pre => "<$name>",
                         post => "</$name>", });
     
