@@ -475,8 +475,9 @@ sub translate_element_node {
                . $self->end_tag($node);	
 		
     }
-
-    my $dokids = 1;  # by default we do the kids
+                        # by default we do the kids
+                        # unless we use insteadofchildren
+    my $dokids = $trans->{insteadofchildren} ? 0 : 1;  
     my $search;
     my $t = new XML::XPathScript::Template::Tag;
     $t->{$_} = $trans->{$_} for keys %{$trans};
@@ -488,16 +489,19 @@ sub translate_element_node {
     }
 
 	no warnings 'uninitialized';
-    if( defined( $action) and $action !~ /^-?\d+/ ) {
-        # ah, an xpath expression
-        $dokids = 0;
-        $search = $action;
-    }
-    elsif ( defined($action) and $action == DO_NOT_PROCESS() ) {
-        return;
-    }
-    elsif ($action == DO_SELF_ONLY() ) {
-        $dokids = 0;
+    return if $action =~ /^-?\d+$/ and $action == DO_NOT_PROCESS();
+
+    # we don't care about the return value of 
+    # testcode if we use insteadofchildren
+    unless ( $trans->{insteadofchildren} ) {
+        if( defined( $action) and $action !~ /^-?\d+/ ) {
+            # ah, an xpath expression
+            $dokids = 0;
+            $search = $action;
+        }
+        elsif ($action == DO_SELF_ONLY() ) {
+            $dokids = 0;
+        }
     }
 
     # default: process children too.
@@ -516,19 +520,30 @@ sub translate_element_node {
 	$post .= $self->interpolate($node, $t->{post});
 
 	my $middle;
-	my @kids = $dokids ? $node->getChildNodes()
-			 : $search ? $node->findnodes($search)
-			 : ();
-	for my $kid ( @kids ) 
-	{
-		$middle .= $self->interpolate($node, $trans->{prechild}) 
-			if $self->is_element_node( $kid );
 
-		$middle .= $self->apply_templates($kid, $params );
+    if ( my $ioc = $trans->{insteadofchildren} ) {
+        if ( $has_kids ) {
+            $middle = ref( $ioc ) eq 'CODE'  ? $ioc->( $node, $t, $params ) 
+                                             : $ioc 
+                                             ;
+        }
+    }
+    else {
+        my @kids = $dokids ? $node->getChildNodes()
+                 : $search ? $node->findnodes($search)
+                 : ()
+                 ;
+        for my $kid ( @kids ) 
+        {
+            $middle .= $self->interpolate($node, $trans->{prechild}) 
+                if $self->is_element_node( $kid );
 
-		$middle .= $self->interpolate($node, $trans->{postchild})
-			if $self->is_element_node( $kid );
-	}
+            $middle .= $self->apply_templates($kid, $params );
+
+            $middle .= $self->interpolate($node, $trans->{postchild})
+                if $self->is_element_node( $kid );
+        }
+    }
         
 	return $pre . $middle . $post
 }
