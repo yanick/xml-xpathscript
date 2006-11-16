@@ -4,7 +4,7 @@ use strict;
 package XML::XPathScript::Stylesheet::DocBook2LaTeX;
 
 use base qw/ XML::XPathScript::Template /;
-use XML::XPathScript::Processor;
+use XML::XPathScript::Processor qw/ DO_SELF_ONLY /;
 use Carp;
 
 our $numbered_sections = 1;

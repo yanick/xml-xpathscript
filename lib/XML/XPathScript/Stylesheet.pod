@@ -255,6 +255,55 @@ Example:
     # <bar abc="def">...</bar>
     <% $t->set( foo => { rename => 'bar' } ); %>
 
+=head3 insteadofchildren
+
+Is printed instead of the node's children. Does 
+nothing if the node has no children. 
+
+I<insteadofchildren> can be a scalar, or can be a a reference to
+a function. In the latter case, the return value of the 
+function is printed.
+
+Note that I<insteadofchildren> acts after I<action> and I<testcode>. 
+Which means that if I<testcode> 
+returns B<DO_SELF_ONLY>, B<DO_NOT_PROCESS>
+or an xpath expression matching none of the node's children,
+I<insteadofchildren> is not triggered.
+
+Example of use with a scalar:
+
+    <%
+        $template->set( foo => { 
+            showtag => 1,
+            insteadofchildren => '[ ... children ... ]',
+        } );
+    %>
+
+    <%~ //foo %>        # yields '<foo>[ ... children ... ]</foo>'
+                        # if the node had children, and
+                        # '<foo></foo>' if not
+
+
+Example if use with a function ref
+
+    <%
+        $template->set( foo => { 
+            showtag => 1,
+            insteadofchildren => \&count_children,
+        } );
+
+        sub count_children {
+            my( $n, $t, $params ) = @_;
+            my @children = $n->findnodes( 'child:*' );
+            return 'node has '.@children.' children';
+        }
+    %>
+
+    <%~ //foo %>        # yields '<foo>node has X children</foo>'
+                        # if the node has at least 1 child 
+
+
+
 =head1 STYLESHEET WRITING GUIDELINES
 
 Here are a few things to watch out for when coding stylesheets.

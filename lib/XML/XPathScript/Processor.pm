@@ -476,8 +476,7 @@ sub translate_element_node {
 		
     }
                         # by default we do the kids
-                        # unless we use insteadofchildren
-    my $dokids = $trans->{insteadofchildren} ? 0 : 1;  
+    my $dokids = 1;  
     my $search;
     my $t = new XML::XPathScript::Template::Tag;
     $t->{$_} = $trans->{$_} for keys %{$trans};
@@ -491,30 +490,27 @@ sub translate_element_node {
 	no warnings 'uninitialized';
     return if $action =~ /^-?\d+$/ and $action == DO_NOT_PROCESS();
 
-    # we don't care about the return value of 
-    # testcode if we use insteadofchildren
-    unless ( $trans->{insteadofchildren} ) {
-        if( defined( $action) and $action !~ /^-?\d+/ ) {
-            # ah, an xpath expression
-            $dokids = 0;
-            $search = $action;
-        }
-        elsif ($action == DO_SELF_ONLY() ) {
-            $dokids = 0;
-        }
+    if( defined( $action) and $action !~ /^-?\d+/ ) {
+        # ah, an xpath expression
+        $dokids = 0;
+        $search = $action;
+    }
+    elsif ($action == DO_SELF_ONLY() ) {
+        $dokids = 0;
     }
 
-    # default: process children too.
-	my $has_kids = $self->{parser} eq 'XML::LibXML' ? 
-						$node->hasChildNodes() : $node->getFirstChild();
-	
+    my @kids = $dokids ? $node->getChildNodes()
+             : $search ? $node->findnodes($search)
+             : ()
+             ;
+
     my $pre = $self->interpolate($node, $t->{pre});
 	$pre .= $self->start_tag( $node , $t->{rename}) if $t->{showtag};
 	$pre .= $t->{intro};
-	$pre .= $self->interpolate($node, $t->{prechildren}) if $has_kids;
+	$pre .= $self->interpolate($node, $t->{prechildren}) if @kids;
 	
 	my $post;
-	$post .= $self->interpolate($node, $t->{postchildren}) if $has_kids;
+	$post .= $self->interpolate($node, $t->{postchildren}) if @kids;
 	$post .= $t->{extro};
 	$post .= $self->end_tag( $node, $t->{rename} ) if  $t->{showtag};
 	$post .= $self->interpolate($node, $t->{post});
@@ -522,17 +518,13 @@ sub translate_element_node {
 	my $middle;
 
     if ( my $ioc = $trans->{insteadofchildren} ) {
-        if ( $has_kids ) {
+        if ( @kids ) {
             $middle = ref( $ioc ) eq 'CODE'  ? $ioc->( $node, $t, $params ) 
                                              : $ioc 
                                              ;
         }
     }
     else {
-        my @kids = $dokids ? $node->getChildNodes()
-                 : $search ? $node->findnodes($search)
-                 : ()
-                 ;
         for my $kid ( @kids ) 
         {
             $middle .= $self->interpolate($node, $trans->{prechild}) 
