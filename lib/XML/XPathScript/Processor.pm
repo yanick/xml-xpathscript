@@ -341,12 +341,13 @@ sub is_utf8_tainted {
 		# ugly hacks all over in this function, because the quirky
 		# refcount-proof aliasing (i.e. XML::XPath::Element versus
 		# XML::XPath::ElementImpl) in XML::XPath gets in the way badly
-		$node = $$node if
-			$node->isa( 'XML::XPath::Node::Element' ) and not $self->isa( 'XML::XPath::Node::ElementImpl' );
+		$node = $$node if $node->isa( 'XML::XPath::Node::Element' ) 
+                      and not $self->isa( 'XML::XPath::Node::ElementImpl' ) 
+                      and $node =~ /SCALAR/;
 
-		my $parent = ( $node->can("parentNode") ?
-					$node->parentNode() :
-					$node->getParentNode() );
+		my $parent = $node->can("parentNode") ?  $node->parentNode() 
+                                              :  $node->getParentNode()
+                                              ;
 
 		return "" unless defined $parent;
 
