@@ -81,6 +81,7 @@ my $build = $class->new
                 'IO::File' 	 	 => 0,
                 'Data::Dumper'   => 0,
                 'Scalar::Util'   => 0,
+                'Readonly'       => 0,
                },
    build_requires => {
                       "File::Find" => 0,

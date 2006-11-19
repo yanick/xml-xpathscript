@@ -2,7 +2,7 @@
 
 use strict;
 use Test;
-use XML::XPathScript::Processor;
+use XML::XPathScript::Processor qw/ is_utf8_tainted /;
 
 BEGIN
 {
@@ -31,7 +31,7 @@ sub ok_utf8_tainted {
         ok(1, 0, "$comment - Oops, Convert::Scalar disagrees! (error in the test suite)");
         return;
     }
-    ok(!!is_utf8_tainted($string), 1, $comment);
+    ok(!! XML::XPathScript::Processor->is_utf8_tainted($string), 1, $comment);
 }
 
 sub ok_not_utf8_tainted {
@@ -40,7 +40,7 @@ sub ok_not_utf8_tainted {
         ok(1, 0, "$comment - Oops, Convert::Scalar disagrees! (error in the test suite)");
         return;
     }
-    ok(!!is_utf8_tainted($string), '', $comment);
+    ok(!!XML::XPathScript::Processor->is_utf8_tainted($string), '', $comment);
 }
 
 ok_not_utf8_tainted(" ", "typical plain string");
@@ -102,7 +102,7 @@ ok_not_utf8_tainted($isostring, "real-world Latin1 text");
 
 my $style = <<'STYLE';
 <%
-XML::XPathScript->current()->binmode();
+enable_binmode();
 sub utf8tolatin1 {
 	my $orig=shift;
 	$orig=$orig->string_value() if (ref($orig) =~ m/^XML::/);

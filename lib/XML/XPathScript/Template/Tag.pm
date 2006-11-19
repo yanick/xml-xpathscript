@@ -6,11 +6,12 @@ use warnings;
 use Carp;
 use Scalar::Util qw/ reftype /;
 
-our $VERSION = '1.46';
+our $VERSION = '1.46_01';
 
 our @ALLOWED_ATTRIBUTES =  qw/ pre post testcode showtag
                                intro extro prechildren postchildren
-                               prechild postchild action rename /;
+                               prechild postchild action rename 
+                               insteadofchildren /;
 
 sub new {
    my( $class ) = @_;

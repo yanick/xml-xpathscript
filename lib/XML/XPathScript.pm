@@ -4,7 +4,7 @@ use strict;
 use warnings;
 use Carp;
 
-# $Revision: 517 $ - $Date: 2006-08-22T17:32:37.165669Z $
+# $Revision: 877 $ - $Date: 2006-11-19T21:27:04.722982Z $
 
 =pod 
 
@@ -134,11 +134,13 @@ sub interpolation {
 sub interpolating {
     my $self=shift;
 
-    $self->{interpolating}=shift if (@_);
+    if ( @_ ) {
+        $self->processor->set_interpolation( 
+            $self->{interpolating} = shift
+        );
+    }
 
-    return exists $self->{interpolating} ?
-			$self->{interpolating} :
-		    !$XML::XPathScript::DoNotInterpolate; # Obsolete, for compatibility:
+    return $self->{interpolating} || 0;
 }
 
 =head2 interpolation_regex
@@ -162,7 +164,11 @@ Example:
 sub interpolation_regex {
     my $self = shift;
 
-    $self->{interpolation_regex} = shift if @_;
+    if ( my $regex = shift ) {
+        $self->processor->set_interpolation_regex( 
+            $self->{interpolation_regex} = $regex
+        )
+    }
 
     return $self->{interpolation_regex};
 }
@@ -182,6 +188,7 @@ Unicode mess>.
 sub binmode {
     my ($self)=@_;
     $self->{binmode}=1;
+    $self->{processor}->enable_binmode;
     binmode ORIGINAL_STDOUT if (! defined $self->{printer});
     return;
 }
@@ -225,14 +232,14 @@ preprocess time.
 
 =cut "
 
-use vars qw( $XML_parser $DoNotInterpolate $debug_level );
+use vars qw( $XML_parser $debug_level );
 
 use Symbol;
 use File::Basename;
 use XML::XPathScript::Processor;
 use XML::XPathScript::Template;
 
-our $VERSION = '1.46';
+our $VERSION = '1.46_01';
 
 $XML_parser = 'XML::LibXML';
 
@@ -250,9 +257,6 @@ END_USE
 die "parser $XML_parser unknown\n" unless $use_parser{$XML_parser};
 eval $use_parser{$XML_parser}.";1" 
     or die "couldn't import $XML_parser";
-
-# By default, we interpolate
-$DoNotInterpolate = 0;
 
 # internal variable for debugging information. 
 # 0 is total silence and 10 is complete verbiage
@@ -331,20 +335,26 @@ sub new {
     my %params = @_;
     my $self = \%params;
     bless $self, $class;
+    $self->{processor} = XML::XPathScript::Processor->new;
     $self->set_xml( $params{xml} ) if $params{xml};
-	$self->{interpolation_regex} ||= qr/{(.*?)}/;
+
+    $self->interpolation( exists $params{interpolation} 
+                               ? $params{interpolation} : 1 );
+
+    $self->interpolation_regex( $params{interpolation_regex} 
+                                || qr/{(.*?)}/ );
+
+
 
     if (  $XML::XPathScript::XML_parser eq 'XML::XPath' ) {
-        eval <<END_EVAL;
-			use XML::XPath 1.0;
-			use XML::XPath::XMLParser;
-			use XML::XPath::Node;
-			use XML::XPath::NodeSet;
-			use XML::Parser;
-END_EVAL
+        require XML::XPath;
+        require XML::XPath::XMLParser;
+        require XML::XPath::Node;
+        require XML::XPath::NodeSet;
+        require XML::Parser;
     } 
     else {
-        eval 'use XML::LibXML';
+        require XML::LibXML;
     }
 
     croak $@ if $@;
@@ -415,7 +425,15 @@ sub set_xml {
 
     $self->{xml} = $xml;
 
-    return ref $xml ? $self->_set_xml_ref() : $self->_set_xml_scalar();
+    my $retval = ref $xml ? $self->_set_xml_ref() 
+                          : $self->_set_xml_scalar()
+                          ;
+
+    $self->{processor}->set_dom( $self->{dom} );
+    
+    return $retval;
+
+    # FIXME
 
 my $xpath;
 
@@ -811,9 +829,9 @@ sub include_file {
 
 =pod "
 
-=item I<compile()>
+=head2 I<compile()>
 
-=item I<compile(varname1, varname2,...)>
+=head2 I<compile(varname1, varname2,...)>
 
 Compiles the stylesheet set at I<new()> time and returns an anonymous
 CODE reference. 
@@ -868,6 +886,13 @@ sub compile {
     my $package=gen_package_name();
 
 	my $extravars = join ',', @extravars;
+
+    my $processor = $self->{processor};
+
+    # needs to be eval'ed first for the constants
+    # to be seen
+    eval "package $package;"
+        ."\$processor->import_functional();";
 	
 	my $eval = <<EOT;
 		    package $package;
@@ -875,17 +900,21 @@ sub compile {
 		    no warnings; # written stylesheets
 			
 			use $XML_parser;  
-		    BEGIN {XML::XPathScript::Processor->import;}
+
 		    sub {
 		    	my (\$self, $extravars ) = \@_;
+                my \$processor = processor();
 				local \$XML::XPathScript::current=\$self;
-		    	my \$t = \$XML::XPathScript::current->{t} 
+		    	my \$t = \$processor->{template} 
                             = XML::XPathScript::Template->new();
                 my \$template = \$t;
-				local \$XML::XPathScript::trans = \$t; # Yes,
-				# this does the sharing! Perl is a bizarre and
-				# wonderful language.
-				local \$XML::XPathScript::xp=\$self->{dom};
+                local \$XML::XPathScript::trans = \$t;
+                #\$processor->{doc} = \$self->{dom};
+                #\$processor->{parser} = '$XML_parser';
+                #\$processor->{binmode} = \$self->{binmode};
+                #\$processor->{is_interpolating} = \$self->interpolation;
+                #\$processor->{interpolation_regex} = \$self->interpolation_regex;
+
 				$script
 		    }
 EOT
@@ -953,6 +982,17 @@ sub get_stylesheet_dependencies {
     return sort keys %{$self->{stylesheet_cache}};
 }
 
+=head2 processor
+
+    $processor = $xps->processor
+
+Returns the processor object associated with I<$xps>.
+
+=cut
+
+sub processor {
+    return $_[0]->{processor};
+}
 
 =head1 FUNCTIONS
 
@@ -1072,6 +1112,13 @@ Yanick Champoux <yanick@cpan.org>
 and Dominique Quatravaux <dom@idealx.com>
 
 Created by Matt Sergeant <matt@sergeant.org>
+
+=head1 THANKS
+
+Thanks to Tim Nelson for pretty nifty suggestions and 
+patches. We sure hope the new B<insteadofchildren>
+tag will make XSL users flock to XPS like ants to 
+a melting chocolate bunny, as he promised. ;-)
 
 =head1 LICENSE
 
