@@ -239,7 +239,7 @@ use File::Basename;
 use XML::XPathScript::Processor;
 use XML::XPathScript::Template;
 
-our $VERSION = '1.46';
+our $VERSION = '1.46_01';
 
 $XML_parser = 'XML::LibXML';
 
@@ -1112,6 +1112,13 @@ Yanick Champoux <yanick@cpan.org>
 and Dominique Quatravaux <dom@idealx.com>
 
 Created by Matt Sergeant <matt@sergeant.org>
+
+=head1 THANKS
+
+Thanks to Tim Nelson for pretty nifty suggestions and 
+patches. We sure hope the new B<insteadofchildren>
+tag will make XSL users flock to XPS like ants to 
+a melting chocolate bunny, as he promised. ;-)
 
 =head1 LICENSE
 

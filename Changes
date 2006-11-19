@@ -1,13 +1,12 @@
 Revision history for Perl module XML::XPathScript
 
-1.47
-    - XML::XPathScript::Processor is now OO
-        - changed the tests to reflect the new interface
-            and added new ones
+1.46_01 Nov 19, 2006
+    - XML::XPathScript::Processor is now OO 
     - apply_templates now support the passing of parameters
-        to testcode
+        to testcode (suggestion and partial patch by Tim Nelson)
     - Added Readonly constants for template's actions (DO_SELF_ONLY, etc)
-    - Added template action 'insteadofchildren'
+    - Added template action 'insteadofchildren' 
+        (suggestion and partial patch by Tim Nelson)
     - Removed support for $XML::XPathScript::DoNotInterpolate 
         (use $xps->interpolation() instead)
 

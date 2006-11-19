@@ -1,13 +1,9 @@
-- For Readonly, have Processor has an exporter DO_* tag 
-        (:actions?)
 - set_stylesheet_args( qw/ $foo $bar  / )
     Already taken care of by compile()
 
 - Documentation of XML::XPS -> put at the end
 
 - Mention the stylesheet arguments ( @_ or named )
-
-* Investigate ties to Toolkit::Template and Embperl
 
 * Add requires
 
@@ -25,14 +21,10 @@
 
 * XML::XPath::..:Document -- must revisit; Add back document() to A::A::L::XPS
 
-* Explain test() and the return code 
-
 * It would be quite easy to come
 	up with a variation of XPS that output a DOM tree rather than
 	text. It wouldn't be as flexible as classic XPS, but it would probably
 	be a little more zippy for long transformation chains
-
-* Would it be a good idea to allow '$t->{foo}{testcode} = DO_SELF_ONLY;' ?
 
 * Do a Makefile-like mode where the same document can be transformed by different stylesheets
 	and produce different end documents.
