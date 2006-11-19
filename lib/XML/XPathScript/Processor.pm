@@ -400,12 +400,12 @@ sub translate_node {
 		$node = $node->documentElement;
 	}
 
-	my $retval = $self->is_comment_node($node) 
-                        ?  $self->translate_comment_node( $node, $params )
+	my $retval = $self->is_element_node( $node ) 
+                        ? $self->translate_element_node( $node, $params )
                : $self->is_text_node($node)
                         ? $self->translate_text_node( $node, $params )
-               : $self->is_element_node( $node )
-                        ? $self->translate_element_node( $node, $params )
+               : $self->is_comment_node($node) 
+                        ?  $self->translate_comment_node( $node, $params )
                : $self->is_pi_node($node)
                         ? eval { if ($node->getParentNode->getParentNode) {
                                     return $node->toString;
