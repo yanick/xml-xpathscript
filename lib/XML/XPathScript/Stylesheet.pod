@@ -168,19 +168,19 @@ The allowed values are:
 
 =over
 
-=item DO_SELF_AND_KIDS
+=item $DO_SELF_AND_KIDS, DO_SELF_AND_KIDS
 
 Process the current node and its children.
 
-=item DO_SELF_ONLY
+=item $DO_SELF_ONLY, DO_SELF_ONLY
 
 Process the current node, but not its children.
 
-=item DO_NOT_PROCESS
+=item $DO_NOT_PROCESS, DO_NOT_PROCESS
 
 Do not process either the current node or any of its children.
 
-=item DO_TEXT_AS_CHILD
+=item $DO_TEXT_AS_CHILD, DO_TEXT_AS_CHILD
 
 Only meaningful for text nodes. When this value is given, 
 the processor pretends that the text is a child of the node, 
@@ -194,7 +194,7 @@ Example:
     # will transform <foo>blah</foo> 
     # into <foo>replacement text</foo>
 
-    $template->( 'text()' => { action => DO_TEXT_AS_CHILD,
+    $template->( 'text()' => { action => $DO_TEXT_AS_CHILD,
                                pre => 'text: '   } );
     # will transform <foo>blah</foo> 
     # into <foo>text: blah</foo>

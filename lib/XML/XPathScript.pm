@@ -891,7 +891,8 @@ sub compile {
 
     # needs to be eval'ed first for the constants
     # to be seen
-    eval "package $package; \$processor->import_functional();";
+    eval "package $package;"
+        ."\$processor->import_functional();";
 	
 	my $eval = <<EOT;
 		    package $package;

@@ -6,6 +6,8 @@ Revision history for Perl module XML::XPathScript
             and added new ones
     - apply_templates now support the passing of parameters
         to testcode
+    - Added Readonly constants for template's actions (DO_SELF_ONLY, etc)
+    - Added template action 'insteadofchildren'
     - Removed support for $XML::XPathScript::DoNotInterpolate 
         (use $xps->interpolation() instead)
 

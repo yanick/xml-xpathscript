@@ -1,3 +1,5 @@
+- For Readonly, have Processor has an exporter DO_* tag 
+        (:actions?)
 - set_stylesheet_args( qw/ $foo $bar  / )
     Already taken care of by compile()
 

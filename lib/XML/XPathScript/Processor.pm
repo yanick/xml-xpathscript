@@ -7,10 +7,30 @@ use Carp;
 use base 'Class::Exporter';
 
 use XML::XPathScript::Template;
+use Readonly;
 
 our $VERSION = '1.46';
 
+our @EXPORT = qw/ 
+        $DO_SELF_AS_CHILD 
+        $DO_SELF_AND_KIDS
+        $DO_SELF_ONLY
+        $DO_NOT_PROCESS
+		DO_SELF_AND_KIDS
+		DO_SELF_ONLY
+		DO_NOT_PROCESS
+		DO_TEXT_AS_CHILD  
+/;
+
 our @EXPORT_OK = qw(
+        $DO_SELF_AS_CHILD 
+        $DO_SELF_AND_KIDS
+        $DO_SELF_ONLY
+        $DO_NOT_PROCESS
+		DO_SELF_AND_KIDS
+		DO_SELF_ONLY
+		DO_NOT_PROCESS
+		DO_TEXT_AS_CHILD  
         processor
         findnodes
         findvalue
@@ -27,10 +47,6 @@ our @EXPORT_OK = qw(
 		is_nodelist
 		is_utf8_tainted
 		get_xpath_of_node
-		DO_SELF_AND_KIDS
-		DO_SELF_ONLY
-		DO_NOT_PROCESS
-		DO_TEXT_AS_CHILD
         set_dom
         get_dom
         get_parser
@@ -49,6 +65,11 @@ use constant DO_TEXT_AS_CHILD =>  2;
 use constant DO_SELF_AND_KIDS =>  1;
 use constant DO_SELF_ONLY     => -1;
 use constant DO_NOT_PROCESS   =>  0;
+
+Readonly our $DO_SELF_AS_CHILD =>  2;
+Readonly our $DO_SELF_AND_KIDS =>  1;
+Readonly our $DO_SELF_ONLY     => -1;
+Readonly our $DO_NOT_PROCESS   =>  0;
 
 
 sub new {
@@ -977,6 +998,21 @@ document.
     If used within a stylesheet, 
 
 =back    
+
+=head1 XPATHSCRIPT LANGUAGE CONSTANTS
+
+B<$DO_SELF_AND_KIDS>, B<$DO_SELF_ONLY>, B<$DO_NOT_PROCESS>,
+B<$DO_TEXT_AS_CHILD>
+
+B<DO_SELF_AND_KIDS>, B<DO_SELF_ONLY>, B<DO_NOT_PROCESS>, B<DO_TEXT_AS_CHILD>
+
+These constants are used to define the B<action> tag of an element, 
+or the return value of a B<testcode> function (see 
+L<XML::XPathScript/Stylesheet#action>). They are automatically
+exported.
+
+The pseudo-bareword way to refer to the constants (e.g., C<DO_SELF_ONLY>) 
+is deprecated, and will eventually be removed in a future release.
 
 =head1 METHODS
 
