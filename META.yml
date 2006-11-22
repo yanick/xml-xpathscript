@@ -1,6 +1,6 @@
 ---
 name: XML-XPathScript
-version: 1.46_01
+version: 1.46_02
 author:
   - 'Yanick Champoux <yanick@cpan.org>'
   - 'Dominique Quatravaux <dom@idealx.com> '
@@ -22,20 +22,20 @@ build_requires:
 provides:
   Apache::AxKit::Language::YPathScript:
     file: lib_axkit/Apache/AxKit/Language/YPathScript.pm
-    version: 1.46_01
+    version: 1.46_02
   XML::XPathScript:
     file: lib/XML/XPathScript.pm
-    version: 1.46_01
+    version: 1.46_02
   XML::XPathScript::Processor:
     file: lib/XML/XPathScript/Processor.pm
-    version: 1.46_01
+    version: 1.46_02
   XML::XPathScript::StdoutSnatcher:
     file: lib/XML/XPathScript.pm
-    version: 1.46_01
+    version: 1.46_02
   XML::XPathScript::Template:
     file: lib/XML/XPathScript/Template.pm
-    version: 1.46_01
+    version: 1.46_02
   XML::XPathScript::Template::Tag:
     file: lib/XML/XPathScript/Template/Tag.pm
-    version: 1.46_01
+    version: 1.46_02
 generated_by: Module::Build version 0.2612

@@ -4,12 +4,12 @@ use strict;
 use warnings;
 use Carp;
 
-use base 'Class::Exporter';
+use base qw/ Exporter /;
 
 use XML::XPathScript::Template;
 use Readonly;
 
-our $VERSION = '1.46_01';
+our $VERSION = '1.46_02';
 
 our @EXPORT = qw/ 
         $DO_SELF_AS_CHILD 
