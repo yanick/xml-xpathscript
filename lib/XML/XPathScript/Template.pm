@@ -8,7 +8,7 @@ use Scalar::Util qw/ reftype /;
 use Data::Dumper;
 use XML::XPathScript::Template::Tag;
 
-our $VERSION = '1.46_01';
+our $VERSION = '1.46_02';
 
 sub new {
    my( $class ) = @_;

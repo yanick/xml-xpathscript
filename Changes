@@ -1,5 +1,8 @@
 Revision history for Perl module XML::XPathScript
 
+1.46_02 Nov 22, 2006
+    - Removing depency to Class::Exporter
+
 1.46_01 Nov 19, 2006
     - XML::XPathScript::Processor is now OO 
     - apply_templates now support the passing of parameters

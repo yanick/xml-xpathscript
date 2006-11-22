@@ -239,7 +239,7 @@ use File::Basename;
 use XML::XPathScript::Processor;
 use XML::XPathScript::Template;
 
-our $VERSION = '1.46_01';
+our $VERSION = '1.46_02';
 
 $XML_parser = 'XML::LibXML';
 

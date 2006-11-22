@@ -6,7 +6,7 @@ use warnings;
 use Carp;
 use Scalar::Util qw/ reftype /;
 
-our $VERSION = '1.46_01';
+our $VERSION = '1.46_02';
 
 our @ALLOWED_ATTRIBUTES =  qw/ pre post testcode showtag
                                intro extro prechildren postchildren
