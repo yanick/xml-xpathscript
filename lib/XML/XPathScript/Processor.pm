@@ -4,7 +4,7 @@ use strict;
 use warnings;
 use Carp;
 
-use base 'Class::Exporter';
+use base qw/ Exporter /;
 
 use XML::XPathScript::Template;
 use Readonly;
