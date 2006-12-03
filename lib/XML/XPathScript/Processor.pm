@@ -1432,5 +1432,5 @@ http://rt.cpan.org/Public/Dist/Display.html?Name=XML-XPathScript .
 =head1 AUTHORS
 
 Yanick Champoux <yanick@cpan.org> 
-and Dominique Quatravaux <dom@idealx.com>
+and Dominique Quatravaux <domq@cpan.org>
 

@@ -28,7 +28,7 @@ de style en cascade <literal>IDEALX.xps</literal>, disponibles dans le
 <acronym>CVS</acronym> d'IDEALX sous <ulink
 url="cvs:doc/xml/DocBkXML2LaTeX"/> et également sur le grand Internet,
 <ulink url="http://www.idealx.org/DocBkXML2LaTeX/"/>. Tous deux sont
-maintenus par <email>dom@idealx.com</email>.</para>
+maintenus par <email>domq@cpan.org</email>.</para>
       <para>Notons que les tests sont déjà commencés, puisque cet
 <foreignphrase>abstract</foreignphrase> doit apparaître avant la
 notice légale (nonbstant le fait que dans le code source, c'est l'inverse).</para>
@@ -1218,9 +1218,9 @@ qui est &amp;~"#@^{[§\% de pénible.</para>
 
     <para>Les URLs se mettent aussi en ligne: <ulink url="http://www.ens-cachan.fr"/></para>
 
-    <para>le verbatim se teste aussi en bloc: <email>dom@idealx.com</email> se
+    <para>le verbatim se teste aussi en bloc: <email>domq@cpan.org</email> se
 typesette bien à l'extérieur, mais dedans c'est moins sûr:
-<programlisting>dom@idealx.com
+<programlisting>domq@cpan.org
 Avec du <varname>balisage</varname> à l'intérieur, l'espacement doit être correct. Les lignes longues doivent césurer.
 </programlisting>
 </para>

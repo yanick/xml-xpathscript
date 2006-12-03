@@ -458,5 +458,5 @@ time under any locales, versions of Perl, or phases of moon.
 =head1 AUTHORS
 
 Yanick Champoux <yanick@cpan.org> 
-and Dominique Quatravaux <dom@idealx.com>
+and Dominique Quatravaux <domq@cpan.org>
 

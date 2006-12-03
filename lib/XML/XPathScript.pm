@@ -1109,7 +1109,7 @@ http://rt.cpan.org/Public/Dist/Display.html?Name=XML-XPathScript .
 
 Current maintainers: 
 Yanick Champoux <yanick@cpan.org> 
-and Dominique Quatravaux <dom@idealx.com>
+and Dominique Quatravaux <domq@cpan.org>
 
 Created by Matt Sergeant <matt@sergeant.org>
 

@@ -1,5 +1,8 @@
 Revision history for Perl module XML::XPathScript
 
+1.47 
+    -  changing Dom's email to domq@cpan.org
+
 1.46_02 Nov 22, 2006
     - Removing depency to Class::Exporter
 

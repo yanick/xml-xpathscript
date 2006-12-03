@@ -3974,7 +3974,7 @@ Ditto, less complete but more LaTeX-friendly:
 =head1 COPYRIGHT
 
 This program is copyright (C) Dominique Quatravaux
-<dom@idealx.com>, all rights reserved. This program is free software; you
+<domq@cpan.org>, all rights reserved. This program is free software; you
 can redistribute it and/or modify it under the same terms as Perl itself.
 
 =cut
