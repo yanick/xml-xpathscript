@@ -1,7 +1,8 @@
 Revision history for Perl module XML::XPathScript
 
 1.47 
-    -  changing Dom's email to domq@cpan.org
+    - Changed Dom's email to domq@cpan.org
+    - Added the 'content' tag attribute.
 
 1.46_02 Nov 22, 2006
     - Removing depency to Class::Exporter

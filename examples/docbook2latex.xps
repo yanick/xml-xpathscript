@@ -3029,11 +3029,11 @@ knowledge of XPathScript is assumed (see L<SEE ALSO>).
 Cut-and-paste the following text into test.xps, then run
 C<xpathscript mydoc.xml test.xps>:
 
-E<32>E<32><% our $inhibitOutput; $inhibitOutput++; %I<>>
+E<32>E<32><% our $inhibitOutput; $inhibitOutput++; %>
 
 E<32>E<32><!--#I<>include file="docbook2latex.xps"-->
 
-E<32>E<32><% $inhibitOutput--; %I<>>
+E<32>E<32><% $inhibitOutput--; %>
 
   <%
   # Change the style to add fancy headers and the word "draft" behind
@@ -3056,9 +3056,9 @@ E<32>E<32><% $inhibitOutput--; %I<>>
      return '\hline'.($ORIG_typeset_tableframe(@_));
   }
 
-E<32>E<32>%I<>>
+  %>
 
-E<32>E<32><%= $inhibitOutput ? "" : apply_templates()  %I<>>
+E<32>E<32><%= $inhibitOutput ? "" : apply_templates()  %>
 
 =head2 Modification points
 
@@ -3399,7 +3399,7 @@ Converts an UTF8-encoded string, stringifiable object or text node
 (that is, most kinds of stuff coming down from the XML data model)
 into a form that is GROKked by LaTeX using the C<inputenc> package
 (most Latin1 characters are supported directly). This function first
-uses the C<%uniconvs> configuration variable (see above), then a
+uses the C< %uniconvs > configuration variable (see above), then a
 direct Latin1 mapping if the character is either whitespace or in
 Latin1 range. If this also fails, C<$uniunknown> is rendered and an
 appropriate warning is emitted.  Unless $significantspace is set to a
@@ -3408,7 +3408,7 @@ and purely whitespace strings are converted to the empty string.
 
 If $translations is additionnally a hash reference, it may supply
 additional character transliterations that will override those in
-L<%uniconvs>. This is most useful for verbatim modes.
+L< %uniconvs >. This is most useful for verbatim modes.
 
 =item my $labelstring = langofnode($node);
 
@@ -3888,11 +3888,11 @@ for the UTF8-tainting issues, and I<XML::XPath> for minor API
 issues). The following derived stylesheet, when run on any document,
 will produce a text output compatible with L<Test::Harness>:
 
-E<32>E<32><% our $inhibitOutput; $inhibitOutput++; %I<>>
+E<32>E<32><% our $inhibitOutput; $inhibitOutput++; %>
 
 E<32>E<32><!--#I<>include file="docbook2latex.xps"-->
 
-E<32>E<32><% integrationtest() %I<>>
+E<32>E<32><% integrationtest() %>
 
 =head1 DOCBOOK EXTENSIONS
 

@@ -241,6 +241,7 @@ sub apply_templates {
 
     my $retval;
 
+    no warnings qw/ uninitialized /;
     $retval .= $self->translate_node( $_, $params ) 
         for $self->is_nodelist($_[0]) ? $_[0]->get_nodelist
                                       : @_
@@ -497,6 +498,34 @@ sub translate_element_node {
                . $self->end_tag($node);	
 		
     }
+
+    if ( $trans->{content} ) {
+        my $interpolated = $self->interpolate( $node, $trans->{content} );
+
+        local *STDOUT;
+        my $output;
+        open STDOUT, '>', \$output 
+            or die "couldn't redirect STDOUT: $!\n";
+
+        my $xps = XML::XPathScript::current();
+
+        my $code = $xps->extract( $interpolated );
+
+        local $self->{dom} = $node;
+
+        eval <<END_CONTENT;
+            package foo; 
+            my \$processor = \$self; 
+            \$self->import_functional unless exists \&get_template;
+            $code;
+END_CONTENT
+
+        die $@ if $@;
+
+        return $output;
+    }
+
+
                         # by default we do the kids
     my $dokids = 1;  
     my $search;
@@ -563,9 +592,7 @@ sub translate_element_node {
 }
 
 sub translate_comment_node {
-    my $self = shift;
-	my $node = shift;
-    my $params = shift;
+    my ( $self, $node, $params ) = @_;
     my $translations = $self->{template};
 
 	my $trans = $translations->{'#comment'} || $translations->{'comment()'};
@@ -585,8 +612,9 @@ sub translate_comment_node {
 			}
 		}
 
-		return if $retval == DO_NOT_PROCESS();
-		$middle = '' if $retval == DO_SELF_ONLY();
+		return if $retval !~ /^-?\d+$/ 
+               or $retval == DO_NOT_PROCESS();
+		$middle = undef if $retval == DO_SELF_ONLY();
 	}
 	
 	no warnings 'uninitialized';
@@ -596,7 +624,8 @@ sub translate_comment_node {
 sub start_tag {
     my( $self, $node, $name ) = @_;
 
-    $name ||= $node->getName or return '';
+    $name ||= $node->getName 
+        or return;
 
     my $string = '<'.$name;
 
