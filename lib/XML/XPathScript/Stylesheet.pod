@@ -132,15 +132,15 @@ Define the text to be printed around a node. All defined attributes
 are outputed in the following order:
 
     pre
-    <tag>              # if showtag == 1
+    <tag>              # displayed if showtag == 1
     intro   
-    prechildren        # if <tag> has children
-    prechild           # for each child
+    prechildren        # displayed if <tag> has children
+    prechild           # displayed before each child
     [ child node ]
-    postchild          # for each child
-    postchildren       # if <tag> has children
+    postchild          # displayed after each child
+    postchildren       # displayed if <tag> has children
     extro
-    </tag>             # if showtag == 1
+    </tag>             # displayed if showtag == 1
     post
 
 If interpolation is enabled, XPath expressions delimited 
@@ -156,6 +156,30 @@ L<interpolation|XML::XPathScript/interpolation>.
 The expressions' delimiter can be modified 
 via the XML::XPathScript object's method 
 L<interpolation_regex|XML::XPathScript/interpolation_regex>.
+
+The value of those tag attributes can also
+be a reference to a subroutine, which return value will
+be taken as the text to display. The subroutine is invoked with
+the same parameters as 'testcode'.
+
+Example:
+
+    # turns <foo comment="blah"></foo> into <foo><!-- blah --></foo>
+    $template->set( 'foo' => {
+        pre  => '<foo>',
+        post => '</foo>',
+        intro => \&insert_comment,
+    } );
+
+    sub insert_comment {
+        my ( $node, $t, $params ) = @_;
+
+        if ( my $c = $node->findvalue( '@comment' ) ) {
+            return "<!-- $c -->";
+        }
+
+        return;
+    }
 
 =head3 showtag
 

@@ -1,7 +1,7 @@
 use strict;
 use warnings;
 
-use Test::More tests => 2;                      # last test to print
+use Test::More tests => 4;                      # last test to print
 
 use XML::XPathScript;
 
@@ -57,3 +57,19 @@ END_STYLESHEET
 
 is $xps->transform => '<song title="White and Nerdy"><artist>Weird Al Yankovic</artist><note>lyrics available</note></song>';
 
+$xps->set_xml( '<doc><foo/></doc>' );
+$xps->interpolation( 0 );
+$xps->set_stylesheet( <<'END_STYLESHEET' );
+<%-  $template->set( foo => { content => '<%= $params{myattr} %>' } );
+-%><%= apply_templates( '//foo' => { myattr => 'bar' } ) -%>
+END_STYLESHEET
+
+is $xps->transform => 'bar';
+
+# messing with $self shouldn't mess up with the processor
+$xps->set_stylesheet( <<'END_STYLESHEET' );
+<%-  $template->set( foo => { content => '<%= $self = "mouahaha" %>' } );
+-%><%= apply_templates( '//foo' ) -%>
+END_STYLESHEET
+
+is $xps->transform => 'mouahaha';

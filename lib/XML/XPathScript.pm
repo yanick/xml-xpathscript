@@ -752,6 +752,7 @@ sub extract {
 
     return $script;
 
+    # FIXME not needed anymore
     # <%- -%> magic
     $contents =~ s#(\s+)<%-([=~]?)#<%$2$1#gs;
     $contents =~ s#-%>(\s+)#$1%>#gs;

@@ -426,6 +426,7 @@ sub translate_node {
 	return $retval;
 }
 
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 sub translate_text_node {
     my $self = shift;	
@@ -437,26 +438,28 @@ sub translate_text_node {
 
 	return $node->toString unless $trans;
 
-	my $middle = '';
-
     my $action = $trans->{action};
 
     my $t = new XML::XPathScript::Template::Tag;
     $t->{$_} = $trans->{$_} for keys %{$trans};
 	if (my $code = $trans->{testcode}) 
 	{
-
 		$action = $code->( $node, $t, $params );
     }
 		
 	no warnings 'uninitialized';
     return if defined($action) and $action == DO_NOT_PROCESS();
 
+	my $middle;
     $middle = $node->toString if defined($action) 
                                     and $action == DO_TEXT_AS_CHILD();
 
-	return $t->{pre} . $middle . $t->{post};
+	return $self->_transform_tag( $t->{pre}, $node, $t, $params ) 
+         . $middle 
+         . $self->_transform_tag( $t->{post}, $node, $t, $params );
 }
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 sub translate_element_node {
     my( $self, $node, $params ) = @_;
@@ -499,38 +502,18 @@ sub translate_element_node {
 		
     }
 
-    if ( $trans->{content} ) {
-        my $interpolated = $self->interpolate( $node, $trans->{content} );
-
-        local *STDOUT;
-        my $output;
-        open STDOUT, '>', \$output 
-            or die "couldn't redirect STDOUT: $!\n";
-
-        my $xps = XML::XPathScript::current();
-
-        my $code = $xps->extract( $interpolated );
-
-        local $self->{dom} = $node;
-
-        eval <<END_CONTENT;
-            package foo; 
-            my \$processor = \$self; 
-            \$self->import_functional unless exists \&get_template;
-            $code;
-END_CONTENT
-
-        die $@ if $@;
-
-        return $output;
-    }
-
-
-                        # by default we do the kids
-    my $dokids = 1;  
-    my $search;
     my $t = new XML::XPathScript::Template::Tag;
     $t->{$_} = $trans->{$_} for keys %{$trans};
+
+    # we officially support 'content', but also allow
+    # 'contents'
+    if ( my $content = $trans->{content} || $trans->{contents} ) {
+        return $self->_transform_content( $content, $node, $t, $params );
+    }
+
+    # by default we do the kids
+    my $dokids = 1;  
+    my $search;
 
     my $action = $trans->{action};
     
@@ -555,41 +538,83 @@ END_CONTENT
              : ()
              ;
 
-    my $pre = $self->interpolate($node, $t->{pre});
-	$pre .= $self->start_tag( $node , $t->{rename}) if $t->{showtag};
-	$pre .= $t->{intro};
-	$pre .= $self->interpolate($node, $t->{prechildren}) if @kids;
+    my @args = ( $node, $t, $params );
+
+    my $pre = $self->_transform_tag( $t->{pre}, @args );
+	$pre   .= $self->start_tag( $node , $t->{rename}) if $t->{showtag};
+	$pre   .= $self->_transform_tag( $t->{intro}, @args );
+	$pre   .= $self->_transform_tag( $t->{prechildren}, @args ) if @kids;
 	
 	my $post;
-	$post .= $self->interpolate($node, $t->{postchildren}) if @kids;
-	$post .= $t->{extro};
+	$post .= $self->_transform_tag( $t->{postchildren}, @args ) if @kids;
+	$post .= $self->_transform_tag( $t->{extro}, @args );
 	$post .= $self->end_tag( $node, $t->{rename} ) if  $t->{showtag};
-	$post .= $self->interpolate($node, $t->{post});
+	$post .= $self->_transform_tag( $t->{post}, @args );
 
 	my $middle;
 
-    if ( my $ioc = $trans->{insteadofchildren} ) {
-        if ( @kids ) {
-            $middle = ref( $ioc ) eq 'CODE'  ? $ioc->( $node, $t, $params ) 
-                                             : $ioc 
-                                             ;
-        }
-    }
-    else {
-        for my $kid ( @kids ) 
-        {
-            $middle .= $self->interpolate($node, $trans->{prechild}) 
-                if $self->is_element_node( $kid );
+    for my $kid ( @kids ) 
+    {
+        my $kid_is_element = $self->is_element_node( $kid );
 
-            $middle .= $self->apply_templates($kid, $params );
+        $middle .= $self->_transform_tag( $trans->{prechild}, 
+                        $kid, $t, $params ) if $kid_is_element;
 
-            $middle .= $self->interpolate($node, $trans->{postchild})
-                if $self->is_element_node( $kid );
-        }
+        $middle .= $self->apply_templates($kid, $params );
+
+        $middle .= $self->_transform_tag( $trans->{postchild}, 
+                        $kid, $t, $params ) if $kid_is_element;
     }
         
-	return $pre . $middle . $post
+	return $pre . $middle . $post;
 }
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+sub _transform_content {
+   my ( $self, $content, $node, $t, $params ) = @_;
+
+    return $content->( $node, $t, $params ) if ref $content eq 'CODE';
+
+    my $interpolated = $self->interpolate( $node, $content );
+
+    local *STDOUT;
+    my $output;
+    open STDOUT, '>', \$output or die "couldn't redirect STDOUT: $!\n";
+
+    my $xps = XML::XPathScript::current();
+
+    my $code = $xps->extract( $interpolated );
+
+    local $self->{dom} = $node;
+
+    eval <<"END_CONTENT";
+        package XML::XPathScript::Template::Content; 
+        my \$processor = \$self; 
+        my \%params = \%\$params;
+        \$self->import_functional unless exists \&get_template;
+        $code;
+END_CONTENT
+
+    die $@ if $@;
+
+    return $output;
+}
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# bad terminology, here a tag is 'pre', 'post', etc
+
+sub _transform_tag {
+    my ( $self, $tag, $node, $t, $params ) = @_;
+
+    return unless $tag;
+
+    return $tag->( $node, $t, $params ) if ref $tag eq 'CODE';
+
+    return $self->interpolate( $node, $tag );
+}
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 sub translate_comment_node {
     my ( $self, $node, $params ) = @_;
@@ -602,24 +627,31 @@ sub translate_comment_node {
 	my $middle = $self->{parser} eq 'XML::LibXML' ?
 					$node->textContent : $node->getData;
 
+    my $t = new XML::XPathScript::Template::Tag;
+    $t->{$_} = $trans->{$_} for keys %{$trans};
+
+    my $action = $trans->{action};
+
 	if (my $code = $trans->{testcode}) 
 	{
-		my $t = {};
-		my $retval = $code->( $node, $t, $params );
-		if ($retval and %$t) {
+		$action = $code->( $node, $t, $params );
+		if ($action and %$t) {
 			foreach my $tkey (keys %$t) {
 				$trans->{$tkey} = $t->{$tkey};
 			}
 		}
-
-		return if $retval !~ /^-?\d+$/ 
-               or $retval == DO_NOT_PROCESS();
-		$middle = undef if $retval == DO_SELF_ONLY();
 	}
-	
+
 	no warnings 'uninitialized';
-	return $trans->{pre}. $middle. $trans->{post};
+    return if $action =~ /^-?\d+$/ and $action == $DO_NOT_PROCESS;
+    
+    $middle = undef if $action == $DO_SELF_ONLY;
+	return $self->_transform_tag( $trans->{pre}, $node, $t, $params )
+         . $middle
+         . $self->_transform_tag( $trans->{post}, $node, $t, $params );
 }
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 sub start_tag {
     my( $self, $node, $name ) = @_;
