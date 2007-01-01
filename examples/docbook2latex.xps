@@ -414,6 +414,8 @@ $t->{"comment()"}->{testcode} = sub {
 	my $value=utf8totex($self);
     $value =~ s/^/%/gm;
     $t->{pre} = $value;
+    
+    return DO_SELF_ONLY();
 };
 
 
