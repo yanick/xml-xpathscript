@@ -2,7 +2,11 @@ Revision history for Perl module XML::XPathScript
 
 1.47 
     - Changed Dom's email to domq@cpan.org
-    - Added the 'content' tag attribute.
+    - Added the 'content' tag attribute
+    - Removed template action 'insteadofchildren'
+    - Display tags can now be strings or code references
+    - Now skip tests that doesn't work for XML::XPath if
+        that parser is chosen
 
 1.46_02 Nov 22, 2006
     - Removing depency to Class::Exporter
