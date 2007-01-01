@@ -41,6 +41,9 @@ $Fake::Request->uri( $xmlfile );
 
 $XML::XPathScript::DoNotInterpolate = !$interpolate if $interpolate;
 
+# to keep 'warnings' happy
+my $foo = $XML::XPathScript::DoNotInterpolate;
+
 my $xml = gensym;
 my $stylesheet = gensym;
 
