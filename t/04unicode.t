@@ -1,13 +1,11 @@
-#!/usr/bin/perl -wT
+#!perl -t
 
 use strict;
-use Test;
-use XML::XPathScript::Processor qw/ is_utf8_tainted /;
+use warnings;
 
-BEGIN
-{
-	plan tests => 11, todo => [];
-}
+use Test::More tests => 11;
+use XML::XPathScript;
+use XML::XPathScript::Processor qw/ is_utf8_tainted /;
 
 =head1 NAME
 
@@ -28,19 +26,19 @@ eval { require Convert::Scalar }; # Not fatal if absent
 sub ok_utf8_tainted {
     my ($string, $comment) = @_;
     if ($Convert::Scalar::VERSION && ! Convert::Scalar::utf8($string)) {
-        ok(1, 0, "$comment - Oops, Convert::Scalar disagrees! (error in the test suite)");
+        is(1, 0, "$comment - Oops, Convert::Scalar disagrees! (error in the test suite)");
         return;
     }
-    ok(!! XML::XPathScript::Processor->is_utf8_tainted($string), 1, $comment);
+    is(!! XML::XPathScript::Processor->is_utf8_tainted($string), 1, $comment);
 }
 
 sub ok_not_utf8_tainted {
     my ($string, $comment) = @_;
     if ($Convert::Scalar::VERSION && Convert::Scalar::utf8($string)) {
-        ok(1, 0, "$comment - Oops, Convert::Scalar disagrees! (error in the test suite)");
+        is(1, 0, "$comment - Oops, Convert::Scalar disagrees! (error in the test suite)");
         return;
     }
-    ok(!!XML::XPathScript::Processor->is_utf8_tainted($string), '', $comment);
+    is(!!XML::XPathScript::Processor->is_utf8_tainted($string), '', $comment);
 }
 
 ok_not_utf8_tainted(" ", "typical plain string");

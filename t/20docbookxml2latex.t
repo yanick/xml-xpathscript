@@ -1,7 +1,15 @@
-#!/usr/bin/perl -w
-
 use strict;
-use Test;
+use warnings;
+
+use Test::More;
+
+if ( $XML::XPathScript::XML_parser eq 'XML::XPath' ) {
+    plan skip_all => "doesn't work with XML::XPath";
+}
+else {
+    plan tests => 3;
+}
+
 
 =head1 NAME
 
@@ -19,12 +27,6 @@ resulting LaTeX file.
 The test document is in french :-)
 
 =cut
-
-BEGIN
-{
-	plan tests => 3, todo => [];
-}
-
 
 use XML::XPathScript;
 use IO::File;
