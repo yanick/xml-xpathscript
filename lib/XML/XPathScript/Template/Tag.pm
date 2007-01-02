@@ -11,7 +11,7 @@ our $VERSION = '1.46_02';
 our @ALLOWED_ATTRIBUTES =  qw/ pre post testcode showtag
                                intro extro prechildren postchildren
                                prechild postchild action rename 
-                               insteadofchildren content /;
+                               content /;
 
 sub new {
    my( $class ) = @_;
