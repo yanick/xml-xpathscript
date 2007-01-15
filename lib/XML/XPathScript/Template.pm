@@ -180,8 +180,8 @@ Creates and returns a new, empty template.
 
 =head2  set
 
-    $template->( $tag, \%attributes )
-    $template->set_template( \@tags , \%attributes )
+    $template->set( $tag, \%attributes )
+    $template->set( \@tags , \%attributes )
 
 Update the $tag or @tags in the template with the 
 given %attributes.
