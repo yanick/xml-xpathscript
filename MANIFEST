@@ -3,6 +3,8 @@ Build.PL
 dist/rewrite-default-xml-parser
 lib/XML/XPathScript.pm
 lib/XML/XPathScript/Processor.pm
+lib/XML/XPathScript/Processor/LibXML.pm
+lib/XML/XPathScript/Processor/XPath.pm
 lib/XML/XPathScript/Stylesheet.pod
 lib/XML/XPathScript/Template.pm
 lib/XML/XPathScript/Template/Tag.pm

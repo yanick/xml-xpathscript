@@ -96,11 +96,42 @@ sub set_dom {
     my $class = ref( $self->{dom} = $dom )
         or croak "usage: \$processor->set_dom( \$dom )";
 
-    ( $self->{parser} ) =  $class =~ /(?:XML::)(?:LibXML|XPath)/g 
-        or croak "can't recognize to what parser $dom belongs to";
+    if ( $class =~ /((?:XML::)(?:LibXML|XPath))/ ) {
+        $self->set_parser( $1 );
+    }
+    elsif ( $class =~ /B::XPath/ ) {
+        $self->set_parser( 'B::XPath' );
+    }
+    else {
+        die "no parser assigned to class $class\n";
+    }
+
 
     return;
 }
+
+sub set_parser {
+    my ( $self, $parser ) = @_;
+
+    $self->{parser} = $parser;
+    if ( $parser eq 'XML::LibXML' ) {
+        require XML::XPathScript::Processor::LibXML;
+        bless $self, 'XML::XPathScript::Processor::LibXML';
+    }
+    elsif ( $parser eq 'XML::XPath' ) {
+        require XML::XPathScript::Processor::XPath;
+        bless $self, 'XML::XPathScript::Processor::XPath';
+    }
+    elsif ( $parser eq 'B::XPath' ) {
+        require XML::XPathScript::Processor::B;
+        bless $self, 'XML::XPathScript::Processor::B';
+    }
+    else {
+        die "parser $parser not supported\n";
+    }
+
+}
+
 sub get_dom { $_[0]->{dom} }
 sub get_parser { $_[0]->{parser} }
 sub enable_binmode { $_[0]->{binmode} = 1 }
@@ -275,39 +306,6 @@ sub _apply_templates {
 	return join '', map $self->translate_node($_,$params), @_;
 }
 
-sub is_element_node {
-    my $self = shift;
-	UNIVERSAL::isa( $_[0], 'XML::XPath::Node::Element' ) or
-		UNIVERSAL::isa( $_[0], 'XML::LibXML::Element' );
-}
-
-sub is_text_node {
-    my $self = shift;
-	UNIVERSAL::isa($_[0], 'XML::XPath::Node::Text') or
-	# little catch: XML::LibXML::Comment is a
-	# XML::LibXML::Text
-		( UNIVERSAL::isa($_[0], 'XML::LibXML::Text') &&
-		  ! UNIVERSAL::isa($_[0], 'XML::LibXML::Comment') );
-}
-
-sub is_comment_node {
-    my $self = shift;
-		UNIVERSAL::isa( $_[0], 'XML::LibXML::Comment' ) or
-			UNIVERSAL::isa( $_[0], 'XML::XPath::Node::Comment' );
-}
-
-sub is_pi_node {
-    my $self = shift;
-	UNIVERSAL::isa($_[0], "XML::LibXML::PI") ||
-		UNIVERSAL::isa($_[0], "XML::XPath::Node::PI");
-}
-
-sub is_nodelist {
-    my $self = shift;
-	UNIVERSAL::isa($_[0], 'XML::XPath::NodeSet') or
-		UNIVERSAL::isa($_[0], 'XML::LibXML::NodeList');
-}
-
 sub is_utf8_tainted {
     my $self = shift;
     my ($string) = @_;
@@ -412,7 +410,7 @@ sub translate_node {
                         ? eval { if ($node->getParentNode->getParentNode) {
                                     return $node->toString;
                                  } else { '' }  }
-               : $node->toString
+               : $self->to_string( $node )
                ;
 
 	if ( $self->{binmode} &&
@@ -465,28 +463,9 @@ sub translate_element_node {
     my( $self, $node, $params ) = @_;
     my $translations = $self->{template};
 
-    my $node_name = 
-        $self->{parser} eq 'XML::LibXML' ? $node->localname
-      : $self->{parser} eq 'XML::XPath'  ? 
-                                 # nasty hack to get around that 
-                                 # the root has no name 
-                                 ( $node->getName && $node->getLocalName )
-      :           croak "unsupported parser:  $self->{parser}"
-      ;
+    my $node_name = $self->get_node_name( $node );
 
-    my $namespace;
-    if( $self->{parser} eq 'XML::LibXML' ) {
-        my $ns = $node->getNamespaces();
-        $namespace = $ns ? $ns->getData() : undef ;
-    }
-    elsif( $self->{parser} eq 'XML::XPath' ) {
-        if( my $prefix = $node->getPrefix ) {
-            $namespace = $node->getNamespace( $prefix )->getExpanded();
-        }
-    }
-    else {
-        croak "unsupported parser:  $self->{parser}"
-    }
+    my $namespace = $self->get_namespace( $node );
 
     my $trans = XML::XPathScript::Template::resolve( $translations, 
                                                 $namespace, $node_name );
@@ -494,8 +473,7 @@ sub translate_element_node {
     unless( $trans ) {
         # no specific and no generic? Okay, okay, return as is...
         no warnings qw/ uninitialized /;
-        my @kids = $self->{parser} eq 'XML::LibXML'
-                        ? $node->childNodes : $node->getChildNodes ;
+        my @kids = $self->get_child_nodes( $node );
         return $self->start_tag($node)  
                . $self->_apply_templates( @kids, $params )
                . $self->end_tag($node);	
@@ -624,8 +602,7 @@ sub translate_comment_node {
 
 	return $node->toString unless $trans;
 
-	my $middle = $self->{parser} eq 'XML::LibXML' ?
-					$node->textContent : $node->getData;
+	my $middle = $self->get_text_content( $node );
 
     my $t = new XML::XPathScript::Template::Tag;
     $t->{$_} = $trans->{$_} for keys %{$trans};
@@ -667,26 +644,8 @@ sub start_tag {
     	$string .= $_->toString for $node->getNamespaceNodes;
 	}
 
-    for my $attr ( ( $self->{parser} eq 'XML::LibXML' ) ? 
-						$node->attributes : $node->getAttributeNodes) 
-	{
-	  
-	  	
-		if( $self->{parser} eq 'XML::XPath' )
-	   	{
-	   		$string .= $attr->toString;
-	   	}
-	   	else
-	   	{
-			#my $att = $attr->toString( 0, 1 );
-		    	#$att =~ s/'/&quot;/g;
-            if( $attr->isa( 'XML::LibXML::Namespace' ) ) {
-                $string .= ' xmlns:'.$attr->getName().'="'.$attr->value().'" ';
-            } 
-            else {
-                $string .= $attr->toString( 0, 1 );
-            }
-		}
+    for my $attr ( $self->get_attributes( $node )  ) {
+		$string .= $self->get_attribute( $attr );
     }
 
     $string .= '>';

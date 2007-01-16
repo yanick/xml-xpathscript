@@ -1,3 +1,4 @@
 tags
 blib
 .svnignore
+*swp

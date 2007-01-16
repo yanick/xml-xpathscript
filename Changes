@@ -7,6 +7,8 @@ Revision history for Perl module XML::XPathScript
     - Display tags can now be strings or code references
     - Now skip tests that doesn't work for XML::XPath if
         that parser is chosen
+    - Parser-centric parts of X::X::Processor now reside
+        in sub-classes
 
 1.46_02 Nov 22, 2006
     - Removing depency to Class::Exporter
