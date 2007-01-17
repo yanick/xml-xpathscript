@@ -33,4 +33,10 @@ sub get_attribute {
          ;
 }
 
+sub translate_node {
+    my ( $self, $node, $params ) = @_;
+    $node = $node->documentElement if $node->isa( 'XML::LibXML::Document' );
+    return $self->SUPER::translate_node( $node, $params );
+}
+
 1;

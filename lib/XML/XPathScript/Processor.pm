@@ -395,11 +395,6 @@ sub is_utf8_tainted {
 sub translate_node {
     my( $self, $node, $params ) = @_;
 
-	if( UNIVERSAL::isa($node,"XML::LibXML::Document") ) 
-	{
-		$node = $node->documentElement;
-	}
-
 	my $retval = $self->is_element_node( $node ) 
                         ? $self->translate_element_node( $node, $params )
                : $self->is_text_node($node)
