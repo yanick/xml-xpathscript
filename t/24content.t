@@ -1,7 +1,7 @@
 use strict;
 use warnings;
 
-use Test::More tests => 4;                      # last test to print
+use Test::More tests => 5;                      # last test to print
 
 use XML::XPathScript;
 
@@ -73,3 +73,39 @@ $xps->set_stylesheet( <<'END_STYLESHEET' );
 END_STYLESHEET
 
 is $xps->transform => 'mouahaha';
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+my $stylesheet = <<'END_STYLESHEET';
+<%@ track
+    <h1><%~ title %></h1> 
+    <%~ lyrics %>
+-%>
+<%-@ title 
+    {text()}
+-%>
+<%-~ / -%>
+END_STYLESHEET
+
+$xps->interpolation(1);
+$xps->set_stylesheet( $stylesheet );
+$xps->set_xml( <<'END_XML' );
+<album>
+<track track_id="13">
+    <title>White and Nerdy</title>
+    <artist>Weird Al Yankovic</artist>
+    <lyrics> ... </lyrics>
+</track>
+<track track_id="14">
+    <title>Forever and One</title>
+    <artist>Halloween</artist>
+    <lyrics> ... </lyrics>
+</track>
+</album>
+END_XML
+
+
+my $result = $xps->transform;
+$result =~ s/\s+/ /g;
+is $result => '<album> <h1> White and Nerdy </h1> <lyrics> ... </lyrics> <h1> Forever and One </h1> '
+             .'<lyrics> ... </lyrics> </album>';

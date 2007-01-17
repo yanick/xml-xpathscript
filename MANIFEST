@@ -36,6 +36,8 @@ t/17xml_loading.t
 t/18tag.t
 t/21processor.t
 t/22stylesheet.t
+t/24content.t
+t/25stylesheetlines.t
 t/99signature.t
 t/document_file.txt
 t/include.xps
