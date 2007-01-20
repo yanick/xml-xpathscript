@@ -411,6 +411,23 @@ sub transform {
     return $output;
 }
 
+=head2 set_dom
+
+    $xps->set_dom( $dom )
+
+Set the DOM of the document to process. I<$dom>
+must be a node object of one of the supported 
+parsers (XML::LibXML, XML::XPath, B::XPath).
+
+=cut
+
+sub set_dom {
+    my( $self, $dom ) = @_;
+    $self->{dom} = $dom;
+    $self->{processor}->set_dom( $dom );
+    return $self;
+}
+
 =head2 set_xml
 
     $xps->set_xml( $xml )
@@ -620,7 +637,8 @@ sub process {
 
     croak "xml document not defined" unless $self->{dom};
 
-	$self->{dom}->ownerDocument->setEncoding( "UTF-8" ) 
+    # FIXME
+	eval { $self->{dom}->ownerDocument->setEncoding( "UTF-8" ) }
 		if $XML_parser eq 'XML::LibXML';
 
 	{
