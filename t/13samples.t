@@ -9,6 +9,8 @@ BEGIN {
 sub test_file {
     my $filename = shift;
 
+    print "testing $filename\n";
+
     local $/ = undef;
 
     open my $xml, "$filename.xml" or die;

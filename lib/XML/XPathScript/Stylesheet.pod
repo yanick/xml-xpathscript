@@ -39,7 +39,26 @@ Example:
 
     Author: <%~ /doc/author %>
 
-=head3 <%- -%>, <%-= -%>, <%-~ -%>, <%-#  -%>
+=head3 <%@ %>
+
+A simplified way to set up the content attribute of a tag. The code
+
+    <%@ foo 
+        <h1><%= $title %></h1>
+        <%~ bar %>
+    %>
+
+is equivalent to 
+
+    <%
+        $template->set( foo => { content <<'END_CONTENT' } );
+            <h1><%= $title %></h1>
+            <%~ bar %>
+    END_CONTENT
+    %>
+
+
+=head3 <%- -%>, <%-= -%>, <%-~ -%>, <%-#  -%>, <%-@ -%>
 
 If a dash is added to a delimiter, all whitespaces (including carriage
 returns) predeceding or following the delimiter are removed from the 
@@ -132,15 +151,15 @@ Define the text to be printed around a node. All defined attributes
 are outputed in the following order:
 
     pre
-    <tag>              # if showtag == 1
+    <tag>              # displayed if showtag == 1
     intro   
-    prechildren        # if <tag> has children
-    prechild           # for each child
+    prechildren        # displayed if <tag> has children
+    prechild           # displayed before each child
     [ child node ]
-    postchild          # for each child
-    postchildren       # if <tag> has children
+    postchild          # displayed after each child
+    postchildren       # displayed if <tag> has children
     extro
-    </tag>             # if showtag == 1
+    </tag>             # displayed if showtag == 1
     post
 
 If interpolation is enabled, XPath expressions delimited 
@@ -156,6 +175,30 @@ L<interpolation|XML::XPathScript/interpolation>.
 The expressions' delimiter can be modified 
 via the XML::XPathScript object's method 
 L<interpolation_regex|XML::XPathScript/interpolation_regex>.
+
+The value of those tag attributes can also
+be a reference to a subroutine, which return value will
+be taken as the text to display. The subroutine is invoked with
+the same parameters as 'testcode'.
+
+Example:
+
+    # turns <foo comment="blah"></foo> into <foo><!-- blah --></foo>
+    $template->set( 'foo' => {
+        pre  => '<foo>',
+        post => '</foo>',
+        intro => \&insert_comment,
+    } );
+
+    sub insert_comment {
+        my ( $node, $t, $params ) = @_;
+
+        if ( my $c = $node->findvalue( '@comment' ) ) {
+            return "<!-- $c -->";
+        }
+
+        return;
+    }
 
 =head3 showtag
 
@@ -254,6 +297,61 @@ Example:
     # change <foo abc="def">..</foo> to 
     # <bar abc="def">...</bar>
     <% $t->set( foo => { rename => 'bar' } ); %>
+
+=head3 content
+
+The I<content> attribute, if defined, trumps all (ie, no any
+other attribute will be taken into consideration). Its value will be taken
+as a sub-template that will be applied whenever the tag is encountered. 
+The sub-template is first interpolated (if interpolation is enabled) 
+before being evaluated. Within the sub-template, the root document 
+node is set to the node under transformation.
+
+Example:
+
+    $template->set( track => { content => <<'END_CONTENT' } );
+        <%-#  will turn
+
+                <track track_id="13">
+                    <title>White and Nerdy</title>
+                    <artist>Weird Al Yankovic</artist>
+                    <lyrics> ... </lyrics>
+                </track>
+
+                into (minus whitespace shenanigans) 
+                
+                <song title="White and Nerdy">
+                    <artist>Weird Al Yankovic</artists>
+                    <note>lyrics available</note>
+                <song>
+        -%>
+        <song title="{title/text()}">
+           <%~ artist %>
+           <% if ( findnodes( 'lyrics' ) { %>
+           <note>lyrics available</note>
+           <% } %>
+        </song>
+    END_CONTENT
+
+See also the stylesheet syntax <%@ %>.
+
+B<WARNING>: If you are to insert Perl code in a content, remember 
+that interpolation is enabled by default, and that the default
+interpolation demarcations are the curly braces. So something like
+
+
+    $template->set( foo => { content => <<'END_CONTENT' } );
+        <%= map { $_ x 2 } @something_or_other %>
+    END_CONTENT
+
+will try to interpolate I<{ $_ x 2 }>, with the obvious
+gruesome results. The best approach, if you want to use code
+extensively in contents, is to reconfigure the interpolation
+regex to something more benign. For example:
+
+    # using double-curlies 
+    $XML::XPathScript::current->interpolation_regex( qr/{{(.*?)}}/ )
+    
 
 =head3 insteadofchildren
 
@@ -458,5 +556,5 @@ time under any locales, versions of Perl, or phases of moon.
 =head1 AUTHORS
 
 Yanick Champoux <yanick@cpan.org> 
-and Dominique Quatravaux <dom@idealx.com>
+and Dominique Quatravaux <domq@cpan.org>
 

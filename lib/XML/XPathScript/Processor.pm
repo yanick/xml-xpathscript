@@ -9,7 +9,7 @@ use base qw/ Exporter /;
 use XML::XPathScript::Template;
 use Readonly;
 
-our $VERSION = '1.46_02';
+our $VERSION = '1.47';
 
 our @EXPORT = qw/ 
         $DO_SELF_AS_CHILD 
@@ -96,11 +96,42 @@ sub set_dom {
     my $class = ref( $self->{dom} = $dom )
         or croak "usage: \$processor->set_dom( \$dom )";
 
-    ( $self->{parser} ) =  $class =~ /(?:XML::)(?:LibXML|XPath)/g 
-        or croak "can't recognize to what parser $dom belongs to";
+    if ( $class =~ /((?:XML::)(?:LibXML|XPath))/ ) {
+        $self->set_parser( $1 );
+    }
+    elsif ( $class =~ /B::XPath/ ) {
+        $self->set_parser( 'B::XPath' );
+    }
+    else {
+        die "no parser assigned to class $class\n";
+    }
+
 
     return;
 }
+
+sub set_parser {
+    my ( $self, $parser ) = @_;
+
+    $self->{parser} = $parser;
+    if ( $parser eq 'XML::LibXML' ) {
+        require XML::XPathScript::Processor::LibXML;
+        bless $self, 'XML::XPathScript::Processor::LibXML';
+    }
+    elsif ( $parser eq 'XML::XPath' ) {
+        require XML::XPathScript::Processor::XPath;
+        bless $self, 'XML::XPathScript::Processor::XPath';
+    }
+    elsif ( $parser eq 'B::XPath' ) {
+        require XML::XPathScript::Processor::B;
+        bless $self, 'XML::XPathScript::Processor::B';
+    }
+    else {
+        die "parser $parser not supported\n";
+    }
+
+}
+
 sub get_dom { $_[0]->{dom} }
 sub get_parser { $_[0]->{parser} }
 sub enable_binmode { $_[0]->{binmode} = 1 }
@@ -241,6 +272,7 @@ sub apply_templates {
 
     my $retval;
 
+    no warnings qw/ uninitialized /;
     $retval .= $self->translate_node( $_, $params ) 
         for $self->is_nodelist($_[0]) ? $_[0]->get_nodelist
                                       : @_
@@ -272,39 +304,6 @@ sub _apply_templates {
     my $params = pop;
 	no warnings 'uninitialized';
 	return join '', map $self->translate_node($_,$params), @_;
-}
-
-sub is_element_node {
-    my $self = shift;
-	UNIVERSAL::isa( $_[0], 'XML::XPath::Node::Element' ) or
-		UNIVERSAL::isa( $_[0], 'XML::LibXML::Element' );
-}
-
-sub is_text_node {
-    my $self = shift;
-	UNIVERSAL::isa($_[0], 'XML::XPath::Node::Text') or
-	# little catch: XML::LibXML::Comment is a
-	# XML::LibXML::Text
-		( UNIVERSAL::isa($_[0], 'XML::LibXML::Text') &&
-		  ! UNIVERSAL::isa($_[0], 'XML::LibXML::Comment') );
-}
-
-sub is_comment_node {
-    my $self = shift;
-		UNIVERSAL::isa( $_[0], 'XML::LibXML::Comment' ) or
-			UNIVERSAL::isa( $_[0], 'XML::XPath::Node::Comment' );
-}
-
-sub is_pi_node {
-    my $self = shift;
-	UNIVERSAL::isa($_[0], "XML::LibXML::PI") ||
-		UNIVERSAL::isa($_[0], "XML::XPath::Node::PI");
-}
-
-sub is_nodelist {
-    my $self = shift;
-	UNIVERSAL::isa($_[0], 'XML::XPath::NodeSet') or
-		UNIVERSAL::isa($_[0], 'XML::LibXML::NodeList');
 }
 
 sub is_utf8_tainted {
@@ -396,11 +395,6 @@ sub is_utf8_tainted {
 sub translate_node {
     my( $self, $node, $params ) = @_;
 
-	if( UNIVERSAL::isa($node,"XML::LibXML::Document") ) 
-	{
-		$node = $node->documentElement;
-	}
-
 	my $retval = $self->is_element_node( $node ) 
                         ? $self->translate_element_node( $node, $params )
                : $self->is_text_node($node)
@@ -411,7 +405,7 @@ sub translate_node {
                         ? eval { if ($node->getParentNode->getParentNode) {
                                     return $node->toString;
                                  } else { '' }  }
-               : $node->toString
+               : $self->to_string( $node )
                ;
 
 	if ( $self->{binmode} &&
@@ -425,6 +419,7 @@ sub translate_node {
 	return $retval;
 }
 
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 sub translate_text_node {
     my $self = shift;	
@@ -436,53 +431,36 @@ sub translate_text_node {
 
 	return $node->toString unless $trans;
 
-	my $middle = '';
-
     my $action = $trans->{action};
 
     my $t = new XML::XPathScript::Template::Tag;
     $t->{$_} = $trans->{$_} for keys %{$trans};
 	if (my $code = $trans->{testcode}) 
 	{
-
 		$action = $code->( $node, $t, $params );
     }
 		
 	no warnings 'uninitialized';
     return if defined($action) and $action == DO_NOT_PROCESS();
 
+	my $middle;
     $middle = $node->toString if defined($action) 
                                     and $action == DO_TEXT_AS_CHILD();
 
-	return $t->{pre} . $middle . $t->{post};
+	return $self->_transform_tag( $t->{pre}, $node, $t, $params ) 
+         . $middle 
+         . $self->_transform_tag( $t->{post}, $node, $t, $params );
 }
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 sub translate_element_node {
     my( $self, $node, $params ) = @_;
     my $translations = $self->{template};
 
-    my $node_name = 
-        $self->{parser} eq 'XML::LibXML' ? $node->localname
-      : $self->{parser} eq 'XML::XPath'  ? 
-                                 # nasty hack to get around that 
-                                 # the root has no name 
-                                 ( $node->getName && $node->getLocalName )
-      :           croak "unsupported parser:  $self->{parser}"
-      ;
+    my $node_name = $self->get_node_name( $node );
 
-    my $namespace;
-    if( $self->{parser} eq 'XML::LibXML' ) {
-        my $ns = $node->getNamespaces();
-        $namespace = $ns ? $ns->getData() : undef ;
-    }
-    elsif( $self->{parser} eq 'XML::XPath' ) {
-        if( my $prefix = $node->getPrefix ) {
-            $namespace = $node->getNamespace( $prefix )->getExpanded();
-        }
-    }
-    else {
-        croak "unsupported parser:  $self->{parser}"
-    }
+    my $namespace = $self->get_namespace( $node );
 
     my $trans = XML::XPathScript::Template::resolve( $translations, 
                                                 $namespace, $node_name );
@@ -490,18 +468,25 @@ sub translate_element_node {
     unless( $trans ) {
         # no specific and no generic? Okay, okay, return as is...
         no warnings qw/ uninitialized /;
-        my @kids = $self->{parser} eq 'XML::LibXML'
-                        ? $node->childNodes : $node->getChildNodes ;
+        my @kids = $self->get_child_nodes( $node );
         return $self->start_tag($node)  
                . $self->_apply_templates( @kids, $params )
                . $self->end_tag($node);	
 		
     }
-                        # by default we do the kids
-    my $dokids = 1;  
-    my $search;
+
     my $t = new XML::XPathScript::Template::Tag;
     $t->{$_} = $trans->{$_} for keys %{$trans};
+
+    # we officially support 'content', but also allow
+    # 'contents'
+    if ( my $content = $trans->{content} || $trans->{contents} ) {
+        return $self->_transform_content( $content, $node, $t, $params );
+    }
+
+    # by default we do the kids
+    my $dokids = 1;  
+    my $search;
 
     my $action = $trans->{action};
     
@@ -526,77 +511,124 @@ sub translate_element_node {
              : ()
              ;
 
-    my $pre = $self->interpolate($node, $t->{pre});
-	$pre .= $self->start_tag( $node , $t->{rename}) if $t->{showtag};
-	$pre .= $t->{intro};
-	$pre .= $self->interpolate($node, $t->{prechildren}) if @kids;
+    my @args = ( $node, $t, $params );
+
+    my $pre = $self->_transform_tag( $t->{pre}, @args );
+	$pre   .= $self->start_tag( $node , $t->{rename}) if $t->{showtag};
+	$pre   .= $self->_transform_tag( $t->{intro}, @args );
+	$pre   .= $self->_transform_tag( $t->{prechildren}, @args ) if @kids;
 	
 	my $post;
-	$post .= $self->interpolate($node, $t->{postchildren}) if @kids;
-	$post .= $t->{extro};
+	$post .= $self->_transform_tag( $t->{postchildren}, @args ) if @kids;
+	$post .= $self->_transform_tag( $t->{extro}, @args );
 	$post .= $self->end_tag( $node, $t->{rename} ) if  $t->{showtag};
-	$post .= $self->interpolate($node, $t->{post});
+	$post .= $self->_transform_tag( $t->{post}, @args );
 
 	my $middle;
 
-    if ( my $ioc = $trans->{insteadofchildren} ) {
-        if ( @kids ) {
-            $middle = ref( $ioc ) eq 'CODE'  ? $ioc->( $node, $t, $params ) 
-                                             : $ioc 
-                                             ;
-        }
-    }
-    else {
-        for my $kid ( @kids ) 
-        {
-            $middle .= $self->interpolate($node, $trans->{prechild}) 
-                if $self->is_element_node( $kid );
+    for my $kid ( @kids ) 
+    {
+        my $kid_is_element = $self->is_element_node( $kid );
 
-            $middle .= $self->apply_templates($kid, $params );
+        $middle .= $self->_transform_tag( $trans->{prechild}, 
+                        $kid, $t, $params ) if $kid_is_element;
 
-            $middle .= $self->interpolate($node, $trans->{postchild})
-                if $self->is_element_node( $kid );
-        }
+        $middle .= $self->apply_templates($kid, $params );
+
+        $middle .= $self->_transform_tag( $trans->{postchild}, 
+                        $kid, $t, $params ) if $kid_is_element;
     }
         
-	return $pre . $middle . $post
+	return $pre . $middle . $post;
 }
 
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+sub _transform_content {
+   my ( $self, $content, $node, $t, $params ) = @_;
+
+    return $content->( $node, $t, $params ) if ref $content eq 'CODE';
+
+    my $interpolated = $self->interpolate( $node, $content );
+
+    local *STDOUT;
+    my $output;
+    open STDOUT, '>', \$output or die "couldn't redirect STDOUT: $!\n";
+
+    my $xps = XML::XPathScript::current();
+
+    my $code = $xps->extract( $interpolated );
+
+    local $self->{dom} = $node;
+
+    eval <<"END_CONTENT";
+        package XML::XPathScript::Template::Content; 
+        my \$processor = \$self; 
+        my \%params = \%\$params;
+        \$self->import_functional unless exists \&get_template;
+        $code;
+END_CONTENT
+
+    die $@ if $@;
+
+    return $output;
+}
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# bad terminology, here a tag is 'pre', 'post', etc
+
+sub _transform_tag {
+    my ( $self, $tag, $node, $t, $params ) = @_;
+
+    return unless $tag;
+
+    return $tag->( $node, $t, $params ) if ref $tag eq 'CODE';
+
+    return $self->interpolate( $node, $tag );
+}
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 sub translate_comment_node {
-    my $self = shift;
-	my $node = shift;
-    my $params = shift;
+    my ( $self, $node, $params ) = @_;
     my $translations = $self->{template};
 
 	my $trans = $translations->{'#comment'} || $translations->{'comment()'};
 
 	return $node->toString unless $trans;
 
-	my $middle = $self->{parser} eq 'XML::LibXML' ?
-					$node->textContent : $node->getData;
+	my $middle = $self->get_text_content( $node );
+
+    my $t = new XML::XPathScript::Template::Tag;
+    $t->{$_} = $trans->{$_} for keys %{$trans};
+
+    my $action = $trans->{action};
 
 	if (my $code = $trans->{testcode}) 
 	{
-		my $t = {};
-		my $retval = $code->( $node, $t, $params );
-		if ($retval and %$t) {
+		$action = $code->( $node, $t, $params );
+		if ($action and %$t) {
 			foreach my $tkey (keys %$t) {
 				$trans->{$tkey} = $t->{$tkey};
 			}
 		}
-
-		return if $retval == DO_NOT_PROCESS();
-		$middle = '' if $retval == DO_SELF_ONLY();
 	}
-	
+
 	no warnings 'uninitialized';
-	return $trans->{pre}. $middle. $trans->{post};
+    return if $action =~ /^-?\d+$/ and $action == $DO_NOT_PROCESS;
+    
+    $middle = undef if $action == $DO_SELF_ONLY;
+	return $self->_transform_tag( $trans->{pre}, $node, $t, $params )
+         . $middle
+         . $self->_transform_tag( $trans->{post}, $node, $t, $params );
 }
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 sub start_tag {
     my( $self, $node, $name ) = @_;
 
-    $name ||= $node->getName or return '';
+    $name ||= $self->get_node_name( $node ) or return;
 
     my $string = '<'.$name;
 
@@ -606,26 +638,8 @@ sub start_tag {
     	$string .= $_->toString for $node->getNamespaceNodes;
 	}
 
-    for my $attr ( ( $self->{parser} eq 'XML::LibXML' ) ? 
-						$node->attributes : $node->getAttributeNodes) 
-	{
-	  
-	  	
-		if( $self->{parser} eq 'XML::XPath' )
-	   	{
-	   		$string .= $attr->toString;
-	   	}
-	   	else
-	   	{
-			#my $att = $attr->toString( 0, 1 );
-		    	#$att =~ s/'/&quot;/g;
-            if( $attr->isa( 'XML::LibXML::Namespace' ) ) {
-                $string .= ' xmlns:'.$attr->getName().'="'.$attr->value().'" ';
-            } 
-            else {
-                $string .= $attr->toString( 0, 1 );
-            }
-		}
+    for my $attr ( $self->get_attributes( $node )  ) {
+		$string .= $self->get_attribute( $attr );
     }
 
     $string .= '>';
@@ -635,7 +649,7 @@ sub start_tag {
 
 sub end_tag {
     my $self = shift;
-    if (my $name = $_[1] || $_[0]->getName) {
+    if (my $name = $_[1] || $self->get_node_name( $_[0] ) ) {
         return "</$name>";
     }
 	return '';
@@ -1432,5 +1446,5 @@ http://rt.cpan.org/Public/Dist/Display.html?Name=XML-XPathScript .
 =head1 AUTHORS
 
 Yanick Champoux <yanick@cpan.org> 
-and Dominique Quatravaux <dom@idealx.com>
+and Dominique Quatravaux <domq@cpan.org>
 

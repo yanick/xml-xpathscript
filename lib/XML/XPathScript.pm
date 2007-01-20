@@ -4,7 +4,7 @@ use strict;
 use warnings;
 use Carp;
 
-# $Revision: 883 $ - $Date: 2006-11-22T13:29:00.483083Z $
+# $Revision: 919 $ - $Date: 2007-01-20T23:04:07.761860Z $
 
 =pod 
 
@@ -145,8 +145,8 @@ sub interpolating {
 
 =head2 interpolation_regex
 
-    $regex = $XML::XPathScript::curent->interpolation_regex
-    $XML::XPathScript::curent->interpolation_regex( $regex )
+    $regex = $XML::XPathScript::current->interpolation_regex
+    $XML::XPathScript::current->interpolation_regex( $regex )
 
 Gets or sets the regex to use for interpolation. The value to be 
 interpolated must be capture by $1. 
@@ -239,7 +239,7 @@ use File::Basename;
 use XML::XPathScript::Processor;
 use XML::XPathScript::Template;
 
-our $VERSION = '1.46_02';
+our $VERSION = '1.47';
 
 $XML_parser = 'XML::LibXML';
 
@@ -409,6 +409,23 @@ sub transform {
     $self->process( \$output, $args ? @$args : () );
 
     return $output;
+}
+
+=head2 set_dom
+
+    $xps->set_dom( $dom )
+
+Set the DOM of the document to process. I<$dom>
+must be a node object of one of the supported 
+parsers (XML::LibXML, XML::XPath, B::XPath).
+
+=cut
+
+sub set_dom {
+    my( $self, $dom ) = @_;
+    $self->{dom} = $dom;
+    $self->{processor}->set_dom( $dom );
+    return $self;
 }
 
 =head2 set_xml
@@ -620,7 +637,8 @@ sub process {
 
     croak "xml document not defined" unless $self->{dom};
 
-	$self->{dom}->ownerDocument->setEncoding( "UTF-8" ) 
+    # FIXME
+	eval { $self->{dom}->ownerDocument->setEncoding( "UTF-8" ) }
 		if $XML_parser eq 'XML::LibXML';
 
 	{
@@ -680,6 +698,94 @@ sub extract {
 
     my $contents = $self->read_stylesheet( $stylesheet );
 
+    my @tokens = split /(<%[-=~#@]*|-?%>)/, $contents;
+
+    no warnings qw/ uninitialized /;
+
+    my $script;
+    my $line = 1;
+    TOKEN:
+    while ( @tokens ) {
+        my $token = shift @tokens;
+
+        if ( -1 == index $token, '<%' ) {
+            $line += $token =~ tr/\n//;
+            $token =~ s/\s+$// if  -1 < index $tokens[0], '<%'
+                               and -1 < index $tokens[0], '-';
+            $token =~ s/\|/\\\|/g;
+            # check for include
+            $token =~ s{<!--#include.+file=(['"])(.*?)\1.*?-->}
+                       { '|);'
+                         . $self->include_file( $2, @includestack)
+                         . 'print(q|'}seg;
+            $script .= 'print(q|'.$token.'|);' if length $token;
+
+            next TOKEN;
+        }
+
+        $script .= "\n#line $line $filename\n";
+
+        my $opening_tag = $token;
+        my $code;
+        my $closing_tag;
+        my $level = 1;
+        while( @tokens ) {
+            my $t = shift @tokens;
+            $level++ if -1 < index $t, '<%';
+            $level-- if -1 < index $t, '%>';
+            if ( $level == 0 ) {
+                $closing_tag = $t;
+                last;
+            }
+            $code .= $t;
+        }
+
+        die "stylesheet <% %>s are unbalanced: $opening_tag$code\n"
+            unless $closing_tag;
+
+        $line += $code =~ tr/\n//;
+
+        if ( -1 < index $opening_tag, '=' ) {
+            $script .= 'print( '.$code.' );';
+        }
+        elsif ( -1 < index $opening_tag, '~' ) {
+            $code =~ s/^\s+//; 
+            $code =~ s/\s+$//; 
+            $script .= 'print $processor->apply_templates( qq<'. $code .'> );';
+        }
+        elsif( -1 < index $opening_tag, '#' ) {
+            # do nothing
+        }
+        elsif( -1 < index $opening_tag, '@' ) {
+            $code =~ s/^\s+(\S+).*?\n//;    # strip first line
+            my $tag = $1 
+                or die "tag name missing in <%\@ %> at line $line\n";
+
+            my $here_delimiter = 'END_TAG';
+            while ( $code =~ /$here_delimiter/ ) {
+                $here_delimiter .= 'x';
+            }
+            $script .= <<END_SNIPPET;
+\$template->set( $tag => { content => <<'$here_delimiter' } );
+$code
+$here_delimiter
+END_SNIPPET
+        }
+        else {
+                    # always add a ';', just in case
+            $script .= $code . ';';
+        }
+
+        if ( -1 < index $closing_tag, '-' ) {
+            $tokens[0] =~ s/^\s*//;
+            my $temp = $&;
+            $line += $temp =~ tr/\n//;
+        }
+    }
+
+    return $script;
+
+    # FIXME not needed anymore
     # <%- -%> magic
     $contents =~ s#(\s+)<%-([=~]?)#<%$2$1#gs;
     $contents =~ s#-%>(\s+)#$1%>#gs;
@@ -687,8 +793,8 @@ sub extract {
     # <%~ %> magic
     $contents =~ s#<%~\s+(\S+)\s+%>#<%= apply_templates( qq<$1> ) %>#gs;
 
-    my $script="#line 1 $filename\n",
-    my $line = 1;
+    $script="#line 1 $filename\n",
+    $line = 1;
 
     while ($contents =~ /\G(.*?)(<!--#include|<%[=#]?)/gcs) {
         my ($text, $type) = ($1, $2);
@@ -1109,7 +1215,7 @@ http://rt.cpan.org/Public/Dist/Display.html?Name=XML-XPathScript .
 
 Current maintainers: 
 Yanick Champoux <yanick@cpan.org> 
-and Dominique Quatravaux <dom@idealx.com>
+and Dominique Quatravaux <domq@cpan.org>
 
 Created by Matt Sergeant <matt@sergeant.org>
 

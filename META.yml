@@ -1,12 +1,14 @@
 ---
 name: XML-XPathScript
-version: 1.46_02
+version: 1.47
 author:
   - 'Yanick Champoux <yanick@cpan.org>'
-  - 'Dominique Quatravaux <dom@idealx.com> '
+  - 'Dominique Quatravaux <domq@cpan.org> '
   - 'Matt Sergeant <matt@sergeant.org>'
 abstract: a Perl framework for XML stylesheets
 license: artistic
+resources:
+  license: http://opensource.org/licenses/artistic-license.php
 requires:
   Carp: 0
   Data::Dumper: 0
@@ -15,27 +17,39 @@ requires:
   Readonly: 0
   Scalar::Util: 0
   Symbol: 0
-  XML::LibXML: 0
+  XML::XPath: 0
 build_requires:
   File::Find: 0
   File::Spec: 0
 provides:
   Apache::AxKit::Language::YPathScript:
     file: lib_axkit/Apache/AxKit/Language/YPathScript.pm
-    version: 1.46_02
+    version: 1.47
   XML::XPathScript:
     file: lib/XML/XPathScript.pm
-    version: 1.46_02
+    version: 1.47
   XML::XPathScript::Processor:
     file: lib/XML/XPathScript/Processor.pm
-    version: 1.46_02
+    version: 1.47
+  XML::XPathScript::Processor::B:
+    file: lib/XML/XPathScript/Processor/B.pm
+  XML::XPathScript::Processor::LibXML:
+    file: lib/XML/XPathScript/Processor/LibXML.pm
+    version: 1.47
+  XML::XPathScript::Processor::XPath:
+    file: lib/XML/XPathScript/Processor/XPath.pm
+    version: 1.47
   XML::XPathScript::StdoutSnatcher:
     file: lib/XML/XPathScript.pm
-    version: 1.46_02
   XML::XPathScript::Template:
     file: lib/XML/XPathScript/Template.pm
-    version: 1.46_02
+    version: 1.47
+  XML::XPathScript::Template::Content:
+    file: lib/XML/XPathScript/Processor.pm
   XML::XPathScript::Template::Tag:
     file: lib/XML/XPathScript/Template/Tag.pm
-    version: 1.46_02
-generated_by: Module::Build version 0.2612
+    version: 1.47
+generated_by: Module::Build version 0.2806
+meta-spec:
+  url: http://module-build.sourceforge.net/META-spec-v1.2.html
+  version: 1.2
