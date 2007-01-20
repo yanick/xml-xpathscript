@@ -39,7 +39,26 @@ Example:
 
     Author: <%~ /doc/author %>
 
-=head3 <%- -%>, <%-= -%>, <%-~ -%>, <%-#  -%>
+=head3 <%@ %>
+
+A simplified way to set up the content attribute of a tag. The code
+
+    <%@ foo 
+        <h1><%= $title %></h1>
+        <%~ bar %>
+    %>
+
+is equivalent to 
+
+    <%
+        $template->set( foo => { content <<'END_CONTENT' } );
+            <h1><%= $title %></h1>
+            <%~ bar %>
+    END_CONTENT
+    %>
+
+
+=head3 <%- -%>, <%-= -%>, <%-~ -%>, <%-#  -%>, <%-@ -%>
 
 If a dash is added to a delimiter, all whitespaces (including carriage
 returns) predeceding or following the delimiter are removed from the 
@@ -313,6 +332,26 @@ Example:
            <% } %>
         </song>
     END_CONTENT
+
+See also the stylesheet syntax <%@ %>.
+
+B<WARNING>: If you are to insert Perl code in a content, remember 
+that interpolation is enabled by default, and that the default
+interpolation demarcations are the curly braces. So something like
+
+
+    $template->set( foo => { content => <<'END_CONTENT' } );
+        <%= map { $_ x 2 } @something_or_other %>
+    END_CONTENT
+
+will try to interpolate I<{ $_ x 2 }>, with the obvious
+gruesome results. The best approach, if you want to use code
+extensively in contents, is to reconfigure the interpolation
+regex to something more benign. For example:
+
+    # using double-curlies 
+    $XML::XPathScript::current->interpolation_regex( qr/{{(.*?)}}/ )
+    
 
 =head3 insteadofchildren
 
