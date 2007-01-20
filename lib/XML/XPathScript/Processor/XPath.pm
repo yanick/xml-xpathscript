@@ -5,6 +5,8 @@ package XML::XPathScript::Processor::XPath;
 
 use base qw/ XML::XPathScript::Processor /;
 
+our $VERSION = '1.47';
+
 sub get_namespace { 
         my $prefix = $_[1]->getPrefix or return;
         return $_[1]->getNamespace( $prefix )->getExpanded();
