@@ -145,8 +145,8 @@ sub interpolating {
 
 =head2 interpolation_regex
 
-    $regex = $XML::XPathScript::curent->interpolation_regex
-    $XML::XPathScript::curent->interpolation_regex( $regex )
+    $regex = $XML::XPathScript::current->interpolation_regex
+    $XML::XPathScript::current->interpolation_regex( $regex )
 
 Gets or sets the regex to use for interpolation. The value to be 
 interpolated must be capture by $1. 
@@ -680,7 +680,7 @@ sub extract {
 
     my $contents = $self->read_stylesheet( $stylesheet );
 
-    my @tokens = split /(<%[-=~#]*|-?%>)/, $contents;
+    my @tokens = split /(<%[-=~#@]*|-?%>)/, $contents;
 
     no warnings qw/ uninitialized /;
 
@@ -737,6 +737,21 @@ sub extract {
         }
         elsif( -1 < index $opening_tag, '#' ) {
             # do nothing
+        }
+        elsif( -1 < index $opening_tag, '@' ) {
+            $code =~ s/^\s+(\S+).*?\n//;    # strip first line
+            my $tag = $1 
+                or die "tag name missing in <%\@ %> at line $line\n";
+
+            my $here_delimiter = 'END_TAG';
+            while ( $code =~ /$here_delimiter/ ) {
+                $here_delimiter .= 'x';
+            }
+            $script .= <<END_SNIPPET;
+\$template->set( $tag => { content => <<'$here_delimiter' } );
+$code
+$here_delimiter
+END_SNIPPET
         }
         else {
                     # always add a ';', just in case
