@@ -5,6 +5,11 @@ package XML::XPathScript::Processor::B;
 
 use base qw/ XML::XPathScript::Processor /;
 
+# No namespaces here
+sub get_namespace { }
+
+sub get_child_nodes { $_[1]->get_children }
+
 sub findnodes { 
     my ( $self, $xpath, $context ) = @_;
     $context ||= $self->{dom};
@@ -22,26 +27,26 @@ sub to_string {
     return $string;
 }
 
-sub get_name {
-    my ( $self, $node ) = @_;
-    return $node->get_name;
-   # $node->can( 'name' ) ? $node->name : 
-    #        $node->can( 'get_name' ) ? $node->get_name :
-     #       'UNKNOWN';
-}
+sub get_node_name { $_[1]->get_name }
 
-sub get_attribute_names {
+sub get_attributes {
     if ( $_[1]->can( 'get_attr_names' ) ) {
-        return $_[1]->get_attr_names;
+        return map { ( [ $_ => $_[1]->get_attr_value( $_ ) ] )
+                       x !! defined $_[1]->get_attr_value( $_ )  } 
+                   $_[1]->get_attr_names ;
     }
-    else {
-        return;
-    }
+
+    return;
 }
 
-sub get_attribute_value {
-    return $_[1]->get_attr_value( $_[2] );
-}
+sub get_attribute { "$_[1][0]='$_[1][1]' " }
+
+# it's all element nodes
+sub is_element_node  { 1 }
+sub is_nodelist      { 0 }
+sub is_text_node     { 0 }
+sub is_comment_node  { 0 }
+sub is_pi_node       { 0 }
 
 1;
 

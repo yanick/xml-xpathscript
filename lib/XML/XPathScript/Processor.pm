@@ -628,8 +628,7 @@ sub translate_comment_node {
 sub start_tag {
     my( $self, $node, $name ) = @_;
 
-    $name ||= $node->getName 
-        or return;
+    $name ||= $self->get_node_name( $node ) or return;
 
     my $string = '<'.$name;
 
@@ -650,7 +649,7 @@ sub start_tag {
 
 sub end_tag {
     my $self = shift;
-    if (my $name = $_[1] || $_[0]->getName) {
+    if (my $name = $_[1] || $self->get_node_name( $_[0] ) ) {
         return "</$name>";
     }
 	return '';
