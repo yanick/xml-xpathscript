@@ -5,6 +5,7 @@ lib/XML/XPathScript.pm
 lib/XML/XPathScript/Processor.pm
 lib/XML/XPathScript/Processor/LibXML.pm
 lib/XML/XPathScript/Processor/XPath.pm
+lib/XML/XPathScript/Processor/B.pm
 lib/XML/XPathScript/Stylesheet.pod
 lib/XML/XPathScript/Template.pm
 lib/XML/XPathScript/Template/Tag.pm
@@ -38,6 +39,7 @@ t/21processor.t
 t/22stylesheet.t
 t/24content.t
 t/25stylesheetlines.t
+t/26bxpath.t
 t/99signature.t
 t/document_file.txt
 t/include.xps
