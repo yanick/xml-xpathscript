@@ -8,7 +8,7 @@ use Getopt::Long;
 use Symbol;
 use File::Basename;
 
-my $VERSION = '1.47';
+my $VERSION = '1.48';
 
 my ( $query, $interpolate );
 GetOptions( 'query=s' => \$query, 
@@ -17,9 +17,9 @@ GetOptions( 'query=s' => \$query,
           );
 
 sub die_version {
-    my( $date ) = q$Date: 2007-01-20T22:14:40.991903Z $ 
+    my( $date ) = q$Date: 2007-01-22T23:20:55.751996Z $ 
                     =~ /\((.*?)\)/;
-    my( $revision ) = q$Revision: 917 $ =~ /(\d+)/;
+    my( $revision ) = q$Revision: 923 $ =~ /(\d+)/;
 
     die <<"END_VERSION";
 $0 : revision $revision ($date)
