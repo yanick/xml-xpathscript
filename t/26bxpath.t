@@ -4,7 +4,7 @@ use warnings;
 use Test::More;  
 use XML::XPathScript;
 
-plan eval { use B::XPath; 1 } 
+plan eval { require B::XPath; 1 } 
      ? ( tests => 1 )
      : ( skip_all => 'B::XPath not installed' );
 

@@ -1,5 +1,8 @@
 Revision history for Perl module XML::XPathScript
 
+1.48 Jan 22, 2007
+    - Fixed t/26bxpath.t so that it skips if B::XPath is not installed
+
 1.47 Jan 20, 2007
     - Changed Dom's email to domq@cpan.org
     - Added the 'content' tag attribute
