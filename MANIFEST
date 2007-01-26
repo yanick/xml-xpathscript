@@ -40,6 +40,8 @@ t/22stylesheet.t
 t/24content.t
 t/25stylesheetlines.t
 t/26bxpath.t
+t/40axkit.t
+t/50tomkit.t
 t/99signature.t
 t/document_file.txt
 t/include.xps
