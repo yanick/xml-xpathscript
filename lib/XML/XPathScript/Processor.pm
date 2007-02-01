@@ -270,6 +270,8 @@ sub apply_templates {
 		@_ = $self->findnodes( @_ );
     }
 
+    return unless @_;
+
     my $retval;
 
     no warnings qw/ uninitialized /;

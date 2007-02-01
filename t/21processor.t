@@ -1,7 +1,7 @@
 use strict;
 use warnings;
 
-use Test::More tests => 7;
+use Test::More tests => 8;
 
 use XML::XPathScript;
 use XML::XPathScript::Processor;
@@ -57,3 +57,8 @@ $result = eval {
 is $@ => '';
 is $result => '<bar>I am the walrus!</bar>', 
                 'functional import of the processor, class-level';
+
+
+is $processor->apply_templates( '/path/to/nowhere' ) => undef
+    "apply_templates with a path without match";
+
