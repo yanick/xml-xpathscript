@@ -8,7 +8,7 @@ use Getopt::Long;
 use Symbol;
 use File::Basename;
 
-my $VERSION = '1.48';
+my $VERSION = '1.49';
 
 my ( $query, $interpolate );
 GetOptions( 'query=s' => \$query, 

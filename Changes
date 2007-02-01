@@ -1,7 +1,8 @@
 Revision history for Perl module XML::XPathScript
 
-1.49
+1.49 Jan 31, 2007
     - added tests for axkit and tomkit
+    - fixed bug for apply_templates called with a path without match
 
 1.48 Jan 22, 2007
     - Fixed t/26bxpath.t so that it skips if B::XPath is not installed
