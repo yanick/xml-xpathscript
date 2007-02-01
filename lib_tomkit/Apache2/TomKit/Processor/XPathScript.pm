@@ -9,7 +9,7 @@ use base qw( Apache2::TomKit::Processor::AbstractProcessor XML::XPathScript );
 use Apache2::TomKit::Processor::DefinitionProvider::FileSystemProvider;
 use XML::LibXML;
 
-our $VERSION = '1.48';
+our $VERSION = '1.49';
 
 sub new {
     my $class  = shift;

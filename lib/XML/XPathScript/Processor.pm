@@ -9,7 +9,7 @@ use base qw/ Exporter /;
 use XML::XPathScript::Template;
 use Readonly;
 
-our $VERSION = '1.48';
+our $VERSION = '1.49';
 
 our @EXPORT = qw/ 
         $DO_SELF_AS_CHILD 
@@ -269,6 +269,8 @@ sub apply_templates {
     unless( ref $_[0] ) { # called with a path to find
 		@_ = $self->findnodes( @_ );
     }
+
+    return unless @_;
 
     my $retval;
 
