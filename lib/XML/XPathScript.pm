@@ -1047,6 +1047,7 @@ method in a subclass provides yet another method to redirect output.
 =cut "
 
 sub print {
+    no warnings qw/ uninitialized /;
     my ($self, @text)=@_;
     my $printer=$self->{printer};
 

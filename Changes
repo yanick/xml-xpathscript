@@ -1,5 +1,8 @@
 Revision history for Perl module XML::XPathScript
 
+1.50
+    Silenced spurious warnings.
+
 1.49 Jan 31, 2007
     - added tests for axkit and tomkit
     - fixed bug for apply_templates called with a path without match
