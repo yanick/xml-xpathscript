@@ -14,7 +14,7 @@ my $imported = XML::XPathScript::Template->new;
 
 $imported->set( foo => { post => 'fum' }, );
 
-$template->impor_template( $imported );
+$template->import_template( $imported );
 
 ok 1, "import_template() invocation";
 
