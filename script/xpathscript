@@ -7,6 +7,7 @@ use XML::XPathScript;
 use Getopt::Long;
 use Symbol;
 use File::Basename;
+use Carp;
 
 my $VERSION = '1.49';
 
@@ -48,8 +49,17 @@ my $xml = gensym;
 my $stylesheet = gensym;
 
 open($xml, $xmlfile) || die "Cannot open XML file '$xmlfile': $!";
-chdir dirname($stylefile);
-open($stylesheet, basename($stylefile)) || die "Cannot open Stylesheet file '$stylefile': $!";
+
+if ( $stylefile !~ /::/ ) {
+    chdir dirname($stylefile);
+    open($stylesheet, basename($stylefile)) || die "Cannot open Stylesheet file '$stylefile': $!";
+}
+else {
+    eval "use $stylefile";
+    die $@ if $@;
+    $stylesheet = eval "\$${stylefile}::stylesheet"
+        or croak "couldn't load stylesheet from module $stylefile";
+}
 
 my $xps = XML::XPathScript->new(xml => $xml, stylesheet => $stylesheet);
 
@@ -117,9 +127,14 @@ xpathscript - XPathScript command-line utility
 
 xpathscript [-i] [-q=<query_string>] <xml_file> <stylesheet_file>
 
+xpathscript [-i] [-q=<query_string>] <xml_file> <stylesheet_module>
+
 xpathscript [-i] [-q=<query_string>] <name> 
 	
 =head1 DESCRIPTION
+
+If the second argument looks like a module, xpathscript will 
+try to load it and use its $stylesheet variable as the stylesheet
 
 If the second type of call is used, xpathscript assumes that the xml source
 file  and the XPathScript stylesheet are named <name>.xml and <name>.xps.

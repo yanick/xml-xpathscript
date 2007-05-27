@@ -3,6 +3,7 @@ Revision history for Perl module XML::XPathScript
 1.50
     - Added method import_template() to XML::XPathScript::Template
     - Silenced spurious warnings.
+    - xpathscript now accepts stylesheet modules as argument
 
 1.49 Jan 31, 2007
     - added tests for axkit and tomkit
