@@ -8,24 +8,25 @@ use Scalar::Util qw/ reftype /;
 
 our $VERSION = '1.49';
 
-our @ALLOWED_ATTRIBUTES =  qw/ pre post testcode showtag
-                               intro extro prechildren postchildren
-                               prechild postchild action rename 
-                               content contents /;
+our @ALLOWED_ATTRIBUTES = qw{
+  pre post 
+  intro extro 
+  prechildren postchildren 
+  prechild testcode 
+  showtag 
+  postchild 
+  action 
+  rename 
+  content contents
+};
 
 sub new {
-   my( $class ) = @_;
-
-   my $self = {};
-   bless $self, $class;
-
-   return $self;
+   return bless {}, shift;
 }
 
 sub get {
-    my( $self, @attributes ) = @_;
-
-    return map { $self->{$_} } @attributes;
+    my $self = shift;
+    return map { $self->{$_} } @_;
 }
 
 sub set {

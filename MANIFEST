@@ -39,6 +39,7 @@ t/21processor.t
 t/22stylesheet.t
 t/24content.t
 t/25stylesheetlines.t
+t/27template_import.t
 t/26bxpath.t
 t/40axkit.t
 t/50tomkit.t

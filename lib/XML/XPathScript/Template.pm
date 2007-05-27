@@ -7,6 +7,7 @@ use Carp;
 use Scalar::Util qw/ reftype /;
 use Data::Dumper;
 use XML::XPathScript::Template::Tag;
+use Clone qw/ clone /;
 
 our $VERSION = '1.49';
 
@@ -129,6 +130,27 @@ sub resolve {
                                                     # (and undef if nothing)
 }
 
+sub import_template {
+    my( $self, $other_template ) = @_;
+
+    carp "incorrect call for import_template(): no argument or is not a template"
+        unless $other_template and $other_template =~ /HASH/;
+
+    for my $k ( keys %$other_template ) {
+        if ( 0 == index $k, ':' ) {         # it's a namespace
+            my $ns = $k;
+            $ns =~ s/^://;
+            my $subtemplate = $self->namespace( $ns );
+            $subtemplate->import( $other_template->{$k} );
+        }
+        else {                              # it's a regular tag
+            $self->set( $k => $other_template->{$k} );
+        }
+    }
+
+    return;
+}
+
 1;
 
 __END__
@@ -210,6 +232,12 @@ Example:
     # to 'urgent' and 'redHot'
     $template->copy( 'important' => [ qw/ urgent redHot / ], 
                         [ qw/ pre post / ] );
+
+=head2 import_template
+
+    $template->import_template( $other_template )
+
+Imports another template into the current one.
 
 =head2 alias
 
