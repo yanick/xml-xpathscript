@@ -9,6 +9,7 @@ lib/XML/XPathScript/Processor/B.pm
 lib/XML/XPathScript/Stylesheet.pod
 lib/XML/XPathScript/Template.pm
 lib/XML/XPathScript/Template/Tag.pm
+lib/XML/XPathScript/Stylesheet/DocBook2LaTeX.pm
 lib_axkit/Apache/AxKit/Language/YPathScript.pm
 lib_tomkit/Apache2/TomKit/Processor/XPathScript.pm
 Makefile.PL
