@@ -66,7 +66,7 @@ while ( my $stylefile = shift @ARGV ) {
     }
 
     $xml = eval { $xps->transform( $xml => $stylesheet ) };
-    die "error while transforming with stylesheet '$stylefile': $!\n"
+    die "error while transforming with stylesheet '$stylefile': $@\n"
         if $@;
 }
 
