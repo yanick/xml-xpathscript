@@ -9,14 +9,14 @@ use Scalar::Util qw/ reftype /;
 our $VERSION = '1.49';
 
 our @ALLOWED_ATTRIBUTES = qw{
-  pre post 
-  intro extro 
-  prechildren postchildren 
-  prechild testcode 
-  showtag 
-  postchild 
-  action 
-  rename 
+  pre post
+  intro extro
+  prechildren postchildren
+  prechild testcode
+  showtag
+  postchild
+  action
+  rename
   content contents
 };
 
@@ -33,7 +33,7 @@ sub set {
 	my( $self, $attribute_ref ) = @_;
 
 	for my $key ( keys %{$attribute_ref} ) {
-        croak "attribute $key not allowed" 
+        croak "attribute $key not allowed"
             if ! grep { $key eq $_ } @ALLOWED_ATTRIBUTES;
 
         $self->{$key} = $attribute_ref->{$key};
