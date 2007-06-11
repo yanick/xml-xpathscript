@@ -9,6 +9,9 @@ use Data::Dumper;
 use XML::XPathScript::Template::Tag;
 use Clone qw/ clone /;
 
+use overload '&{}'  => \&_overload_func,
+             q{""}  => \&_overload_quote;
+
 our $VERSION = '1.49';
 
 sub new {
@@ -19,7 +22,6 @@ sub new {
 
    return $self;
 }
-
 
 sub set {       ##no critic
     croak "method set called with more than two arguments" if @_ > 3;
@@ -149,6 +151,16 @@ sub import_template {
     }
 
     return;
+}
+
+sub _overload_func {
+    my $self = shift;
+    return sub { $self->set( @_ ) }
+}
+
+sub _overload_quote {
+    my $self = shift;
+    return sub { print $self };
 }
 
 1;

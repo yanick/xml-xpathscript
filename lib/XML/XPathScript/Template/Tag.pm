@@ -6,6 +6,9 @@ use warnings;
 use Carp;
 use Scalar::Util qw/ reftype /;
 
+use overload '&{}'  => \&_overload_func,
+             q{""}  => \&_overload_quote;
+
 our $VERSION = '1.49';
 
 our @ALLOWED_ATTRIBUTES = qw{
@@ -26,7 +29,9 @@ sub new {
 
 sub get {
     my $self = shift;
-    return map { $self->{$_} } @_;
+    return wantarray ? map { $self->{$_} } @_
+                     : $self->{$_[0]}
+                     ;
 }
 
 sub set {
@@ -43,6 +48,16 @@ sub set {
 	}
 
 	return;
+}
+
+sub _overload_func {
+    my $self = shift;
+    return sub { $self->set( @_ ) }
+}
+
+sub _overload_quote {
+    my $self = shift;
+    return sub { print $self };
 }
 
 'end of XML::XPathScript::Template::Tag';
