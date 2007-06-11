@@ -57,6 +57,7 @@ sub _overload_func {
 
 sub _overload_quote {
     my $self = shift;
+    return $self;
     return sub { print $self };
 }
 
@@ -141,9 +142,14 @@ Creates a new, empty tag.
 
 Updates the tag's attributes with the values given in \%attributes
 
+Thanks to the magic of overloading, using I<$t> as a function 
+reference acts as a shortcut to I<set>.
+
 Example:
 
     $t->set({ pre => '<a>', post => '</a>' });
+    # or, equivalently,
+    $t->({ pre => '<a>', post => '</a>' });
 
 =head2 get
 

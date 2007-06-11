@@ -12,7 +12,7 @@ $template->( 'foo' => { rename => 'bar' } );
 
 is $template->{foo}{rename} => 'bar', 'Template &{} overloading';
 
-like $template => qr/^CODE/;
+like $template => qr/^XML::XPathScript::Template/;
 
 my $tag = XML::XPathScript::Template::Tag->new;
 
@@ -20,5 +20,5 @@ $tag->({ pre => 'alpha' });
 
 is $tag->get( 'pre' ) => 'alpha', 'Tag &{} overloading';
 
-like $tag => qr/^CODE/;
+like $tag => qr/^XML::XPathScript::Template/;
 

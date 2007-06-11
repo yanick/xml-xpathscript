@@ -8,6 +8,7 @@ use Scalar::Util qw/ reftype /;
 use Data::Dumper;
 use XML::XPathScript::Template::Tag;
 use Clone qw/ clone /;
+use Scalar::Util qw/ refaddr /;
 
 use overload '&{}'  => \&_overload_func,
              q{""}  => \&_overload_quote;
@@ -94,7 +95,9 @@ sub is_alias {
 
     my $id = $self->{$tag};
 
-    my @aliases = grep { $_ ne $tag and $self->{$_} eq $id } keys %{$self};
+    my @aliases = grep {     $_ ne $tag 
+                         and refaddr( $self->{$_} ) eq refaddr( $id ) }
+                  keys %{$self};
 
     return @aliases;
 }
@@ -160,7 +163,8 @@ sub _overload_func {
 
 sub _overload_quote {
     my $self = shift;
-    return sub { print $self };
+    return $self;
+    return sub { $self };
 }
 
 1;
@@ -217,12 +221,17 @@ Creates and returns a new, empty template.
     $template->set( $tag, \%attributes )
     $template->set( \@tags , \%attributes )
 
-Update the $tag or @tags in the template with the 
+Updates the $tag or @tags in the template with the 
 given %attributes.
+
+Thank to the magic of overloading, using the $template 
+as a code reference acts as a shortcut to I<set>.
 
 Example:
 
     $template->set( 'foo' => { pre => '<a>', post => '</a>' } );
+    # or, if you prefer,
+    $template->( 'foo' => { pre => '<a>', post => '</a>' } );
 
 =head2 copy
 
