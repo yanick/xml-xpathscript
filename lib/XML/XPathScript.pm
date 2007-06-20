@@ -4,7 +4,7 @@ use strict;
 use warnings;
 use Carp;
 
-# $Revision: 923 $ - $Date: 2007-01-22T23:20:55.751996Z $
+# $Revision: 987 $ - $Date: 2007-06-20T21:19:15.193213Z $
 
 =pod 
 
@@ -239,7 +239,7 @@ use File::Basename;
 use XML::XPathScript::Processor;
 use XML::XPathScript::Template;
 
-our $VERSION = '1.49';
+our $VERSION = '1.50';
 
 $XML_parser = 'XML::LibXML';
 
@@ -1047,6 +1047,7 @@ method in a subclass provides yet another method to redirect output.
 =cut "
 
 sub print {
+    no warnings qw/ uninitialized /;
     my ($self, @text)=@_;
     my $printer=$self->{printer};
 

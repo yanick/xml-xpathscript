@@ -9,10 +9,12 @@ lib/XML/XPathScript/Processor/B.pm
 lib/XML/XPathScript/Stylesheet.pod
 lib/XML/XPathScript/Template.pm
 lib/XML/XPathScript/Template/Tag.pm
+lib/XML/XPathScript/Stylesheet/DocBook2LaTeX.pm
 lib_axkit/Apache/AxKit/Language/YPathScript.pm
 lib_tomkit/Apache2/TomKit/Processor/XPathScript.pm
 Makefile.PL
 MANIFEST			This list of files
+SIGNATURE
 META.yml
 README
 script/xpathscript
@@ -39,6 +41,7 @@ t/21processor.t
 t/22stylesheet.t
 t/24content.t
 t/25stylesheetlines.t
+t/27template_import.t
 t/26bxpath.t
 t/40axkit.t
 t/50tomkit.t

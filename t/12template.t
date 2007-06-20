@@ -1,6 +1,8 @@
 use strict;
 use Test::More tests => 11;
 
+use Scalar::Util qw/ refaddr /;
+
 BEGIN {
     use_ok( 'XML::XPathScript::Template' );
 }
@@ -30,10 +32,10 @@ is( $template->{bar}{post}, 'd', 'copy()' );
 
 # alias
 $template->alias( 'foo' => 'bar' );
-is( $template->{foo}, $template->{bar}, 'alias()' );
+is( refaddr($template->{foo}), refaddr($template->{bar}), 'alias()' );
 
 $template->alias( 'foo' => [ qw/ bar baz / ] );
-is( $template->{foo}, $template->{baz}, 'alias()' );
+is( refaddr($template->{foo}) => refaddr($template->{baz}), 'alias()' );
 
 # is_alias
 ok( $template->is_alias( 'foo' ) == 2, 'is_alias()' );

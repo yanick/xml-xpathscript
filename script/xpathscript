@@ -7,8 +7,9 @@ use XML::XPathScript;
 use Getopt::Long;
 use Symbol;
 use File::Basename;
+use Carp;
 
-my $VERSION = '1.49';
+my $VERSION = '1.50';
 
 my ( $query, $interpolate );
 GetOptions( 'query=s' => \$query, 
@@ -17,9 +18,9 @@ GetOptions( 'query=s' => \$query,
           );
 
 sub die_version {
-    my( $date ) = q$Date: 2007-01-22T23:20:55.751996Z $ 
+    my( $date ) = q$Date: 2007-06-20T21:19:15.193213Z $ 
                     =~ /\((.*?)\)/;
-    my( $revision ) = q$Revision: 923 $ =~ /(\d+)/;
+    my( $revision ) = q$Revision: 987 $ =~ /(\d+)/;
 
     die <<"END_VERSION";
 $0 : revision $revision ($date)
@@ -34,9 +35,9 @@ END_VERSION
 $Fake::Request = AxKit::Apache->request();
 $Fake::Request->param( split /[;&=]/, $query ) if $query;		
 
-usage() unless @ARGV == 2;
+usage() unless @ARGV >= 2;
 
-my ($xmlfile, $stylefile) = @ARGV;
+my $xmlfile = shift @ARGV;
 $Fake::Request->uri( $xmlfile );
 
 $XML::XPathScript::DoNotInterpolate = !$interpolate if $interpolate;
@@ -44,22 +45,38 @@ $XML::XPathScript::DoNotInterpolate = !$interpolate if $interpolate;
 # to keep 'warnings' happy
 my $foo = $XML::XPathScript::DoNotInterpolate;
 
-my $xml = gensym;
-my $stylesheet = gensym;
+open my $xml_fh, $xmlfile or die "Cannot open XML file '$xmlfile': $!\n";
 
-open($xml, $xmlfile) || die "Cannot open XML file '$xmlfile': $!";
-chdir dirname($stylefile);
-open($stylesheet, basename($stylefile)) || die "Cannot open Stylesheet file '$stylefile': $!";
+undef $/;
+my $xml = <$xml_fh>;
+my $xps = XML::XPathScript->new;
 
-my $xps = XML::XPathScript->new(xml => $xml, stylesheet => $stylesheet);
+while ( my $stylefile = shift @ARGV ) {
+    my $stylesheet;
 
-$xps->process;
+    if ( $stylefile !~ /::/ ) {
+        chdir dirname($stylefile);
+        open( $stylesheet, basename($stylefile)) || die "Cannot open Stylesheet file '$stylefile': $!";
+    }
+    else {
+        eval "use $stylefile";
+        die $@ if $@;
+        $stylesheet = eval "\$${stylefile}::stylesheet"
+            or croak "couldn't load stylesheet from module $stylefile";
+    }
+
+    $xml = eval { $xps->transform( $xml => $stylesheet ) };
+    die "error while transforming with stylesheet '$stylefile': $@\n"
+        if $@;
+}
+
+print $xml;
 
 exit(0);
 
 sub usage {
     print STDERR <<EOT;
-Usage: xpathscript [-i] [-q="query-string"] xmlfile stylesheet_file
+Usage: xpathscript [-i] [-q="query-string"] xmlfile stylesheet_files
        or
        xpathscript [-i] [-q="query-string"] file
 	     in which case the xml file will be assumed 
@@ -100,14 +117,13 @@ sub param
 	return %{$self->{param}};
 }
 
-sub uri
-{
-		my $self = shift;
-		$self->{uri} = shift if @_;
-		return $self->{uri};
-
+sub uri {
+    my $self = shift;
+    $self->{uri} = shift if @_;
+    return $self->{uri};
 }
 
+__END__
 
 =head1 NAME
 
@@ -115,13 +131,20 @@ xpathscript - XPathScript command-line utility
 
 =head1 SYNOPSIS
 
-xpathscript [-i] [-q=<query_string>] <xml_file> <stylesheet_file>
+xpathscript [-i] [-q=<query_string>] <xml_file> <stylesheet_files or modules..>
 
 xpathscript [-i] [-q=<query_string>] <name> 
 	
 =head1 DESCRIPTION
 
-If the second type of call is used, xpathscript assumes that the xml source
+Transforms the xml document using the one or more given
+XPathScript stylesheets. If a module name is passed as
+one of the stylesheets,
+xpathscript will 
+try to load it and use its local $stylesheet variable as the stylesheet.
+
+If no stylesheet is provided, 
+xpathscript assumes that the xml source
 file  and the XPathScript stylesheet are named <name>.xml and <name>.xps.
 
 =head2 ARGUMENTS
@@ -145,7 +168,7 @@ will act as if the document was requested from the web server with the url
 
 =head1 SEE ALSO
 
-XML::XPathScript
+L<XML::XPathScript>
 
 =head1 BUGS
 
@@ -155,7 +178,7 @@ http://rt.cpan.org/Public/Dist/Display.html?Name=XML-XPathScript .
 
 =head1 AUTHOR
 
-Yanick Champoux, <yanick@babyl.dyndns.org>
+Yanick Champoux, <yanick@cpan.org>
 
 =cut
 

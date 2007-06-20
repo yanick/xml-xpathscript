@@ -2,7 +2,7 @@ use strict;
 use Test::More;
 
 BEGIN { 
-	plan tests => 24, todo => [];
+	plan tests => 26;
 }
 
 no warnings;   # SAVERRR used only once
@@ -218,3 +218,17 @@ test_xml( '<foo></foo>', $xps,
 
 }
 
+{
+close STDERR;
+my $errors;
+open STDERR, '>', \$errors;
+
+my $exp;
+test_xml( '<foo />', '<% my $nothing; print $nothing;  %>', '',
+            $exp = 'printing undefs should not trigger a warning' );
+
+is $errors => undef, $exp;
+
+open STDERR, ">&SAVEERR";    # return to normal
+
+}

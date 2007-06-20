@@ -7,8 +7,13 @@ use Carp;
 use Scalar::Util qw/ reftype /;
 use Data::Dumper;
 use XML::XPathScript::Template::Tag;
+use Clone qw/ clone /;
+use Scalar::Util qw/ refaddr /;
 
-our $VERSION = '1.49';
+use overload '&{}'  => \&_overload_func,
+             q{""}  => \&_overload_quote;
+
+our $VERSION = '1.50';
 
 sub new {
    my( $class ) = @_;
@@ -18,7 +23,6 @@ sub new {
 
    return $self;
 }
-
 
 sub set {       ##no critic
     croak "method set called with more than two arguments" if @_ > 3;
@@ -91,7 +95,9 @@ sub is_alias {
 
     my $id = $self->{$tag};
 
-    my @aliases = grep { $_ ne $tag and $self->{$_} eq $id } keys %{$self};
+    my @aliases = grep {     $_ ne $tag 
+                         and refaddr( $self->{$_} ) eq refaddr( $id ) }
+                  keys %{$self};
 
     return @aliases;
 }
@@ -127,6 +133,38 @@ sub resolve {
                 || $template->{$tag}                # bar
                 || $template->{'*'} );              # *  
                                                     # (and undef if nothing)
+}
+
+sub import_template {
+    my( $self, $other_template ) = @_;
+
+    carp "incorrect call for import_template(): no argument or is not a template"
+        unless $other_template and $other_template =~ /HASH/;
+
+    for my $k ( keys %$other_template ) {
+        if ( 0 == index $k, ':' ) {         # it's a namespace
+            my $ns = $k;
+            $ns =~ s/^://;
+            my $subtemplate = $self->namespace( $ns );
+            $subtemplate->import( $other_template->{$k} );
+        }
+        else {                              # it's a regular tag
+            $self->set( $k => $other_template->{$k} );
+        }
+    }
+
+    return;
+}
+
+sub _overload_func {
+    my $self = shift;
+    return sub { $self->set( @_ ) }
+}
+
+sub _overload_quote {
+    my $self = shift;
+    return $self;
+    return sub { $self };
 }
 
 1;
@@ -183,12 +221,17 @@ Creates and returns a new, empty template.
     $template->set( $tag, \%attributes )
     $template->set( \@tags , \%attributes )
 
-Update the $tag or @tags in the template with the 
+Updates the $tag or @tags in the template with the 
 given %attributes.
+
+Thank to the magic of overloading, using the $template 
+as a code reference acts as a shortcut to I<set>.
 
 Example:
 
     $template->set( 'foo' => { pre => '<a>', post => '</a>' } );
+    # or, if you prefer,
+    $template->( 'foo' => { pre => '<a>', post => '</a>' } );
 
 =head2 copy
 
@@ -210,6 +253,12 @@ Example:
     # to 'urgent' and 'redHot'
     $template->copy( 'important' => [ qw/ urgent redHot / ], 
                         [ qw/ pre post / ] );
+
+=head2 import_template
+
+    $template->import_template( $other_template )
+
+Imports another template into the current one.
 
 =head2 alias
 

@@ -6,33 +6,39 @@ use warnings;
 use Carp;
 use Scalar::Util qw/ reftype /;
 
-our $VERSION = '1.49';
+use overload '&{}'  => \&_overload_func,
+             q{""}  => \&_overload_quote;
 
-our @ALLOWED_ATTRIBUTES =  qw/ pre post testcode showtag
-                               intro extro prechildren postchildren
-                               prechild postchild action rename 
-                               content contents /;
+our $VERSION = '1.50';
+
+our @ALLOWED_ATTRIBUTES = qw{
+  pre post
+  intro extro
+  prechildren postchildren
+  prechild testcode
+  showtag
+  postchild
+  action
+  rename
+  content contents
+};
 
 sub new {
-   my( $class ) = @_;
-
-   my $self = {};
-   bless $self, $class;
-
-   return $self;
+   return bless {}, shift;
 }
 
 sub get {
-    my( $self, @attributes ) = @_;
-
-    return map { $self->{$_} } @attributes;
+    my $self = shift;
+    return wantarray ? map { $self->{$_} } @_
+                     : $self->{$_[0]}
+                     ;
 }
 
 sub set {
 	my( $self, $attribute_ref ) = @_;
 
 	for my $key ( keys %{$attribute_ref} ) {
-        croak "attribute $key not allowed" 
+        croak "attribute $key not allowed"
             if ! grep { $key eq $_ } @ALLOWED_ATTRIBUTES;
 
         $self->{$key} = $attribute_ref->{$key};
@@ -42,6 +48,17 @@ sub set {
 	}
 
 	return;
+}
+
+sub _overload_func {
+    my $self = shift;
+    return sub { $self->set( @_ ) }
+}
+
+sub _overload_quote {
+    my $self = shift;
+    return $self;
+    return sub { print $self };
 }
 
 'end of XML::XPathScript::Template::Tag';
@@ -125,9 +142,14 @@ Creates a new, empty tag.
 
 Updates the tag's attributes with the values given in \%attributes
 
+Thanks to the magic of overloading, using I<$t> as a function 
+reference acts as a shortcut to I<set>.
+
 Example:
 
     $t->set({ pre => '<a>', post => '</a>' });
+    # or, equivalently,
+    $t->({ pre => '<a>', post => '</a>' });
 
 =head2 get
 
