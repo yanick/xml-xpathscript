@@ -1,6 +1,7 @@
 Revision history for Perl module XML::XPathScript
 
 1.50
+    - Functional calls to Template and Tag are now shortcut to set()s
     - Added method import_template() to XML::XPathScript::Template
     - Silenced spurious warnings.
     - New stylesheet module DocBook2LaTeX.pm

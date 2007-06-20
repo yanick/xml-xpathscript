@@ -6,6 +6,8 @@ use strict;
 use XML::XPathScript::Processor;
 use Carp;
 
+our $VERSION = '1.50';
+
 our $processor;
 
 our $stylesheet = <<'END_STYLESHEET';
@@ -3063,13 +3065,40 @@ $t->{othername}->{testcode}=sub {
 	return -1;
 };
 
-
+__END__
 
 #########################################################################
 #########################################################################
 #################       POD DOCUMENTATION      ##########################
 #########################################################################
 #########################################################################
+
+=head1 NAME
+
+XML::XPathScript::Stylesheet::DocBook2LaTeX - Transforms DocBook into LaTeX
+
+=head1 WARNING
+
+This module is still in a very beta-ish stage.
+We heavily recommend to wait till we tell you to to use it. 
+But if you are in an adventurous mode, by all means, go ahead. :-)
+
+=head1 SYNOPSIS
+
+    use XML::XPathScript;
+    use XML::XPathScript::Stylesheet::DocBook2LaTeX;
+
+    my $latex = $xps->transform( 
+        $docbook => XML::XPathScript::Stylesheet::DocBook2LaTeX::stylesheet
+    );
+
+=head1 AUTHORS
+
+This module is a port of Dominique Quatravaux's original I<docbook2latex.xps> 
+stylesheet, also part of the XML::XPathScript's distibution. Yanick Champoux
+did the porting.
+
+=begin devel
 
 =head1 NAME
 
@@ -4066,3 +4095,5 @@ can redistribute it and/or modify it under the same terms as Perl itself.
 %>
 
 <%= $inhibitOutput ? "" : apply_templates() %>
+
+=end devel
