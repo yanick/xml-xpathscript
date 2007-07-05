@@ -1,10 +1,16 @@
 use Test::More;
 
-if( eval q{use Test::Signature; 1;} ) {
-    plan tests => 1;
-}
-else {
-    plan skip_all => 'Test::Signature required to test SIGNATURE';
-}
+$ENV{ TEST_AUTHOR } and eval q{
+    use Test::Signature;
+    goto RUN_TESTS;
+};
+
+plan skip_all => $@
+    ? 'Test::Signature not installed; skipping signature testing'
+    : 'Set TEST_AUTHOR in your environment to enable these tests';
+
+RUN_TESTS:
+
+plan tests => 1;
 
 signature_ok();

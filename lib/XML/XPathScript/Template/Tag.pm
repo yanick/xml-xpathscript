@@ -9,7 +9,7 @@ use Scalar::Util qw/ reftype /;
 use overload '&{}'  => \&_overload_func,
              q{""}  => \&_overload_quote;
 
-our $VERSION = '1.50';
+our $VERSION = '1.50.1';
 
 our @ALLOWED_ATTRIBUTES = qw{
   pre post
