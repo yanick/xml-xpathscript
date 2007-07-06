@@ -63,13 +63,18 @@ C<< XML::XPathScript->current()->binmode() >>.
 =cut
 
 my $tainted_null_string = substr($0, 0, 0);
-if (eval { kill 0 => $tainted_null_string; 1 }) {
-    warn "Taint mode disabled, UTF8 and taint checks skipped";
-    ok(1) for (1..3);
-} else {
-    ok_not_utf8_tainted("foo" . $tainted_null_string);
-    ok_not_utf8_tainted($byte . $tainted_null_string);
-    ok_utf8_tainted($utf8 . $tainted_null_string);
+SKIP: {
+    no warnings qw/ numeric /;
+
+    local *STDERR;    # if we die, we die silently
+    open STDERR, '>', \do { my $anon };
+
+    skip 'Taint mode disabled, UTF8 and taint checks skipped', 3
+      if eval { kill 0 => $tainted_null_string; 1 };
+
+    ok_not_utf8_tainted( 'foo' . $tainted_null_string );
+    ok_not_utf8_tainted( $byte . $tainted_null_string );
+    ok_utf8_tainted( $utf8 . $tainted_null_string );
 }
 
 =pod
