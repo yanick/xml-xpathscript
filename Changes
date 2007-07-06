@@ -1,5 +1,8 @@
 Revision history for Perl module XML::XPathScript
 
+1.52 Jul 6, 2007
+    - Added Clone dependency
+
 1.51 Jul 5, 2007
     - Changes to X::X::Stylesheet::Docbook2LaTeX for Pod::Manual
 
