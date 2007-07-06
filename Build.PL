@@ -82,6 +82,7 @@ my $build = $class->new
                 'Data::Dumper'   => 0,
                 'Scalar::Util'   => 0,
                 'Readonly'       => 0,
+                'Clone'          => 0,
                },
    build_requires => {
                       "File::Find" => 0,
