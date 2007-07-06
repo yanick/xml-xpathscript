@@ -6,7 +6,7 @@ use strict;
 use XML::XPathScript::Processor;
 use Carp;
 
-our $VERSION = '1.50.1';
+our $VERSION = '1.51';
 
 our $processor;
 
@@ -331,6 +331,7 @@ sub listtitle {
 }
 
 sub tc_screen {
+    no warnings qw/ uninitialized /;
 	my ($self,$t)=@_;
 	my $ret= verbatimcode($self,$t,1);
 
@@ -401,6 +402,7 @@ sub verbatimcode {
 };
 
 sub RE_of_uniconvs {
+    no warnings qw/ digit /;
 	my ($uni)=@_;
 	my @latin1variants=grep {$_ < 0xFF} (keys %$uni);
 	my $RE='[^\x9\xA\x20-\xFF]|'.
@@ -430,6 +432,7 @@ sub utf8totex {
 	do {
  	 use utf8;
 
+    no warnings qw/ digit /;
 	 $uni =~ s/($escapeRE)/
 	     my $c=ord($1);
 		 if (exists $$uniref{$c}) { "<$c>"; } else {
@@ -498,8 +501,12 @@ sub tc_section {
     }
 
     my $title = apply_templates_under('title',$n);
-    my $titleabbrev = apply_templates_under( $n->findnodes('titleabbrev') )
-                        || $title ;
+    my( $abbrev_node ) = $n->findnodes('titleabbrev');
+    my $titleabbrev;
+    if ( $abbrev_node ) {
+        $titleabbrev = apply_templates_under( $abbrev_node );
+    }
+    $titleabbrev ||= $title ;
 
     if ( $numbered_sections ) {
         $t->{pre}="\n\n".sprintf '\%s[%s]{%s}',$name ,$titleabbrev, $title ;
@@ -521,9 +528,13 @@ sub tc_section {
 };
 
 sub thelabel {
+    return unless @_;
+
+    no warnings qw/ uninitialized /;
+
     my $label = id2label( $_[0] );
 
-    return "\\label{$label}\n" x !!$label;
+    return $label ? "\\label{$label}\n" : q{} ;
 }
 
 # Handle UTF-8 braindamage and prevent utf8 tainting from propagating
@@ -657,6 +668,7 @@ SUBTITLE
 \title{\textbf{\textsc{\Huge{}%s}}}
 TITLE
 
+        no warnings qw/ uninitialized /;
 		$t->{pre}.="\n\\author{$author}\n";
    };
 

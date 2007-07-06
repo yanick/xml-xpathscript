@@ -1,5 +1,8 @@
 Revision history for Perl module XML::XPathScript
 
+1.51 Jul 5, 2007
+    - Changes to X::X::Stylesheet::Docbook2LaTeX for Pod::Manual
+
 1.50.1 Jul 5, 2007
     - Silencing warnings in t/04unicode.t
     - t/99signature.t is now an author test 
