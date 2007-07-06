@@ -1,6 +1,6 @@
 ---
 name: XML-XPathScript
-version: 1.50.1
+version: 1.51
 author:
   - 'Yanick Champoux <yanick@cpan.org>'
   - 'Dominique Quatravaux <domq@cpan.org> '
@@ -24,35 +24,35 @@ build_requires:
 provides:
   Apache::AxKit::Language::YPathScript:
     file: lib_axkit/Apache/AxKit/Language/YPathScript.pm
-    version: 1.50.1
+    version: 1.51
   XML::XPathScript:
     file: lib/XML/XPathScript.pm
-    version: 1.50.1
+    version: 1.51
   XML::XPathScript::Processor:
     file: lib/XML/XPathScript/Processor.pm
-    version: 1.50.1
+    version: 1.51
   XML::XPathScript::Processor::B:
     file: lib/XML/XPathScript/Processor/B.pm
-    version: 1.50.1
+    version: 1.51
   XML::XPathScript::Processor::LibXML:
     file: lib/XML/XPathScript/Processor/LibXML.pm
-    version: 1.50.1
+    version: 1.51
   XML::XPathScript::Processor::XPath:
     file: lib/XML/XPathScript/Processor/XPath.pm
-    version: 1.50.1
+    version: 1.51
   XML::XPathScript::StdoutSnatcher:
     file: lib/XML/XPathScript.pm
   XML::XPathScript::Stylesheet::DocBook2LaTeX:
     file: lib/XML/XPathScript/Stylesheet/DocBook2LaTeX.pm
-    version: 1.50.1
+    version: 1.51
   XML::XPathScript::Template:
     file: lib/XML/XPathScript/Template.pm
-    version: 1.50.1
+    version: 1.51
   XML::XPathScript::Template::Content:
     file: lib/XML/XPathScript/Processor.pm
   XML::XPathScript::Template::Tag:
     file: lib/XML/XPathScript/Template/Tag.pm
-    version: 1.50.1
+    version: 1.51
 generated_by: Module::Build version 0.2806
 meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.2.html

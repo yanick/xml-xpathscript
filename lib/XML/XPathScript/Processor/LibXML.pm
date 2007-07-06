@@ -5,7 +5,7 @@ use warnings;
 
 use base qw/ XML::XPathScript::Processor /;
 
-our $VERSION = '1.50.1';
+our $VERSION = '1.51';
 
 sub get_namespace {
         my $ns = $_[1]->getNamespaces();
