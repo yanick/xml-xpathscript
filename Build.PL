@@ -96,6 +96,8 @@ my $build = $class->new
 
 $build->create_build_script;
 
+### utility functions #####################################
+
 sub choose_parser {
 	my( $XML_parser ) = @_;
 
@@ -128,8 +130,17 @@ sub choose_parser {
 	}
 	print "XML::XPath not found\n";
 
-	die "XML::XPathScript needs either XML::LibXML or ",
-		"XML::XPath to be installed\n";
+    print <<'END_MESSAGE';
+Neither XML::LibXML or XML::XPath are already installed.
+
+Setting XML::LibXML as a dependency, as it is the
+most efficient of the two. If, for whatever reason,
+it fails to install on your machine, consider trying
+to install XML::XPath.
+
+END_MESSAGE
+
+    return 'XML::LibXML';
 }
 
 

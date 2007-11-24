@@ -47,8 +47,8 @@ To install this module type the following:
 
    
 During installation, Build.PL will check if it should use XML::LibXML 
-or XML::XPath as the default xml parser. if you want to force XPathScript to use 
-one or the other, do
+or XML::XPath as the default xml parser. If you want to force XPathScript 
+to use one or the other, do
 
 	perl Build.PL -parser=XML::LibXML
 	or
