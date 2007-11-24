@@ -2,7 +2,7 @@ Revision history for Perl module XML::XPathScript
 
 current
     - If no XML parser is present during installation, add XML::LibXML
-        to the dependencies
+        to the dependencies (thanks to David for the bug report)
 
 1.52 Jul 6, 2007
     - Added Clone dependency
