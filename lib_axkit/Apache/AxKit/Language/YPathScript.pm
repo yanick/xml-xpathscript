@@ -64,7 +64,7 @@ use XML::XPathScript;
 use vars qw( @ISA $VERSION $stash );
 @ISA = qw/ Apache::AxKit::Language XML::XPathScript /;
 
-$VERSION = '1.52';
+$VERSION = '1.53_work';
 
 =head2 Functions
 
