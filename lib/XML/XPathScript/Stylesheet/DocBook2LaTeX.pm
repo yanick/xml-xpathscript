@@ -6,7 +6,7 @@ use strict;
 use XML::XPathScript::Processor;
 use Carp;
 
-our $VERSION = '1.52';
+our $VERSION = '1.53';
 
 our $processor;
 

@@ -13,7 +13,7 @@ use Scalar::Util qw/ refaddr /;
 use overload '&{}'  => \&_overload_func,
              q{""}  => \&_overload_quote;
 
-our $VERSION = '1.52';
+our $VERSION = '1.53';
 
 sub new {
    my( $class ) = @_;

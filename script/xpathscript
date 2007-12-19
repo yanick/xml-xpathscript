@@ -9,7 +9,7 @@ use Symbol;
 use File::Basename;
 use Carp;
 
-my $VERSION = '1.52';
+my $VERSION = '1.53';
 
 my ( $query, $interpolate );
 GetOptions( 'query=s' => \$query, 
@@ -18,9 +18,9 @@ GetOptions( 'query=s' => \$query,
           );
 
 sub die_version {
-    my( $date ) = q$Date: 2007-07-06T12:37:51.503257Z $ 
+    my( $date ) = q$Date$ 
                     =~ /\((.*?)\)/;
-    my( $revision ) = q$Revision: 1012 $ =~ /(\d+)/;
+    my( $revision ) = q$Revision$ =~ /(\d+)/;
 
     die <<"END_VERSION";
 $0 : revision $revision ($date)
