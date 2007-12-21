@@ -68,10 +68,10 @@ use constant DO_NOT_PROCESS   =>  0;
 
 our( $DO_SELF_AS_CHILD, $DO_SELF_AND_KIDS,
      $DO_SELF_ONLY,     $DO_NOT_PROCESS    );
-Readonly $DO_SELF_AS_CHILD =>  2;
-Readonly $DO_SELF_AND_KIDS =>  1;
-Readonly $DO_SELF_ONLY     => -1;
-Readonly $DO_NOT_PROCESS   =>  0;
+Readonly::Scalar $DO_SELF_AS_CHILD =>  2;
+Readonly::Scalar $DO_SELF_AND_KIDS =>  1;
+Readonly::Scalar $DO_SELF_ONLY     => -1;
+Readonly::Scalar $DO_NOT_PROCESS   =>  0;
 
 
 sub new {

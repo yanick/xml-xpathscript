@@ -1,5 +1,9 @@
 Revision history for Perl module XML::XPathScript
 
+work
+    - Change Readonly call in X::X::Processor to try to please Perl 5.6 and
+      earlier.
+
 1.53 Dec 18, 2007
     - If no XML parser is present during installation, add XML::LibXML
         to the dependencies (thanks to David for the bug report)
