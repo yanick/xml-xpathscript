@@ -41,7 +41,7 @@ sub get_attributes {
     return;
 }
 
-sub get_attribute { "$_[1][0]='$_[1][1]' " }
+sub get_attribute { " $_[1][0]='$_[1][1]' " }
 
 # it's all element nodes
 sub is_element_node  { 1 }
