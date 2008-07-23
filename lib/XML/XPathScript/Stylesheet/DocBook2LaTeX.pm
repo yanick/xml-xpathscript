@@ -280,7 +280,7 @@ sub tc_quote {
 	my ($self,$t)=@_;
 
 	my $lang=langofnode($self);
-	my ($nested)=findnodes("ancestor::quote",$self);
+	my ($nested)= $self->findnodes("ancestor::quote");
 
 	if ($lang && $lang =~ m/^fr/i) {
 		if ($nested) {
@@ -303,7 +303,8 @@ sub tc_quote {
 }
 
 sub langofnode {
-    return findvalue('(ancestor::*/@lang)[position()=last()]',$_[0]);
+    my $self = shift;
+    return $self->findvalue('(ancestor::*/@lang)[position()=last()]');
 }
 
 sub tc_varlisentry {
@@ -799,7 +800,7 @@ $template->{'orderedlist'}->{testcode}=sub {
 	# also have "continuation=Continues" set, and then another list
 	# that doesn't have it.
 
-	my $cont=findvalue('@continuation',$self);
+	my $cont= $self->findvalue('@continuation');
 	if ($cont && ($cont =~ m/continues/i)) {
 		my $num=0;
 
@@ -821,13 +822,13 @@ $template->{'orderedlist'}->{testcode}=sub {
 $template->{'ulink'}->{testcode}=sub {
 	my ($self, $t)=@_;
 
-	my $url="\\texttt{".utf8totex(findvalue('@url',$self), 
+	my $url="\\texttt{".utf8totex( $self->findvalue('@url'), 
 								  {
 								   ord(" ")=>"\\ ",
 								   ord('@')=>'@',
 								  })."}";
 
-	if (findnodes("node()", $self)) {
+	if ( $self->findnodes("node()") ) {
 		$t->{post}=render_footnote($self, $url);
 		$t->{pre}="";
 		return 1;
@@ -939,7 +940,7 @@ sub footnotes_allowed {
 	my ($self)=@_;
 #warn "footnotes_allowed",get_xpath_of_node($self);
 
-	my ($parent)=findnodes("..", $self);
+	my ($parent)= $self->findnodes('..');
 	if (!defined $parent) {
 #warn "footnotes_allowed hit root";
 		return 1
@@ -954,7 +955,7 @@ sub footnotes_allowed {
 $is_footnote_blocker=sub {
 	my ($self)=@_;
 
-	my $nodename=findvalue("name()", $self);
+	my $nodename= $self->findvalue('name()');
 	return undef if (! $nodename); # Root node
 	return grep {$_ eq $nodename} @footnote_blockers;
 };

@@ -1,6 +1,7 @@
 Revision history for Perl module XML::XPathScript
 
 work
+    - Fix bugs in stylesheet DocBook2LaTex
     - Fix bug in X::X::Processor::B where there is no whitespace
         between the tagname and the first attribute.
     - Change Readonly call in X::X::Processor to try to please Perl 5.6 and
