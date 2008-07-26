@@ -1,0 +1,13 @@
+use File::Find::Rule;
+
+my %file;
+
+$file{README} = qr/XML::XPathScript version (\S+)/;
+
+for my $m ( File::Find::Rule->file->name( '*.pm' )->in( 'lib' ),
+            'script/xpathscript' ) {
+   $file{$m} = [ qr/\$VERSION\s*=\s*'(.*?)';/, 
+                 qr/This document describes \S+ version (\S*)/ ];
+}
+
+%file;
