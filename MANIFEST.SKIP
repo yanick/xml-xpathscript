@@ -21,3 +21,4 @@ tags
 TODO
 ^html/
 perversionrc    # author stuff
+.gitignore 
