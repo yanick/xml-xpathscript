@@ -5,7 +5,7 @@ package XML::XPathScript::Processor::B;
 
 use base qw/ XML::XPathScript::Processor /;
 
-our $VERSION = '1.53';
+our $VERSION = '1.54';
 
 # No namespaces here
 sub get_namespace { }
@@ -41,7 +41,7 @@ sub get_attributes {
     return;
 }
 
-sub get_attribute { "$_[1][0]='$_[1][1]' " }
+sub get_attribute { " $_[1][0]='$_[1][1]' " }
 
 # it's all element nodes
 sub is_element_node  { 1 }

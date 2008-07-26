@@ -239,7 +239,7 @@ use File::Basename;
 use XML::XPathScript::Processor;
 use XML::XPathScript::Template;
 
-our $VERSION = '1.53';
+our $VERSION = '1.54';
 
 $XML_parser = 'XML::LibXML';
 
@@ -649,7 +649,7 @@ sub process {
 		# Perl 5.6.1 dislikes closed but tied descriptors (causes SEGVage)
    		*STDOUT = *ORIGINAL_STDOUT if $^V lt v5.7.0; 
 
-	   	tie *STDOUT, 'XML::XPathScript::StdoutSnatcher';
+	   	tie *STDOUT, __PACKAGE__;
         $self->compile unless $self->{compiledstylesheet};
 	   	my $retval = $self->{compiledstylesheet}->( $self, @extravars );
 	   	untie *STDOUT;
@@ -1186,12 +1186,6 @@ sub document {
     return $results;
 }
 
-1;
-
-# small package to catch print statements within
-# the stylesheets
-package XML::XPathScript::StdoutSnatcher;
-
 sub TIEHANDLE { my $self = ''; bless \$self, $_[0] }
 sub PRINT {
 	my $self = shift;
@@ -1201,7 +1195,7 @@ sub BINMODE {
     return XML::XPathScript::current()->binmode( @_ );
 }
 
-'end of XML::XPathScript::StdoutSnatcher' ;
+1;
 
 __END__
 

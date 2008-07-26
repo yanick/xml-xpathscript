@@ -15,26 +15,26 @@ not run its Makefile.PL or Build.PL.
 Hash: SHA1
 
 SHA1 2554a1c42ac19f0bfc7b5c391676f3343a2ad232 Build.PL
-SHA1 47a46a449cf77844a3f743be42cf84638f185071 Changes
+SHA1 6289a7b63e6cddf0139fd9d74705adf0d07464fa Changes
 SHA1 05a5f3528ef8a73c665e5e73cfe088a22841d60f MANIFEST
-SHA1 a65624f3fca72342c09e93f2ab1c129e2d8ca524 META.yml
+SHA1 c12cf66c790482c504d042650f963b8effc940d3 META.yml
 SHA1 1794aad4c7569a63f2638e58789ee2f1ad3a86a8 Makefile.PL
 SHA1 0b05cc0bbf188500b5260ae83f500e5af82735ca README
 SHA1 585dbee14359e90630096c4c39d944c3ed5fd0df dist/rewrite-default-xml-parser
 SHA1 b8f13d00c750860ca69a0f2be632fdb0cf1b3256 examples/docbook2latex.xps
 SHA1 49de2221717af40dfd852e18c46650097290aa1f examples/sample-docbook.xml
-SHA1 b43bb4925898cef7d35be8ba6a3650afce90acac lib/XML/XPathScript.pm
-SHA1 d96184b54fe2bb56809c9fb37ec8b75287ead850 lib/XML/XPathScript/Processor.pm
-SHA1 1d075f69703ddcc3e5259faba0188174620f1473 lib/XML/XPathScript/Processor/B.pm
-SHA1 dd7458db336c56db2bc69b2ab0c8acebfda92611 lib/XML/XPathScript/Processor/LibXML.pm
-SHA1 e5147416e4c022a9d5fb8ae55be536a45a2ef90f lib/XML/XPathScript/Processor/XPath.pm
+SHA1 477417aa6f19e280f0a99cfebe898709b43f58fc lib/XML/XPathScript.pm
+SHA1 425d3d5866d0f5214672883c58efc52f8f0188ac lib/XML/XPathScript/Processor.pm
+SHA1 2c6197b637d04230d08c55db4b5cf19804ff558c lib/XML/XPathScript/Processor/B.pm
+SHA1 873b0493b0ad13eecdfa8eaac69f139a23d75e0c lib/XML/XPathScript/Processor/LibXML.pm
+SHA1 433d1eb212012aeb6450a4137f08bbf89c958e77 lib/XML/XPathScript/Processor/XPath.pm
 SHA1 4f2bd67d33fd417629c6cff2a0d3053035c45e03 lib/XML/XPathScript/Stylesheet.pod
-SHA1 5516c9b56da12b33d0c60134f564a84e30779518 lib/XML/XPathScript/Stylesheet/DocBook2LaTeX.pm
-SHA1 c61b07ac8d1e4d791c19f879e13ace684784b762 lib/XML/XPathScript/Template.pm
-SHA1 9aba6566eb13651c8ba5d1c5927754e8a6674007 lib/XML/XPathScript/Template/Tag.pm
+SHA1 f667a41fd6c92916e6205fadbadb7d22b9c86bd2 lib/XML/XPathScript/Stylesheet/DocBook2LaTeX.pm
+SHA1 9bba29e14e803933b09efb3eadca5eefbdf2bd8c lib/XML/XPathScript/Template.pm
+SHA1 19ba4614630c35a3059dffa8e18876ba6d0d6afa lib/XML/XPathScript/Template/Tag.pm
 SHA1 44a91906b1c3ba4b2bddec121e96c77c97f30081 lib_axkit/Apache/AxKit/Language/YPathScript.pm
 SHA1 553248592b413f49ea7f739d1da52f2fc2219b53 lib_tomkit/Apache2/TomKit/Processor/XPathScript.pm
-SHA1 a73bfb7ff30574b701eba6e321083f6e0690ffe2 script/xpathscript
+SHA1 0475c452e5a471b610041abd6b24b177748e7186 script/xpathscript
 SHA1 0fabf086f09dd536eab3e44118e71ed456a53eb1 t/00build.t
 SHA1 9d8a3166da409cfa69237aaf8228e17f6e75cf9a t/01basic.t
 SHA1 66b1a741ea182ba1ff9fcdc6527ee3fdbbec10ef t/02interpolate.t
@@ -100,9 +100,9 @@ SHA1 e739fa89f56b123580d539d5e2d400c6abd108d5 t/testdocs/tag_attributes.expected
 SHA1 db53da51ad4ff13761a69ee9b0e12315f7623fc5 t/testdocs/tag_attributes.xml
 SHA1 d36ad2b5860e4ca564b845e0e7bb5d5134624d6e t/testdocs/tag_attributes.xps
 -----BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.4.3 (GNU/Linux)
+Version: GnuPG v2.0.7 (GNU/Linux)
 
-iD8DBQFHaIDf34Hwf+GwC4wRAkS+AJ9mG5ukejenOpKQWN48BfOhKslYawCcDRNN
-ZqDyr/N2bbwZvO8zrT0SUYM=
-=xccT
+iD8DBQFIi4tn34Hwf+GwC4wRApKMAJ45/53zHAFfm4qNgae6xY3cnYYlrACg8fAn
+eArdMMSPcsD2SEX0daapB/Q=
+=lCA1
 -----END PGP SIGNATURE-----
