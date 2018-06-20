@@ -157,7 +157,7 @@ sub import_functional {
     # call as XML::XPathScript::Processor->import_functional
     $self = XML::XPathScript::Processor->new unless ref $self;
 
-    my($caller, $file, $line) = caller;
+    my($caller) = caller;
 
     $self->_export( $caller, $_, $prefix ) for @EXPORT_OK;
 
