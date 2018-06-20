@@ -9,7 +9,7 @@ use base qw/ Exporter /;
 use XML::XPathScript::Template;
 use Readonly;
 
-our $VERSION = '1.54';
+our $VERSION = '1.55';
 
 our @EXPORT = qw/ 
         $DO_SELF_AS_CHILD 
@@ -632,7 +632,7 @@ sub translate_comment_node {
 sub start_tag {
     my( $self, $node, $name ) = @_;
 
-    $name ||= $self->get_node_name( $node ) or return;
+    $name ||= $self->get_qualified_name( $node ) or return;
 
     my $string = '<'.$name;
 
@@ -653,7 +653,7 @@ sub start_tag {
 
 sub end_tag {
     my $self = shift;
-    if (my $name = $_[1] || $self->get_node_name( $_[0] ) ) {
+    if (my $name = $_[1] || $self->get_qualified_name( $_[0] ) ) {
         return "</$name>";
     }
 	return '';

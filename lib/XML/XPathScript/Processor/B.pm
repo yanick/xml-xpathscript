@@ -5,7 +5,7 @@ package XML::XPathScript::Processor::B;
 
 use base qw/ XML::XPathScript::Processor /;
 
-our $VERSION = '1.54';
+our $VERSION = '1.55';
 
 # No namespaces here
 sub get_namespace { }
@@ -30,6 +30,8 @@ sub to_string {
 }
 
 sub get_node_name { $_[1]->get_name }
+
+sub get_qualified_name { $_[1]->get_name }
 
 sub get_attributes {
     if ( $_[1]->can( 'get_attr_names' ) ) {

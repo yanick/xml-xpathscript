@@ -239,9 +239,9 @@ use File::Basename;
 use XML::XPathScript::Processor;
 use XML::XPathScript::Template;
 
-our $VERSION = '1.54';
+our $VERSION = '1.55';
 
-$XML_parser = 'XML::LibXML';
+our $XML_parser = 'XML::LibXML';
 
 my %use_parser = (
     'XML::LibXML' => 'use XML::LibXML',
