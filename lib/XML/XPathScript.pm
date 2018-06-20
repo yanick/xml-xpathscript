@@ -241,7 +241,7 @@ use XML::XPathScript::Template;
 
 our $VERSION = '1.54';
 
-$XML_parser = 'XML::LibXML';
+our $XML_parser = 'XML::LibXML';
 
 my %use_parser = (
     'XML::LibXML' => 'use XML::LibXML',
