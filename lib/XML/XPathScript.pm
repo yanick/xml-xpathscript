@@ -5,8 +5,6 @@ use strict;
 use warnings;
 use Carp;
 
-# $Revision$ - $Date$
-
 =pod 
 
 =head1 SYNOPSIS
@@ -235,8 +233,6 @@ use Symbol;
 use File::Basename;
 use XML::XPathScript::Processor;
 use XML::XPathScript::Template;
-
-our $VERSION = '1.55';
 
 our $XML_parser = 'XML::LibXML';
 

@@ -8,8 +8,6 @@ use strict;
 use XML::XPathScript::Processor;
 use Carp;
 
-our $VERSION = '1.55';
-
 our $processor;
 
 our $stylesheet = <<'END_STYLESHEET';

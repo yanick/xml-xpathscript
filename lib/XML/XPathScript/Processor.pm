@@ -10,8 +10,6 @@ use base qw/ Exporter /;
 use XML::XPathScript::Template;
 use Readonly;
 
-our $VERSION = '1.55';
-
 our @EXPORT = qw/ 
         $DO_SELF_AS_CHILD 
         $DO_SELF_AND_KIDS

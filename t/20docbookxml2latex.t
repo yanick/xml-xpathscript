@@ -3,13 +3,10 @@ use warnings;
 
 use Test::More;
 
-if ( $XML::XPathScript::XML_parser eq 'XML::XPath' ) {
-    plan skip_all => "doesn't work with XML::XPath";
-}
-else {
-    plan tests => 3;
-}
+plan skip_all => "doesn't work with XML::XPath"
+    if $XML::XPathScript::XML_parser eq 'XML::XPath';
 
+plan tests => 3;
 
 =head1 NAME
 
