@@ -5,7 +5,7 @@ package XML::XPathScript::Processor::B;
 
 use base qw/ XML::XPathScript::Processor /;
 
-our $VERSION = '1.54';
+our $VERSION = '1.55';
 
 # No namespaces here
 sub get_namespace { }
