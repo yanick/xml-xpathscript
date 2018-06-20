@@ -13,7 +13,6 @@ README
 README.mkdn
 SIGNATURE
 cpanfile
-dist.ini
 dist/rewrite-default-xml-parser
 doap.xml
 examples/docbook2latex.xps
