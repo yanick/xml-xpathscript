@@ -1,6 +1,7 @@
 package XML::XPathScript::Template;
+our $AUTHORITY = 'cpan:YANICK';
 # ABSTRACT: XML::XPathScript transformation template 
-
+$XML::XPathScript::Template::VERSION = '1.55';
 use strict;
 use warnings;
 
@@ -168,12 +169,17 @@ sub _overload_quote {
 
 1;
 
-__END__
+=pod
 
-#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-#  Module Documentation
-#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+=encoding UTF-8
 
+=head1 NAME
+
+XML::XPathScript::Template - XML::XPathScript transformation template 
+
+=head1 VERSION
+
+version 1.55
 
 =head1 SYNOPSIS
 
@@ -203,7 +209,6 @@ are performed on the tags of a document as they are processed.
 The template of a stylesheet can be accessed via variables 
 I<$t>, I<$template> and I<$XML::XPathScript::trans>.
 
-
 =head1 METHODS
 
 =head2 new
@@ -212,7 +217,7 @@ I<$t>, I<$template> and I<$XML::XPathScript::trans>.
 
 Creates and returns a new, empty template.
 
-=head2  set
+=head2 set
 
     $template->set( $tag, \%attributes )
     $template->set( \@tags , \%attributes )
@@ -272,7 +277,6 @@ Example:
     # also modifies 'foo'
     $template->set( 'bar' => { pre => '<u>' } );  
 
-
 =head2 is_alias
 
     @aliases = $template->is_alias( $tag )
@@ -325,7 +329,6 @@ Example:
     #        pre  => '<bar>',
     #    }
     # };
-
 
 =head2 namespace
 
@@ -423,5 +426,38 @@ access methods.
         $t->alias( important => alert );
     %>
 
+=head1 AUTHORS
+
+=over 4
+
+=item *
+
+Yanick Champoux <yanick@cpan.org>
+
+=item *
+
+Dominique Quatravaux <domq@cpan.org>
+
+=item *
+
+Matt Sergeant <matt@sergeant.org>
+
+=back
+
+=head1 COPYRIGHT AND LICENSE
+
+This software is copyright (c) 2018, 2008, 2007 by Matt Sergeant.
+
+This is free software; you can redistribute it and/or modify it under
+the same terms as the Perl 5 programming language system itself.
+
 =cut
+
+__END__
+
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+#  Module Documentation
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
 

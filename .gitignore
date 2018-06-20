@@ -1,8 +1,0 @@
-*.swp
-Build
-META.yml
-Makefile.PL
-XML-XPathScript-*.tar.gz
-blib
-_build
-XML-XPathScript-*
