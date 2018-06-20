@@ -30,7 +30,7 @@ sub is_nodelist      { return $_[1]->isa( 'XML::LibXML::NodeList' ); }
 
 sub get_attribute {
     return $_[1]->isa( 'XML::LibXML::Namespace' )
-         ?  ' xmlns:' . $_[1]->getName() . q{="} . $_[1]->value() . q{" }
+         ? sprintf(q{ %s="%s"}, $_[1]->getName(), $_[1]->value())
          : $_[1]->toString( 0, 1 )
          ;
 }
