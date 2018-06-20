@@ -1,8 +1,5 @@
-# PODNAME: XML::XPathScript::Style
-
-=head1 NAME
-
-XML::XPathScript::Stylesheet - XPathScript's Stylesheet Writer Guide
+# PODNAME: XML::XPathScript::Stylesheet
+# ABSTRACT: XPathScript's Stylesheet Writer Guide
 
 =head1 STYLESHEET SYNTAX
 
@@ -553,10 +550,4 @@ that a spurious, final charset conversion will not happen at print()
 time under any locales, versions of Perl, or phases of moon.
 
 =back
-
-
-=head1 AUTHORS
-
-Yanick Champoux <yanick@cpan.org> 
-and Dominique Quatravaux <domq@cpan.org>
 
