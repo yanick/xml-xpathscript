@@ -19,14 +19,15 @@ sub is_text_node {
            && !$_[1]->isa('XML::LibXML::Comment');
 }
 
-sub get_attributes   { return $_[1]->attributes }
-sub get_text_content { return $_[1]->textContent }
-sub get_child_nodes  { return $_[1]->childNodes }
-sub get_node_name    { return $_[1]->localname }
-sub is_element_node  { return $_[1]->isa( 'XML::LibXML::Element' ); }
-sub is_comment_node  { return $_[1]->isa( 'XML::LibXML::Comment' ); }
-sub is_pi_node       { return $_[1]->isa( 'XML::LibXML::PI' ); }
-sub is_nodelist      { return $_[1]->isa( 'XML::LibXML::NodeList' ); }
+sub get_attributes     { return $_[1]->attributes }
+sub get_text_content   { return $_[1]->textContent }
+sub get_child_nodes    { return $_[1]->childNodes }
+sub get_node_name      { return $_[1]->localname }
+sub get_qualified_name { return $_[1]->nodeName }
+sub is_element_node    { return $_[1]->isa( 'XML::LibXML::Element' ); }
+sub is_comment_node    { return $_[1]->isa( 'XML::LibXML::Comment' ); }
+sub is_pi_node         { return $_[1]->isa( 'XML::LibXML::PI' ); }
+sub is_nodelist        { return $_[1]->isa( 'XML::LibXML::NodeList' ); }
 
 sub get_attribute {
     return $_[1]->isa( 'XML::LibXML::Namespace' )

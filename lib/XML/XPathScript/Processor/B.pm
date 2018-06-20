@@ -31,6 +31,8 @@ sub to_string {
 
 sub get_node_name { $_[1]->get_name }
 
+sub get_qualified_name { $_[1]->get_name }
+
 sub get_attributes {
     if ( $_[1]->can( 'get_attr_names' ) ) {
         return map { ( [ $_ => $_[1]->get_attr_value( $_ ) ] )
