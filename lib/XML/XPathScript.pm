@@ -1196,32 +1196,6 @@ sub BINMODE {
 
 __END__
 
-=head1 BUGS
-
-Please send bug reports to <bug-xml-xpathscript@rt.cpan.org>,
-or via the web interface at 
-http://rt.cpan.org/Public/Dist/Display.html?Name=XML-XPathScript .
-
-
-=head1 AUTHORS
-
-Current maintainers: 
-Yanick Champoux <yanick@cpan.org> 
-and Dominique Quatravaux <domq@cpan.org>
-
-Created by Matt Sergeant <matt@sergeant.org>
-
-=head1 THANKS
-
-Thanks to Tim Nelson for pretty nifty suggestions and 
-patches. We sure hope the new B<insteadofchildren>
-tag will make XSL users flock to XPS like ants to 
-a melting chocolate bunny, as he promised. ;-)
-
-=head1 LICENSE
-
-This is free software. You may distribute it under the same terms as
-Perl itself.
 
 =head1 SEE ALSO
 
@@ -1238,8 +1212,3 @@ Unicode character table:
 http://www.unicode.org/charts/charindex.html
 
 =cut
-
-# Local Variables:
-# mode:cperl
-# tab-width:8
-# End:

@@ -3104,12 +3104,6 @@ But if you are in an adventurous mode, by all means, go ahead. :-)
         $docbook => XML::XPathScript::Stylesheet::DocBook2LaTeX::stylesheet
     );
 
-=head1 AUTHORS
-
-This module is a port of Dominique Quatravaux's original I<docbook2latex.xps> 
-stylesheet, also part of the XML::XPathScript's distibution. Yanick Champoux
-did the porting.
-
 =begin devel
 
 =head1 NAME
