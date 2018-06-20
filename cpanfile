@@ -22,10 +22,6 @@ requires "vars" => "0";
 requires "warnings" => "0";
 
 on 'test' => sub {
-  requires "Apache2::TomKit::Processor::AbstractProcessor" => "0";
-  requires "Apache::AxKit::Provider" => "0";
-  requires "B::XPath" => "0";
-  requires "Convert::Scalar" => "0";
   requires "ExtUtils::MakeMaker" => "0";
   requires "File::Spec" => "0";
   requires "IO::File" => "0";
