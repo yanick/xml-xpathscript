@@ -4,6 +4,7 @@ Revision history for Perl module XML::XPathScript
     - Improve namespace support
     - Fix a bug where "xmlns:" was duplicated in the top-level element
     - Fix a bug that prevented manual switching between XML::XPath and XML::LibXML as the back-end parser
+    - Move to Dist::Zilla.
 
 1.54 July 26, 2008
     - Fix bugs in stylesheet DocBook2LaTex
