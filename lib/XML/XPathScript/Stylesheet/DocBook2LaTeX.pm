@@ -1,12 +1,12 @@
 package XML::XPathScript::Stylesheet::DocBook2LaTeX;
 
+# ABSTRACT: Transforms DocBook into LaTeX
+
 use warnings;
 use strict;
 
 use XML::XPathScript::Processor;
 use Carp;
-
-our $VERSION = '1.55';
 
 our $processor;
 
@@ -75,11 +75,11 @@ our %uniconvs=(
 		# Those are Latin1 and have no business here, except that
 		# we use them to quote things to protect during the
 		# quoting process (elegant hack if I may)
-		ord('<') => '{<}', # Also prevents kerning into "«"
+		ord('<') => '{<}', # Also prevents kerning into "Â«"
 		ord('>') => '{>}',
 
 		# TeX's shenanigans
-	    ord('µ') => '\ensuremath{µ}',
+	    ord('Âµ') => '\ensuremath{Âµ}',
 	    ord('_') => '\_',
 	    ord('^') => '{\^\relax}',
 	    ord('$') => '\$',
@@ -287,8 +287,8 @@ sub tc_quote {
 			$t->{pre}=" ``";
 			$t->{post}="''";
 		} else {
-			$t->{pre}=" «";
-			$t->{post}="»";
+			$t->{pre}=" Â«";
+			$t->{post}="Â»";
 		};
 	} else {
 		if ($nested) {
@@ -965,7 +965,7 @@ __END__
 <% # -*-perl-*-
 
 # XPathScript stylesheet for Docbook 4.1.2, LaTeX output.
-# ©-IDEALX
+# Â©-IDEALX
 # http://www.idealx.org/DocBkXML2LaTeX/
 #
 # >; # Help Emacs out
@@ -1146,7 +1146,7 @@ sub integrationtest {
 
 	print "ok 1\n" if ! is_utf8_tainted(" ");
 
-	my $utf8=do { use utf8; "Ã©" }; # literal e acute in UTF-8
+	my $utf8=do { use utf8; "ÃƒÂ©" }; # literal e acute in UTF-8
 	print "ok 2\n" if is_utf8_tainted($utf8);
 
 	require Unicode::String;
@@ -1157,13 +1157,13 @@ sub integrationtest {
 
 	print "ok 4\n" if !is_utf8_tainted($utf8);
 
-	print "ok 5\n" if ($utf8 eq "é");
+	print "ok 5\n" if ($utf8 eq "Ã©");
 
 	print "ok 6\n" if $XML::XPath::VERSION le '1.13'; # see reorder_backaxis()
 
 	# Regression tests
 	print "ok 7\n" if 
-	  (!is_utf8_tainted("Documentation d<39>administration de IDX<45>ReverseProxyé"));
+	  (!is_utf8_tainted("Documentation d<39>administration de IDX<45>ReverseProxyÃ©"));
 
 	print "ok 8\n" if (is_utf8_tainted("\x{263A}"));
 
@@ -1270,7 +1270,7 @@ sub flatten_textnodes {
 					   (findnodes(($path or ".//text()"),$self)));
 	$plaintext =~ s/\s+/ /gs;
 	$plaintext =~ s/^ //; $plaintext =~ s/ $//;
-	$plaintext =~ tr/ÁÀÂÄÇÉÈÊËÍÌÎÏÑÓÒÔÖÚÙÛÜÝáàâäçéèêëíìîïñóòôöúùûüýÿ/AAAACEEEEIIIINOOOOUUUUYaaaaceeeeiiiinoooouuuuyy/;
+	$plaintext =~ tr/ÃÃ€Ã‚Ã„Ã‡Ã‰ÃˆÃŠÃ‹ÃÃŒÃŽÃÃ‘Ã“Ã’Ã”Ã–ÃšÃ™Ã›ÃœÃÃ¡Ã Ã¢Ã¤Ã§Ã©Ã¨ÃªÃ«Ã­Ã¬Ã®Ã¯Ã±Ã³Ã²Ã´Ã¶ÃºÃ¹Ã»Ã¼Ã½Ã¿/AAAACEEEEIIIINOOOOUUUUYaaaaceeeeiiiinoooouuuuyy/;
 	return $plaintext;
 }
 
@@ -1281,7 +1281,7 @@ sub flatten_textnodes {
 
 $t->{'*'}->{showtag}=0;  # This also suppresses an Unicode effect
 
-# The default behaviour is to output a warning but still process the
+#Â The default behaviour is to output a warning but still process the
 # contents.
 
 {
@@ -1822,7 +1822,7 @@ $t->{abstract}->{testcode}=sub {
 $t->{legalnotice}->{testcode}=sub {
 	my ($self, $t)=@_;
 	my $legalname = (langofnode($self) =~ m/^fr/i) ?
-	  "Informations légales" :
+	  "Informations lÃ©gales" :
 		"Legal information";
 	$t->{pre}="{\\def\\abstractname{$legalname}\\begin{abstract}\n";
 	$t->{post}="\\end{abstract}}\n";
@@ -2778,7 +2778,7 @@ $t->{xref}->{testcode}=sub {
 		$theregexp=q/tab(le|leau|)/;
 	} elsif ($targetelementname =~ m/^sect/) {
 		$theword=($lang eq "fr" ? "le chapitre": "Chapter");
-		$theregexp=q/(chap(itre|ter|)|sect(ion|)|par(a|agraph|agraphe|t|tie|)|§)/;
+		$theregexp=q/(chap(itre|ter|)|sect(ion|)|par(a|agraph|agraphe|t|tie|)|Â§)/;
 	}
 elsif ($targetelementname =~ m/^appendix/) {
 		$theword=($lang eq "fr" ? "l'annexe": "Appendix");
@@ -2948,7 +2948,7 @@ our $typeset_bibentry=sub {
 			my $typesettitle=(
 				 ($role =~ m/^(proceedings|conference)$/i)?
 				   "\\emph{$title}":
-				   "«$title»");
+				   "Â«$titleÂ»");
 			$t->{pre}=join(", ",($t->{pre} ? $t->{pre}:()),$typesettitle);
 		};
 
@@ -2978,7 +2978,7 @@ our $typeset_bibentry=sub {
 
 	if ($lang =~ m/^fr/i) {
 		$t->{post}=join(", ",($t->{post}?$t->{post}:()),
-						utf8totex("n° $issuenum")) if ($edition);
+						utf8totex("nÂ° $issuenum")) if ($edition);
 	} else {
 		$t->{post}=join(", ",($t->{post}?$t->{post}:()),
 						utf8totex("# $issuenum")) if ($edition);
@@ -3086,9 +3086,6 @@ __END__
 #########################################################################
 #########################################################################
 
-=head1 NAME
-
-XML::XPathScript::Stylesheet::DocBook2LaTeX - Transforms DocBook into LaTeX
 
 =head1 WARNING
 
@@ -3104,12 +3101,6 @@ But if you are in an adventurous mode, by all means, go ahead. :-)
     my $latex = $xps->transform( 
         $docbook => XML::XPathScript::Stylesheet::DocBook2LaTeX::stylesheet
     );
-
-=head1 AUTHORS
-
-This module is a port of Dominique Quatravaux's original I<docbook2latex.xps> 
-stylesheet, also part of the XML::XPathScript's distibution. Yanick Champoux
-did the porting.
 
 =begin devel
 
@@ -3588,7 +3579,7 @@ C<$documentclass="report"> and C<< @documentclass_args = ("11pt",
 The name of the DVI driver used for rendering this document, such as
 C<dvipdfm> or C<dvips>. This variable also helps making decisions for
 rendering images (the <graphic> tag for example). This stylesheet
-indeed has support for both PostScript® and PDF document rendering,
+indeed has support for both PostScriptÂ® and PDF document rendering,
 but unfortunately not through the same TeX output file (due to
 restrictions on LaTeX's side) so the DVI driver has to be chosen at
 XML-to-LaTeX conversion time.
@@ -4052,7 +4043,7 @@ Only a subset of DocBook is implemented. Adding tags is easy most of
 the time though.
 
 MediaObject's are the only portable, kosher way of dealing with
-multi-format graphics (such as PostScript® vs. PNG in PDF's). They are
+multi-format graphics (such as PostScriptÂ® vs. PNG in PDF's). They are
 not implemented.
 
 Bibliography support is far from optimal and will result in bogus

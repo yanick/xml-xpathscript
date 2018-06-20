@@ -1,4 +1,5 @@
 package XML::XPathScript::Template;
+# ABSTRACT: XML::XPathScript transformation template 
 
 use strict;
 use warnings;
@@ -12,8 +13,6 @@ use Scalar::Util qw/ refaddr /;
 
 use overload '&{}'  => \&_overload_func,
              q{""}  => \&_overload_quote;
-
-our $VERSION = '1.55';
 
 sub new {
    my( $class ) = @_;
@@ -175,9 +174,6 @@ __END__
 #  Module Documentation
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-=head1 NAME
-
-XML::XPathScript::Template - XML::XPathScript transformation template 
 
 =head1 SYNOPSIS
 
@@ -426,16 +422,6 @@ access methods.
 
         $t->alias( important => alert );
     %>
-
-=head1 BUGS 
-
-Please send bug reports to <bug-xml-xpathscript@rt.cpan.org>,
-or via the web interface at 
-http://rt.cpan.org/Public/Dist/Display.html?Name=XML-XPathScript .
-
-=head1 AUTHOR
-
-Yanick Champoux <yanick@cpan.org>
 
 =cut
 

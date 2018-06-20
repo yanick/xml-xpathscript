@@ -1,6 +1,5 @@
-=head1 NAME
-
-XML::XPathScript::Stylesheet - XPathScript's Stylesheet Writer Guide
+# PODNAME: XML::XPathScript::Stylesheet
+# ABSTRACT: XPathScript's Stylesheet Writer Guide
 
 =head1 STYLESHEET SYNTAX
 
@@ -500,7 +499,7 @@ characters (such as "A" or or "/" or ".", but I<not> the ISO-8859-1
 8-bit extensions) have the same encoding in both ASCII and UTF-8,
 including the null character (which is good for strcpy() and
 friends). Of course, this means that the other characters are rendered
-using I<several> bytes, for example "�" is "é" in UTF-8. The result
+using I<several> bytes, for example "é" is "Ã©" in UTF-8. The result
 is therefore vaguely intelligible for a Western reader.
 
 =head2 Output to UTF-8 with XPathScript
@@ -551,10 +550,4 @@ that a spurious, final charset conversion will not happen at print()
 time under any locales, versions of Perl, or phases of moon.
 
 =back
-
-
-=head1 AUTHORS
-
-Yanick Champoux <yanick@cpan.org> 
-and Dominique Quatravaux <domq@cpan.org>
 

@@ -6,10 +6,8 @@
 #
 # >; # Help Emacs out
 
-# Perl dependencies:
-require 5.6.1;
-use XML::XPathScript 0.14;
 use strict;
+use XML::XPathScript;
 
 warn 'This is $Id: docbook2latex.xps 32928 2006-02-01 17:59:52Z dom $'.
 	"\n";

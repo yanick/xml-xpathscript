@@ -1,4 +1,5 @@
 package XML::XPathScript::Processor;
+# ABSTRACT: XML::XPathScript transformation engine
 
 use strict;
 use warnings;
@@ -8,8 +9,6 @@ use base qw/ Exporter /;
 
 use XML::XPathScript::Template;
 use Readonly;
-
-our $VERSION = '1.55';
 
 our @EXPORT = qw/ 
         $DO_SELF_AS_CHILD 
@@ -678,10 +677,6 @@ sub interpolate {
 'end of module XML::XPathScript::Processor';
 
 __END__
-
-=head1 NAME
-
-XML::XPathScript::Processor - XML::XPathScript transformation engine
 
 =head1 SYNOPSIS
 
@@ -1440,15 +1435,4 @@ Example:
     print apply_templates( $foo_nodes[-1] );
 
 =back
-
-=head1 BUGS
-
-Please send bug reports to <bug-xml-xpathscript@rt.cpan.org>,
-or via the web interface at 
-http://rt.cpan.org/Public/Dist/Display.html?Name=XML-XPathScript .
-
-=head1 AUTHORS
-
-Yanick Champoux <yanick@cpan.org> 
-and Dominique Quatravaux <domq@cpan.org>
 

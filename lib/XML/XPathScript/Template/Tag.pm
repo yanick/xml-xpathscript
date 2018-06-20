@@ -1,4 +1,5 @@
 package XML::XPathScript::Template::Tag;
+# ABSTRACT: XPathScript Template Element 
 
 use strict;
 use warnings;
@@ -8,8 +9,6 @@ use Scalar::Util qw/ reftype /;
 
 use overload '&{}'  => \&_overload_func,
              q{""}  => \&_overload_quote;
-
-our $VERSION = '1.55';
 
 our @ALLOWED_ATTRIBUTES = qw{
   pre post
@@ -65,13 +64,6 @@ sub _overload_quote {
 
 __END__
 
-#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-#  Module Documentation
-#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-=head1 NAME
-
-XML::XPathScript::Template::Tag - XPathScript Template Element 
 
 =head1 SYNOPSIS
 
@@ -198,15 +190,6 @@ access methods.
         };
     %>
 
-=head1 BUGS 
-
-Please send bug reports to <bug-xml-xpathscript@rt.cpan.org>,
-or via the web interface at 
-http://rt.cpan.org/Public/Dist/Display.html?Name=XML-XPathScript .
-
-=head1 AUTHOR
-
-Yanick Champoux <yanick@cpan.org>
 
 =cut
 
