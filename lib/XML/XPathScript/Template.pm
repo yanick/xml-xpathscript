@@ -1,4 +1,5 @@
 package XML::XPathScript::Template;
+# ABSTRACT: XML::XPathScript transformation template 
 
 use strict;
 use warnings;
@@ -175,9 +176,6 @@ __END__
 #  Module Documentation
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-=head1 NAME
-
-XML::XPathScript::Template - XML::XPathScript transformation template 
 
 =head1 SYNOPSIS
 

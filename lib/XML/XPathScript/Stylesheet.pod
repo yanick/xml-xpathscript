@@ -1,3 +1,5 @@
+# PODNAME: XML::XPathScript::Style
+
 =head1 NAME
 
 XML::XPathScript::Stylesheet - XPathScript's Stylesheet Writer Guide

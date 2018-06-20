@@ -1,4 +1,5 @@
 package XML::XPathScript::Template::Tag;
+# ABSTRACT: XPathScript Template Element 
 
 use strict;
 use warnings;
@@ -65,13 +66,6 @@ sub _overload_quote {
 
 __END__
 
-#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-#  Module Documentation
-#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-=head1 NAME
-
-XML::XPathScript::Template::Tag - XPathScript Template Element 
 
 =head1 SYNOPSIS
 

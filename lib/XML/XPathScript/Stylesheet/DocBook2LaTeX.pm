@@ -1,5 +1,7 @@
 package XML::XPathScript::Stylesheet::DocBook2LaTeX;
 
+# ABSTRACT: Transforms DocBook into LaTeX
+
 use warnings;
 use strict;
 
@@ -3086,9 +3088,6 @@ __END__
 #########################################################################
 #########################################################################
 
-=head1 NAME
-
-XML::XPathScript::Stylesheet::DocBook2LaTeX - Transforms DocBook into LaTeX
 
 =head1 WARNING
 

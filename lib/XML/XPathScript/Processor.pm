@@ -1,4 +1,5 @@
 package XML::XPathScript::Processor;
+# ABSTRACT: XML::XPathScript transformation engine
 
 use strict;
 use warnings;
@@ -678,10 +679,6 @@ sub interpolate {
 'end of module XML::XPathScript::Processor';
 
 __END__
-
-=head1 NAME
-
-XML::XPathScript::Processor - XML::XPathScript transformation engine
 
 =head1 SYNOPSIS
 

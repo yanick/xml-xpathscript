@@ -1,4 +1,5 @@
 package XML::XPathScript;
+# ABSTRACT: a Perl framework for XML stylesheets
 
 use strict;
 use warnings;
@@ -7,10 +8,6 @@ use Carp;
 # $Revision$ - $Date$
 
 =pod 
-
-=head1 NAME
-
-XML::XPathScript - a Perl framework for XML stylesheets
 
 =head1 SYNOPSIS
 
