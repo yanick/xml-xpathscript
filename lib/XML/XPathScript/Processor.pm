@@ -984,7 +984,7 @@ Returns true iff $object is a processing instruction node.
 Returns true if $node is a node list (as returned by L</findnodes> in
 scalar context), false otherwise.
 
-=item is_utf_tainted
+=item is_utf8_tainted
 
     $bool = is_utf8_tainted( $string )
 

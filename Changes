@@ -6,6 +6,7 @@ Revision history for Perl module XML::XPathScript
   [ BUG FIXES ]
 
   [ DOCUMENTATION ]
+    - Fixed pod error as reported by CPANTS. (GH#1, Mohammad S Anwar)
 
   [ ENHANCEMENTS ]
 
