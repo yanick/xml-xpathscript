@@ -25,8 +25,6 @@ lib/XML/XPathScript/Stylesheet.pod
 lib/XML/XPathScript/Stylesheet/DocBook2LaTeX.pm
 lib/XML/XPathScript/Template.pm
 lib/XML/XPathScript/Template/Tag.pm
-lib_axkit/Apache/AxKit/Language/YPathScript.pm
-lib_tomkit/Apache2/TomKit/Processor/XPathScript.pm
 manual/DocBook2LaTeX.pm
 manual/Makefile
 manual/manual.pl
