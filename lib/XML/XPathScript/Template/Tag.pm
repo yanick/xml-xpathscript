@@ -1,6 +1,7 @@
 package XML::XPathScript::Template::Tag;
+our $AUTHORITY = 'cpan:YANICK';
 # ABSTRACT: XPathScript Template Element 
-
+$XML::XPathScript::Template::Tag::VERSION = '2.00';
 use strict;
 use warnings;
 
@@ -64,6 +65,17 @@ sub _overload_quote {
 
 __END__
 
+=pod
+
+=encoding UTF-8
+
+=head1 NAME
+
+XML::XPathScript::Template::Tag - XPathScript Template Element 
+
+=head1 VERSION
+
+version 2.00
 
 =head1 SYNOPSIS
 
@@ -190,6 +202,29 @@ access methods.
         };
     %>
 
+=head1 AUTHORS
+
+=over 4
+
+=item *
+
+Yanick Champoux <yanick@cpan.org>
+
+=item *
+
+Dominique Quatravaux <domq@cpan.org>
+
+=item *
+
+Matt Sergeant <matt@sergeant.org>
+
+=back
+
+=head1 COPYRIGHT AND LICENSE
+
+This software is copyright (c) 2019, 2018, 2008, 2007 by Matt Sergeant.
+
+This is free software; you can redistribute it and/or modify it under
+the same terms as the Perl 5 programming language system itself.
 
 =cut
-
