@@ -2,6 +2,7 @@ Revision history for Perl module XML::XPathScript
 
 {{$NEXT}}
   [ API CHANGES ]
+    - Remove old Apache/Apache2 bindings. 
 
   [ BUG FIXES ]
 
