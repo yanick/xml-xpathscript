@@ -241,7 +241,7 @@ of $original_tag to $copy_tag.
 
 Note that subsequent modifications of the original tag will not
 affect the copies. To bind several tags to the same behavior, see
-L<alias>.
+L</alias>.
 
 Example:
 
