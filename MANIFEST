@@ -67,9 +67,6 @@ t/25stylesheetlines.t
 t/26bxpath.t
 t/27template_import.t
 t/28function_overload.t
-t/40axkit.t
-t/50tomkit.t
-t/99signature.t
 t/document_file.txt
 t/include.xps
 t/include2.xps
